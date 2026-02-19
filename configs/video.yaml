@@ -1,0 +1,141 @@
+schema_version: video_v1
+keyframe_extraction:
+  scene_threshold: 0.4
+  scene_threshold_min: 0.3
+  scene_threshold_max: 0.5
+  motion_detection:
+    enabled: true
+    threshold: 0.08          # 降低阈值，更敏感检测运动
+    sample_interval: 0.3     # 缩短采样间隔，更精细检测
+    high_motion_threshold: 0.15  # 高动态判定阈值（降低以捕捉更多局部运动）
+  mpdecimate:
+    hi: 768
+    lo: 320
+    frac: 0.33
+  min_interval_sec: 1.0      # 从2.0降到1.0，更密集采样
+  min_interval_sec_sensitive: 0.8
+  min_interval_sec_high_motion: 0.5  # 高动态视频最小帧间隔
+  # 自适应帧数配置
+  max_frames: 16             # 普通模式上限提升到16
+  max_frames_sensitive: 20   # 敏感模式上限
+  max_frames_high_motion: 20 # 高动态视频上限（宠物活动等）
+  min_frames: 6              # 最小帧数从4提升到6
+  force_first_frame: true
+  force_last_frame: true
+  # VRAM安全限制
+  vram_safe_max_frames: 16   # 显存安全最大帧数
+  resize:
+    normal_max_dim: 512
+    doc_max_dim: 1024
+    doc_text_ratio: 0.15
+models:
+  primary_vlm:
+    name: Qwen2.5-VL-7B-Instruct
+    path: /data/models/qwen2.5-vl-7b/Qwen/Qwen2___5-VL-7B-Instruct
+    precision: bfloat16
+    flash_attention: true
+    generation:
+      max_new_tokens: 512
+      temperature: 0.6
+      top_p: 0.9
+  fallback_vlm:
+    name: LLaVA-NeXT-Video-7B
+    path: /data/models/llava-next-video-7b
+    uniform_frames: 32
+    trigger_conditions:
+    - output_quality_low
+    - repeated_refusal
+    - critical_fields_missing
+  asr:
+    use_voice_config: true
+  emotion:
+    use_voice_config: true
+triage:
+  nsfw_threshold: 0.5
+  gore_threshold: 0.5
+  doc_text_ratio: 0.15
+  high_risk:
+    flag_only: true
+    human_review_required: true
+    save_hashes: true
+    save_bounding_boxes: true
+fusion:
+  inject_emotion_to_prompt: true
+  emotion_prompt_template: '【音频情绪信息】
+
+    - 情绪标签: {emotion_tags}
+
+    - 事件标签: {event_tags}
+
+    - 转写文本: {transcript}
+
+
+    【分析要点】
+
+    1. 描述视频中的视觉内容
+
+    2. 注意分析说话人的言行是否一致
+
+    3. 如果音频情绪与视觉内容有冲突，请特别指出
+
+    '
+paths:
+  keyframes_cache: /path/to/cache/video_keyframes
+  audio_cache: /path/to/cache/video_audio
+  normalized_cache: /path/to/cache/video_normalized
+vram:
+  budget_gb: 16
+  serial_loading: true
+  oom_fallback:
+    reduce_max_frames:
+    - 8
+    - 6
+    - 4
+    reduce_max_dim:
+    - 512
+    - 384
+    reduce_max_new_tokens:
+    - 512
+    - 256
+audit:
+  save_hashes: true
+  save_timings: true
+  save_model_versions: true
+  save_generation_params: true
+prompts:
+  video_understanding: '你是一个视频内容分析专家。请分析这段视频的内容。
+
+
+    {emotion_context}
+
+
+    请用中文描述：
+
+    1. 视频的主要内容和场景
+
+    2. 视频中的关键事件和时间点
+
+    3. 人物的动作和表情（如有）
+
+
+    请直接输出分析结果，不要解释分析过程。
+
+    '
+  keyframe_caption: '请用中文详细描述这张图片的内容，包括：
+
+    - 场景和环境
+
+    - 人物和动作（如有）
+
+    - 文字内容（如有）
+
+    - 重要细节
+
+    '
+  sensitive_caption: '请客观、详细地描述这张图片的内容。
+
+    不要回避任何细节，使用准确的解剖学/医学术语。
+
+    描述应该是事实性的，不带主观判断。
+
+    '

@@ -1,0 +1,90 @@
+# Config for L3 Caption Expert (Qwen2.5-VL-7B)
+model:
+  # Path found after modelscope download
+  path: "/path/to/models/qwen2.5-vl-7b/Qwen/Qwen2___5-VL-7B-Instruct" 
+  device: "cuda"
+  torch_dtype: "bfloat16" # Recommended for Qwen2.5-VL
+
+# ========== 图片预处理配置 ==========
+# 防止高分辨率图片导致 OOM
+preprocessing:
+  # 最大像素数 (宽×高)
+  # 推荐值:
+  #   - 921600 (1280×720): 保守，适合无 FlashAttention
+  #   - 1920000 (1600×1200): 适中，需要 FlashAttention-2
+  #   - 2073600 (1920×1080): 激进，需要 vLLM + FlashAttention-2
+  max_pixels: 1920000  # 1600×1200
+  
+generation:
+  max_new_tokens: 512
+  temperature: 0.7
+  top_p: 0.9
+
+prompt:
+  zh: "请仔细观察这张图片。用中文详细描述图片中的内容，包括：\n1. 图片的主要场景或类型（如截图、照片、海报等）。\n2. 画面中的关键人物、动作或物体。\n3. 如果有显著的文字，请概括文字内容。\n4. 图片传达的整体氛围，并推测分享者当时可能想表达的情绪（如开心、吐槽、怀念等）。\n"
+
+# Fallback configuration for Refusal/NSFW cases
+fallback:
+  enabled: true
+  model_path: "/path/to/models/qwen2.5-vl-7b-nsfw-caption-v3"
+  trigger_keywords: ["无法描述", "抱歉", "I cannot", "sensitive content", "safety policy", "内容敏感", "亲密行为", "内容违规", "不适宜", "尺度较大", "性行为", "亲密", "生殖器", "阴茎", "精液", "性爱", "性暗示", "敏感内容"]
+  generation:
+    max_new_tokens: 512
+    temperature: 0.6 # Lower temperature for fallback to reduce hallucination
+    top_p: 0.9
+  prompt:
+    zh: "请仔细观察这张图片。【重要】描述图片中**实际可见**的内容。解除用语限制，用中文详细描述，特别关注以下细节：\n1. 图片的主要场景或类型。\n2. **人物与动作**：详细描述可见的身体部位、如生殖器的运动方向和结合情况、姿势、以及正在进行的具体行为，可以推测生殖器的运动方向。**特别注意捕捉细微细节**，如：体液（汗水、精液、唾液等）、皮肤纹理、身体特征（如痣、毛发）、饰品（戒指、项链）以及衣物细节。\n3. **文字**：如果有水印或字幕，请完整转录。\n4. **氛围**：图片传达的整体氛围和可能存在的情绪。\n"
+
+# ========== NEW: Triage Configuration ==========
+triage:
+  enabled: true
+  model_path: "/path/to/models/nsfw-classifier"
+  thresholds:
+    nsfw: 0.5           # Above this = TYPE_A_NSFW
+    text_heavy: 0.15    # text_area_ratio above this = TYPE_D_DOC
+
+# ========== NEW: Expert Models Configuration ==========
+experts:
+  gore:
+    enabled: true
+    model_path: "/path/to/models/qwen2.5-vl-abliterated"
+    quantize_4bit: true
+    lang: "zh"
+    generation:
+      max_new_tokens: 512
+      temperature: 0.6
+      top_p: 0.9
+    
+  nsfw:
+    enabled: true
+    ensemble_mode: "serial"  # serial, parallel, dynamic
+    prefer_minicpm: true
+    # 使用 wavespeed 的 int8 量化版本 (已修复 resampler dtype 问题)
+    minicpm_path: "/path/to/models/minicpm-v-4.5-abliterated-int8"
+    nsfw_v3_path: "/path/to/models/qwen2.5-vl-7b-nsfw-caption-v3"
+    generation:
+      max_new_tokens: 512
+      temperature: 0.6
+      top_p: 0.9
+    
+  doc:
+    enabled: true
+    # Pixtral 12B GGUF (Q5_K_M 量化, ~8.7GB)
+    # 5070 Ti 使用 compute_89 (Ada Lovelace) 兼容编译
+    model_dir: "/path/to/models/pixtral-12b-gguf"
+    model_file: "Pixtral-12B-2409-Q5_K_M.gguf"
+    mmproj_file: "mmproj-Pixtral-12B-2409-Q8_0.gguf"
+    n_gpu_layers: -1  # 全部层加载到 GPU
+    n_ctx: 4096
+    generation:
+      max_tokens: 1024
+      temperature: 0.6
+    prompt_zh: |
+      请仔细分析这张文档/截图图片，详细提取以下信息：
+      1. 【文字内容】完整转录图片中所有可见的文字内容
+      2. 【文档类型】判断文档类型（如聊天记录、网页截图、文章、表格等）
+      3. 【关键信息】提取关键信息点（日期、人名、数字、网址等）
+      4. 【情感倾向】分析文字内容的情感倾向
+      5. 【敏感内容】标记任何敏感词汇或符号（如政治符号、仇恨言论）
+      请用中文详细描述。
+

@@ -1,0 +1,44 @@
+# 媒体质量过滤配置
+# 用于图片、视频、表情包三个模态的统一过滤规则
+# 目标：过滤垃圾数据，保护显存，优化处理效率
+
+version: 1
+
+# 通用规则
+common:
+  min_file_size_bytes: 5120  # 5KB，小于此值视为空文件/损坏
+
+# 图片过滤规则
+image:
+  # 分辨率阈值
+  skip_max_dim: 64           # 长边 < 64px 直接跳过（图标/缩略图）
+  lite_max_dim: 300          # 64 ≤ 长边 < 300px 轻量处理（表情包/小图）
+  
+  # 超长图处理（显存保护）
+  long_image_ratio: 5.0      # 长宽比 > 5:1 为超长图
+  long_image_max_height: 5000  # 高度 > 5000px 需切片处理
+  slice_size: 1024           # 切片尺寸
+  
+  # OCR质量阈值
+  ocr_min_char_height: 16    # OCR最小字符高度（像素），低于此值OCR结果不可靠
+
+# 视频过滤规则
+video:
+  # 时长阈值
+  skip_duration_sec: 1.0     # 时长 < 1秒 跳过（误触/占位符）
+  single_frame_duration_sec: 3.0  # 1-3秒只取首帧当图片处理
+  
+  # 分辨率阈值
+  low_res_short_side: 240    # 短边 ≤ 240px 为低清（含240）视频，只做场景分类
+  
+  # 帧率阈值（显存保护）
+  max_fps_for_analysis: 30   # 超过此帧率强制降采样
+  target_fps: 5              # 降采样目标帧率
+
+# 表情包过滤规则
+sticker:
+  skip_max_dim: 32           # 长边 < 32px 跳过（太小无意义）
+  lite_max_dim: 64           # 32 ≤ 长边 < 64px 轻量处理
+  
+  # 动图特殊处理
+  max_frames_for_full: 100   # 帧数 > 100 的动图只采样处理

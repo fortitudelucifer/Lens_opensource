@@ -1,0 +1,79 @@
+# 表情包模态配置文件
+schema_version: "sticker_v1"
+
+# ========== 网络配置 ==========
+networking:
+  timeout:
+    connect_sec: 10
+    read_sec: 30
+  retries:
+    max: 3
+    backoff: exponential
+    base_sec: 1.0
+  headers:
+    user_agent: "sticker-fetcher/1.0"
+  concurrency: 5
+
+# ========== 格式检测 ==========
+detection:
+  trust_content_type: false
+  max_header_bytes: 12
+  pillow_max_pixels: 26000000
+
+# ========== 分类配置 ==========
+classification:
+  frame_count_cap: 3000
+
+# ========== 缩略图配置 ==========
+thumbnail:
+  size_px: 256
+  format: "PNG"
+
+# ========== 关键帧配置 ==========
+frame_sampling:
+  strategy: "adaptive"
+  min_frames: 4
+  default_frames: 8
+  max_frames: 16
+  adaptive_rules:
+    short:
+      threshold: 12
+      sample: 4
+    normal:
+      threshold: 30
+      sample: 8
+    long:
+      threshold: 60
+      sample: 12
+    very_long:
+      threshold: null
+      sample: 16
+
+# ========== Contact Sheet 配置 ==========
+contact_sheet:
+  enabled: true
+  layout: "auto"
+  cell_size: 256
+  max_width: 1024
+
+# ========== Triage 配置 ==========
+triage:
+  enabled: true
+  nsfw_threshold: 0.5
+  gore_threshold: 0.5
+  method: "per_frame_max"
+  classifier: "Falconsai/nsfw_image_detection"
+
+# ========== 语义描述 ==========
+caption:
+  enabled: true
+  model: "Qwen2.5-VL-7B-AWQ"
+  ocr_enabled: true
+  output_format: "[表情包: {action} + {text} + 情绪:{emotion}]"
+  generation:
+    max_new_tokens: 128
+    temperature: 0.4  # 表情包专用温度
+    top_p: 0.9
+  # 敏感内容处理
+  use_expert_router: true  # 使用专家模型路由处理敏感内容
+

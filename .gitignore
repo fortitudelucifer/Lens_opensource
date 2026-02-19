@@ -1,0 +1,112 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.windsurf/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+raw/
+artifacts/
+timeline_out/
+logs/
+cache/
+*.cache
+*.log
+*.tmp
+
+# Model files (too large for GitHub)
+*.bin
+*.safetensors
+*.gguf
+*.pth
+*.pt
+models/
+checkpoints/
+advisor_out/
+
+# Data files
+*.jsonl
+*.json
+*.csv
+*.html
+*.txt
+data/
+datasets/
+
+# Cache directories
+.cache/
+.cache_huggingface/
+.faiss/
+__pycache__/
+
+# Output files
+output/
+results/
+outputs/
+
+# Configuration files with sensitive data
+configs/anonymization.yaml
+configs/paths.yaml
+configs/hotword.txt
+source_manifest.yaml
+
+# Temporary files
+temp/
+tmp/
+*.temp
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json

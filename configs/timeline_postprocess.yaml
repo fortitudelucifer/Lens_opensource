@@ -1,0 +1,82 @@
+# 时间轴后处理配置
+# 用于 scripts/timeline/postprocess_timeline.py
+
+# 消息合并配置
+merge:
+  enabled: true
+  threshold_seconds: 60  # 60秒内的连续消息可合并
+  emotion_aware: true    # 启用情绪感知合并
+  separator: " | "       # 合并消息的分隔符
+  
+  # 不合并的消息类型（多模态消息）
+  skip_modalities:
+    - image
+    - voice
+    - video
+    - sticker
+    - location
+    - contact
+  
+  # 情绪冲突检测（这些情绪组合不合并）
+  emotion_conflicts:
+    - ["HAPPY", "SAD"]
+    - ["HAPPY", "ANGRY"]
+    - ["CALM", "ANGRY"]
+    - ["CALM", "ANXIOUS"]
+
+# 时间间隔标记配置
+time_gap:
+  enabled: true
+  threshold_seconds: 7200  # 2小时以上插入标记
+  
+  # 人类可读格式映射
+  format_rules:
+    - max_hours: 6
+      format: "{hours}小时"
+    - max_hours: 24
+      format: "半天"
+    - max_days: 3
+      format: "{days}天"
+    - max_days: 7
+      format: "{days}天"
+    - max_days: 30
+      format: "{weeks}周"
+    - default: "{days}天"
+
+# 对话中断类型检测
+break_detection:
+  enabled: true
+  
+  # 冷暴力检测关键词（配合长时间间隔）
+  cold_shoulder_keywords:
+    - "哦"
+    - "嗯"
+    - "好"
+    - "知道了"
+    - "随便"
+    - "都行"
+  
+  # 冲突关键词
+  conflict_keywords:
+    - "生气"
+    - "烦"
+    - "算了"
+    - "不想说"
+    - "别说了"
+    - "够了"
+  
+  # 情绪爆发检测（连续感叹号/问号）
+  emotion_burst_pattern: "[!！?？]{2,}"
+  
+  # 冷暴力时间阈值（小时）
+  cold_shoulder_threshold_hours: 4
+  
+  # 冲突冷却时间阈值（小时）
+  conflict_cooling_threshold_hours: 12
+
+# 快速连发检测（吵架/撒娇场景）
+rapid_fire:
+  enabled: true
+  threshold_seconds: 10  # 10秒内连续发送
+  min_messages: 3        # 至少3条消息
+  max_length: 20         # 每条消息最大长度

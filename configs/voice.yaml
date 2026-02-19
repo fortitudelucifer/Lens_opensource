@@ -1,0 +1,231 @@
+# 语音模态配置文件
+# Voice Pipeline Configuration
+
+# ========== Schema 版本 ==========
+schema_version: "voice_v3"
+
+# ========== ASR 引擎配置 ==========
+asr:
+  funasr:
+    model: "paraformer-zh"
+    vad_model: "fsmn-vad"
+    punc_model: "ct-punc"
+    hotword: "云顶之弈 金铲铲"
+    hotword_file: "configs/hotword.txt"
+  
+  whisper:
+    model_path: "/path/to/models/faster-whisper-large-v3"
+    device: "cuda"
+    compute_type: "float16"
+    beam_size: 5
+    language: "zh"
+    vad_filter: true
+    vad_parameters:
+      min_silence_duration_ms: 500
+
+# ========== 文本后处理 ==========
+text_processing:
+  opencc_config: "t2s"  # 繁转简
+  strip_punc: true
+  dedup_punc: true
+  apply_patches: true
+  fix_false_question: true
+
+# ========== 情绪分析配置 ==========
+emotion:
+  # SenseVoice 快速情绪检测
+  sensevoice:
+    model_id: "iic/SenseVoiceSmall"
+    device: "cuda:0"
+    trust_remote_code: true
+    disable_update: true
+    batch_size_s: 60
+  
+  # Qwen2-Audio 深度分析
+  qwen_audio:
+    model_path: "/path/to/models/qwen2-audio-7b-instruct"
+    device_map: "auto"
+    torch_dtype: "float16"
+    generation:
+      max_new_tokens: 300
+      temperature: 0.7
+      top_p: 0.9
+
+# ========== Triage 配置 ==========
+triage:
+  emotion_triggers:
+    - "SAD"
+    - "ANGRY"
+    - "HAPPY"
+  
+  event_triggers:
+    - "Cry"
+    - "Laughter"
+  
+  keywords:
+    # A. 危机/压力类
+    A_Crisis:
+      - "随便"
+      - "都行"
+      - "累了"
+      - "烦死了"
+      - "无所谓"
+      - "算了"
+      - "不想说"
+      - "阴影"
+    
+    # B. 亲密关系类
+    B_Intimacy:
+      - "在干嘛"
+      - "睡了吗"
+      - "想你了"
+      - "好想你"
+      - "想见你"
+      - "去找你"
+      - "我去找你"
+      - "想和你"
+      - "和你待"
+      - "很湿"
+      - "很想做"
+    
+    # C. 职场类
+    C_Workplace:
+      - "收到"
+      - "辛苦了"
+      - "原则上"
+      - "综合考虑"
+      - "后续再说"
+    
+    # D. 边界/施压类
+    D_Boundaries:
+      - "为你好"
+      - "借我"
+      - "手头紧"
+      - "帮个忙"
+      - "都是为你"
+    
+    # E. 伤心/无奈类
+    E_Sadness:
+      - "残酷"
+      - "遗憾"
+      - "可惜"
+      - "后悔"
+      - "不舍"
+      - "画饼"
+      - "没办法"
+      - "只能这样"
+      - "对我挺"
+      - "尊重你"
+      - "不公平"
+    
+    # F. 疑惑/困惑类
+    F_Confusion:
+      - "是吧"
+      - "怎么抢"
+      - "为什么"
+      - "怎么说"
+      - "不知道"
+      - "不懂"
+      - "听不懂"
+      - "在说什么"
+      - "你说什么"
+      - "什么意思"
+    
+    # G. 无奈类
+    G_Helpless:
+      - "没法"
+      - "也没事"
+      - "也没关系"
+      - "着急"
+      - "很堵"
+      - "很梗"
+      - "始终都没"
+      - "一直都没"
+      - "挺烦"
+      - "很想说"
+
+# ========== Qwen 系统提示词 ==========
+prompts:
+  qwen_system: |
+    你是语音情感分析专家。请仔细听这段语音，分析说话人的真实情绪。
+
+    【分析要点】
+    1. 注意语调起伏、语速变化、停顿位置
+    2. 关注呼吸声、叹气、颤音等非语言信号
+    3. 区分表面情绪和深层情绪
+
+    【请用以下格式输出】
+
+    语调特征：（描述语调高低、语速快慢、是否有停顿/颤音/叹气）
+    情绪状态：（用2-3句话描述说话人的情绪）
+    潜台词：（一句话概括说话人真正想表达的意思）
+    情绪标签：（从以下选1-2个：中性/伤心/愤怒/期待/无奈/疑惑/诱惑/兴奋/遗憾/担忧/委屈）
+
+    请直接输出分析，不要解释分析过程。
+
+# ========== 情绪分类法 ==========
+emotion_taxonomy:
+  A_Toxic:
+    - name: "Contempt"
+      zh: "轻蔑"
+      features: "冷笑、鼻音重"
+    - name: "Sarcastic"
+      zh: "讽刺"
+      features: "夸张语调、假性热情"
+    - name: "Passive-Aggressive"
+      zh: "冷暴力"
+      features: "表面平静、潜台词攻击"
+  
+  B_Intimacy:
+    - name: "Longing"
+      zh: "思念"
+      features: "气音、轻柔、拉长音"
+    - name: "Seductive"
+      zh: "诱惑"
+      features: "低沉气声、若有若无的笑意"
+    - name: "Playful"
+      zh: "调情/撒娇"
+      features: "音调上扬、轻快节奏"
+    - name: "Anticipation"
+      zh: "期待"
+      features: "语速加快、音调升高"
+  
+  C_Distress:
+    - name: "Resigned"
+      zh: "无奈"
+      features: "叹气、能量下降"
+    - name: "Helpless"
+      zh: "无助"
+      features: "颤抖、长停顿、哽咽前兆"
+    - name: "Hurt"
+      zh: "受伤/委屈"
+      features: "哭腔、气息不稳"
+    - name: "Regret"
+      zh: "遗憾"
+      features: "停顿多、自我责备语调"
+  
+  D_Masking:
+    - name: "Suppressed-Anger"
+      zh: "隐忍"
+      features: "咬字用力、气息紧绷"
+    - name: "Fake-Cheerful"
+      zh: "强颜欢笑"
+      features: "笑声空洞"
+  
+  E_Basic:
+    - name: "Happy"
+      zh: "开心"
+    - name: "Sad"
+      zh: "悲伤"
+    - name: "Angry"
+      zh: "愤怒"
+    - name: "Neutral"
+      zh: "中性"
+  
+  F_Cognitive:
+    - name: "Confused"
+      zh: "困惑"
+      features: "音调上扬的疑问，无攻击性"
+    - name: "Skeptical"
+      zh: "怀疑"
+      features: "拖长音、不信任"

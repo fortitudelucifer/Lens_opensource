@@ -1,0 +1,105 @@
+# ============================================================
+# 链接与文件分享配置
+# ============================================================
+
+# sub_type 映射
+sub_type_map:
+  5: "link_share"        # 链接分享
+  6: "file"              # 文件传输
+  19: "chat_history"     # 聊天记录分享
+  33: "miniprogram_link" # 小程序链接
+  36: "miniprogram"      # 小程序
+  51: "video_channel"    # 视频号
+  57: "quote"            # 引用消息
+
+# 链接类型识别规则 (按优先级排序)
+link_type_rules:
+  - pattern: "surl.amap.com"
+    type: "map_location"
+    description: "高德地图位置"
+  
+  - pattern: "mp.weixin.qq.com"
+    type: "chat_app_article"
+    description: "CHAT_APP公众号文章"
+  
+  - pattern: "meishi.meituan.com"
+    type: "meituan_poi"
+    description: "美团餐厅"
+  
+  - pattern: "dianping.com"
+    type: "dianping_poi"
+    description: "大众点评"
+  
+  - pattern: "music.163.com"
+    type: "netease_music"
+    description: "网易云音乐"
+  
+  - pattern: "y.qq.com"
+    type: "qq_music"
+    description: "QQ音乐"
+  
+  - pattern: "bilibili.com"
+    type: "bilibili_video"
+    description: "B站视频"
+  
+  - pattern: "douyin.com"
+    type: "douyin_video"
+    description: "抖音视频"
+  
+  - pattern: "zhihu.com"
+    type: "zhihu_article"
+    description: "知乎"
+  
+  - pattern: "weibo.com"
+    type: "weibo_post"
+    description: "微博"
+  
+  # 默认类型 (无匹配时)
+  - pattern: "*"
+    type: "web_link"
+    description: "普通网页链接"
+
+# 文件类型分类
+file_categories:
+  document:
+    extensions: ["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "md", "rtf", "odt", "ods", "odp"]
+    description: "文档"
+  
+  archive:
+    extensions: ["zip", "rar", "7z", "tar", "gz", "bz2", "xz"]
+    description: "压缩包"
+  
+  audio:
+    extensions: ["mp3", "wav", "flac", "aac", "m4a", "ogg", "wma"]
+    description: "音频"
+  
+  video:
+    extensions: ["mp4", "avi", "mkv", "mov", "wmv", "flv", "webm"]
+    description: "视频"
+  
+  image:
+    extensions: ["jpg", "jpeg", "png", "gif", "bmp", "webp", "svg", "ico", "tiff"]
+    description: "图片"
+  
+  code:
+    extensions: ["py", "js", "ts", "java", "c", "cpp", "h", "hpp", "cs", "go", "rs", "rb", "php", "swift", "kt"]
+    description: "代码"
+  
+  data:
+    extensions: ["json", "xml", "yaml", "yml", "csv", "sql", "db", "sqlite"]
+    description: "数据文件"
+  
+  executable:
+    extensions: ["exe", "msi", "dmg", "app", "apk", "deb", "rpm"]
+    description: "可执行文件"
+
+# 小程序 AppID 映射 (可选，用于识别常见小程序)
+miniprogram_apps:
+  wx14f2622c01a98fbb: "美团"
+  wx2f6a6a6a6a6a6a6a: "滴滴出行"
+  # 可根据需要添加更多
+
+# 输出文件名（统一使用 linkfile 前缀）
+output_files:
+  extract: "linkfile_extract_v1.jsonl"
+  merged: "linkfile_merged_final.jsonl"

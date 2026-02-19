@@ -1,0 +1,399 @@
+# ============================================================
+# 语义压缩配置文件
+# ============================================================
+schema_version: "compression_v1"
+
+# ========== 全局配置 ==========
+global:
+  # 模型配置
+  model:
+    name: "Qwen2.5-7B-Instruct"
+    path: "/path/to/models/Qwen2.5-7B-Instruct-AWQ"
+    device: "cuda"
+    load_in_4bit: true
+    torch_dtype: "float16"
+  
+  # 语义相似度模型（用于质量验证）
+  embedding_model:
+    name: "paraphrase-multilingual-MiniLM-L12-v2"
+    path: "/path/to/models/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+  
+  # 批处理配置
+  batch_size: 4
+  max_retries: 3
+  timeout_seconds: 30
+  
+  # 显存管理
+  cuda_config:
+    expandable_segments: true
+    empty_cache_after_batch: true
+
+# ========== 压缩级别 ==========
+compression_levels:
+  aggressive:
+    description: "激进压缩，最大压缩比"
+    target_ratio: 5.0
+  balanced:
+    description: "平衡压缩，推荐默认"
+    target_ratio: 3.0
+  conservative:
+    description: "保守压缩，保留更多细节"
+    target_ratio: 2.0
+
+default_level: "balanced"
+
+# ========== 表情包压缩配置 ==========
+sticker:
+  enabled: true
+  target_length:
+    aggressive: 30
+    balanced: 50
+    conservative: 80
+  
+  # 输出格式
+  output_format: "[表情包: {intent}:{confidence}] {text_part}"
+  
+  # 字典化配置
+  lexicon:
+    enabled: true
+    output_path: "artifacts/dictionaries/sticker_lexicon.jsonl"
+    min_occurrences_for_ref: 2  # 出现2次以上才使用引用
+  
+  # 意图映射配置
+  intent_map_path: "configs/sticker_intent_map.yaml"
+  
+  # LLM 兜底配置
+  llm_fallback:
+    enabled: true
+    confidence_threshold: 0.6  # 低于此置信度时使用 LLM
+
+# ========== 图片压缩配置 ==========
+image:
+  enabled: true
+  # 注意：target_length 现在仅作为参考，不再强制截断
+  # 完整的 VLM 描述会被保留
+  target_length:
+    aggressive: 100
+    balanced: 200
+    conservative: 300
+  
+  # 输出字段
+  output_fields:
+    - image_summary
+    - scene_focus
+    - emotion_atmosphere
+    - intent
+  
+  # 敏感内容处理
+  sensitive_content:
+    preserve_labels: true  # 保留敏感内容标签
+    detailed_description: true  # 如实描述敏感内容特征
+  
+  # Prompt 模板
+  prompt_template: |
+    请将以下图片描述压缩为简洁摘要（{target_length}字以内）：
+    
+    图片描述：{caption}
+    OCR文字：{ocr_text}
+    内容类型：{content_type}
+    
+    要求：
+    1. 保留关键信息：人物、地点、物体、动作
+    2. 提取场景重点、情绪氛围、发送意图
+    3. 如果是敏感内容，如实描述特征
+    
+    输出格式：
+    摘要：<压缩后的描述>
+    场景重点：<风景/人物/物品/文档/美食>
+    情绪氛围：<欢乐/严肃/温馨/紧张/其他>
+    意图：<分享/求助/炫耀/记录/其他>
+
+# ========== 视频压缩配置 ==========
+video:
+  enabled: true
+  max_frames: 16
+  target_length:
+    aggressive: 300
+    balanced: 0      # 0 表示不截断，保留完整摘要
+    conservative: 0  # 0 表示不截断，保留完整摘要
+  
+  # 输出字段
+  output_fields:
+    - video_summary
+    - transcription
+    - emotion_tags
+    - atmosphere
+    - intent
+  
+  # 帧合并策略
+  merge_strategy:
+    frames_5_or_less: "sequential"  # 逐帧描述
+    frames_6_to_10: "segmented"     # 分段描述（开始/中间/结尾）
+    frames_11_to_16: "key_changes"  # 提取关键场景变化
+  
+  # Prompt 模板
+  prompt_template: |
+    请将以下视频的多帧描述和转写合并为连贯摘要（{target_length}字以内）：
+    
+    关键帧描述：
+    {keyframe_captions}
+    
+    音频转写：{transcription}
+    情绪标签：{emotion_tags}
+    
+    要求：
+    1. 保持时间顺序的连贯性
+    2. 去除重复的背景描述
+    3. 保留关键动作和场景变化
+    4. 提取整体氛围和发送意图
+    
+    输出格式：
+    摘要：<压缩后的描述>
+    氛围：<轻松/紧张/温馨/激动/其他>
+    意图：<分享日常/展示成果/求助/娱乐/其他>
+
+# ========== 语音压缩配置 ==========
+voice:
+  enabled: true
+  target_length:
+    aggressive: 50
+    balanced: 80
+    conservative: 100
+  
+  # 保留字段
+  preserve_fields:
+    - punct_text      # 原始转写必须保留
+    - emotion_tags    # 情绪标签必须保留
+  
+  # 压缩字段
+  compress_fields:
+    - qwen_analysis   # 压缩或删除
+  
+  # 输出字段
+  output_fields:
+    - punct_text
+    - emotion_tags
+    - analysis_summary
+    - possible_intent
+    - possible_subtext
+  
+  # Prompt 模板
+  prompt_template: |
+    请压缩以下语音分析内容（保留关键推理，{target_length}字以内）：
+    
+    原始转写：{punct_text}
+    情绪标签：{emotion_tags}
+    详细分析：{qwen_analysis}
+    
+    要求：
+    1. 保留原始转写和情绪标签
+    2. 提取分析中的关键洞察
+    3. 如果分析仅重复转写内容，可删除
+    4. 提取可能的意图和潜台词
+    
+    输出格式：
+    分析摘要：<压缩后的分析>
+    可能意图：<简短描述>
+    可能潜台词：<简短描述>
+
+# ========== 时间轴后处理配置 ==========
+timeline_postprocess:
+  enabled: true
+  
+  # 消息合并配置
+  message_merge:
+    enabled: true
+    threshold_seconds: 60           # 合并时间阈值
+    max_gap_seconds: 300            # 超过5分钟不合并（可能是冷暴力）
+    emotion_aware: true             # 情绪感知合并
+    text_only: true                 # 只合并文本消息
+    
+    # 短消息分类
+    short_message:
+      length_threshold: 5           # 短消息长度阈值
+      rapid_interval_seconds: 10    # 快速连发间隔
+      
+      # 确认类关键词（可合并）
+      confirmation_keywords:
+        - "好"
+        - "好的"
+        - "嗯"
+        - "嗯嗯"
+        - "收到"
+        - "OK"
+        - "ok"
+        - "行"
+        - "可以"
+        - "知道了"
+        - "明白"
+      
+      # 情绪爆发类特征（不合并）
+      emotional_burst_patterns:
+        - "！！"
+        - "？？"
+        - "..."
+        - "。。。"
+  
+  # 时间流逝标记配置
+  time_gap:
+    enabled: true
+    threshold_seconds: 7200         # 2小时
+    
+    # 时间描述格式
+    format:
+      hours: "{hours}小时后"
+      days: "{days}天后"
+      mixed: "{days}天{hours}小时后"
+    
+    # 对话中断类型标记
+    break_types:
+      normal_gap: "正常间隔"
+      potential_cold_shoulder: "对话中断"
+      topic_change: "话题切换"
+      day_change: "次日继续"
+
+# ========== 质量验证配置 ==========
+quality:
+  enabled: true
+  
+  # 语义相似度阈值
+  semantic_similarity:
+    threshold: 0.7
+    low_quality_threshold: 0.5
+  
+  # 压缩比验证
+  compression_ratio:
+    warn_if_below: 2.0
+    error_if_below: 1.5
+  
+  # 抽样审查
+  sampling:
+    rate: 0.05  # 5%
+    output_path: "artifacts/quality_samples/"
+
+# ========== 匿名化配置 ==========
+anonymization:
+  # L1 可逆匿名化
+  l1:
+    enabled: true
+    vault_path: "local_secrets/identity_map.json"
+    encryption: true
+  
+  # L2 不可逆匿名化
+  l2:
+    enabled: true
+    
+    # 时间戳泛化
+    timestamp:
+      preserve_relative: true       # 保留相对时间
+      preserve_period: true         # 保留时段（凌晨/上午/下午/晚上）
+      preserve_day_type: true       # 保留工作日/周末
+    
+    # 地点降精度
+    location:
+      level: "city"                 # city/district/none
+    
+    # PII 检测规则
+    pii_patterns:
+      phone: "1[3-9]\\d{9}"
+      email: "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
+      id_card: "\\d{17}[\\dXx]"
+      chat_app_id: "wxid_[a-zA-Z0-9]+"
+    
+    # 别名组配置路径
+    alias_groups_path: "configs/anonymization.yaml"
+
+# ========== GLiNER 配置（已废弃）==========
+# 注意：GLiNER 已于 2026-02-06 废弃
+# 原因：中文误检率高，需要大量排除列表维护
+# 替代方案：两阶段 PII 检测系统（scripts/compression/two_stage_pii.py）
+gliner:
+  enabled: false  # 已废弃
+  
+  # 模型配置（保留以兼容旧代码）
+  model:
+    name: "gliner-x-base-v0.5"
+    path: "/path/to/models/gliner-x-base-v0.5"
+  
+  # 检测配置（已废弃）
+  detection:
+    labels:
+      - "person"
+      - "location"
+      - "organization"
+      - "date"
+      - "phone number"
+      - "email"
+    threshold: 0.7
+
+# ========== LLM 兜底检测配置（已废弃）==========
+# 注意：此配置已被两阶段 PII 检测系统替代
+# 新系统使用 Qwen2.5-7B-Instruct-AWQ 进行 LLM 验证
+# 详见 two_stage_pii 配置和 scripts/compression/two_stage_pii.py
+llm_pii_fallback:
+  enabled: false  # 已废弃，使用 two_stage_pii 替代
+  
+  model:
+    name: "Qwen2.5-7B-Instruct-AWQ"
+    path: "/path/to/models/Qwen2.5-7B-Instruct-AWQ"
+    device: "cuda"
+    load_in_4bit: false  # AWQ 已量化
+  
+  # 触发条件（已废弃）
+  trigger:
+    low_confidence: false
+    potential_code_phrase: false
+  
+  # Prompt 模板（已废弃）
+  prompt_template: |
+    请识别以下文本中的敏感信息（人名、地名、组织名、日期、电话、邮箱等）。
+    只输出 JSON 格式，不要解释。
+    
+    文本：{text}
+    
+    输出格式：
+    [{"type": "PERSON", "value": "xxx", "start": 0, "end": 3}]
+
+# ========== 两阶段 PII 检测配置 ==========
+# 替代 GLiNER 的高精度人名检测方案
+# Phase 1: 离线扫描生成确认人名列表
+# Phase 2: 匿名化时使用精确字符串匹配
+two_stage_pii:
+  # 是否启用（启用后将替代 GLiNER 进行人名检测）
+  enabled: false
+  
+  # 确认人名列表路径
+  confirmed_names_path: "configs/confirmed_names.yaml"
+  
+  # Phase 1 配置（离线扫描）
+  phase1:
+    # LLM 验证模型（使用 7B AWQ 量化模型）
+    model:
+      name: "Qwen2.5-7B-Instruct-AWQ"
+      path: "/path/to/models/Qwen2.5-7B-Instruct-AWQ"
+    
+    # 批处理大小
+    batch_size: 50
+    
+    # 候选词提取配置
+    extraction:
+      # 扫描的文本字段
+      text_fields:
+        - "text_raw"
+        - "voice_to_text"
+        - "image_summary"
+        - "video_summary"
+        - "sticker_caption"
+        - "link_quote_text"
+      
+      # 跳过的消息类型
+      skip_types:
+        - "time_gap"
+  
+  # Phase 2 配置（精确替换）
+  phase2:
+    # 替换格式
+    replacement_format: "[{alias}]"
+    
+    # 长度优先（长名字优先替换）
+    length_priority: true

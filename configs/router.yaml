@@ -1,0 +1,96 @@
+# Image Pipeline Router Configuration
+# Based on ChatGLM.md (P0) recommendations
+
+# Image Pipeline Router Configuration
+# Based on Enhanced Routing Strategy (5-class taxonomy)
+
+# L1 Route Thresholds (det-only features)
+thresholds:
+  l1:
+    # VISUAL_ONLY: Pure image (no text boxes at all)
+    visual_only:
+      box_count_max: 0
+    
+    # VISUAL_PRIMARY: Scene/People with minimal text (1-4 boxes, low ratio)
+    visual_primary:
+      box_count_max: 4
+      text_area_ratio_max: 0.02
+      
+    # TEXT_PRIMARY: Document/Screenshot (5+ boxes AND ratio ≥ 5%)
+    text_primary:
+      box_count_min: 5
+      text_area_ratio_min: 0.05
+
+  # L2 Rule Thresholds (Gray zone handling - use ratio to distinguish)
+  l2:
+    # HYBRID_VISUAL_MAIN: Visual with some text overlay (low ratio)
+    hybrid_visual_main:
+      box_count_max: 11
+      text_area_ratio_max: 0.04
+      
+    # HYBRID_TEXT_MAIN: Text-heavy visual (higher ratio)
+    hybrid_text_main:
+      box_count_range: [5, 11]
+      text_area_ratio_min: 0.05
+
+# Processing Strategy Matrix
+processing_matrix:
+  TEXT_PRIMARY:
+    need_ocr: true
+    need_caption: false
+    ocr_priority: high
+    caption_priority: none
+    
+  VISUAL_PRIMARY:
+    need_ocr: false
+    need_caption: true
+    ocr_priority: none
+    caption_priority: high
+    
+  HYBRID_TEXT_MAIN:
+    need_ocr: true
+    need_caption: true
+    ocr_priority: high
+    caption_priority: low
+    
+  HYBRID_VISUAL_MAIN:
+    need_ocr: true
+    need_caption: true
+    ocr_priority: low
+    caption_priority: high
+    
+  VISUAL_ONLY:
+    need_ocr: false
+    need_caption: true
+    ocr_priority: none
+    caption_priority: high
+
+# Orientation Detection
+orientation:
+  enabled: true
+  horizontal_box_ratio_threshold: 0.7   # >70% boxes are horizontal
+  aspect_ratio_threshold: 0.8           # Image aspect ratio (W/H) < 0.8 (Portrait)
+  
+# L2 VLM Settings (Optional)
+l2_vlm:
+  enabled: false                        # Disabled by default until env is ready
+  model: "Qwen/Qwen2.5-VL-3B-Instruct"  # Local path or HF ID
+  timeout_seconds: 10
+  fallback_class: "HYBRID_TEXT_MAIN"
+
+# Long image handling
+long_image:
+  ratio_threshold: 5.0
+  long_edge_threshold: 4096
+  chunk_height: 3000
+  chunk_overlap: 150
+
+# Model paths
+models:
+  paddleocr:
+    det_model_dir: /data/models/paddleocr_v4/ch_PP-OCRv4_det_infer
+    rec_model_dir: /data/models/paddleocr_v4/ch_PP-OCRv4_rec_infer
+    cls_model_dir: /data/models/paddleocr_v4/ch_ppocr_mobile_v2.0_cls_infer
+    use_gpu: true
+    lang: ch
+
