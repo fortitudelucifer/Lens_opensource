@@ -1,7 +1,8 @@
 # 关系顾问 Agent 配置文件
-# 版本: 2.0.0
-# 更新日期: 2026-01-25
+# 版本: 2.1.0
+# 更新日期: 2026-02-21
 # 架构: 云端大脑 + 本地嘴巴 | 单 GPU (5070 Ti 16GB) 串行执行
+# 修复: 版本号标准化、清除重复配置、修正API端点
 
 # =============================================================================
 # 路径配置
@@ -52,39 +53,39 @@ extraction:
 analysis:
   # 默认后端
   default_backend: DeepSeek
-  
+
+    
   # -----------------------------------------------------------------------
-  # OpenAI 配置（OpenAI 兼容接口）
-  # 环境变量: OPENAI_API_KEY
-  # 可选模型: GLM-5 / GLM-5.2 / GLM-4.1 / GLM-4o
-  # 注意：以下为公开API端点，非隐私信息
+  # DeepSeek 配置（OpenAI 兼容接口）
+  # 环境变量: DEEPSEEK_API_KEY
+  # 可选模型: deepseek-chat (非思考模式), deepseek-reasoner (思考模式)
   # -----------------------------------------------------------------------
-  openai:
-    model: GLM-5
-    api_key: ${OPENAI_API_KEY}
-    base_url: https://api.openai.com/v1
+  DeepSeek:
+    model: deepseek-chat
+    api_key: ${DEEPSEEK_API_KEY}
+    base_url: https://api.deepseek.com/v1
     temperature: 0.7
     max_tokens: 16384
     
   # -----------------------------------------------------------------------
-  # DeepSeek 配置（OpenAI 兼容接口）
-  # 环境变量: ANTHROPIC_API_KEY
-  # 可选模型: DeepSeek-V3.2
+  # DeepSeek 思考模式配置（OpenAI 兼容接口）
+  # 环境变量: DEEPSEEK_API_KEY
+  # 适用于复杂推理任务
   # -----------------------------------------------------------------------
-  DeepSeek:
-    model: DeepSeek-V3.2
-    api_key: ${ANTHROPIC_API_KEY}
-    base_url: https://api.anthropic.com/v1/
+  DeepSeek_Reasoner:
+    model: deepseek-reasoner
+    api_key: ${DEEPSEEK_API_KEY}
+    base_url: https://api.deepseek.com/v1
     temperature: 0.7
     max_tokens: 16384
     
   # -----------------------------------------------------------------------
   # Kimi 配置（OpenAI 兼容接口）
   # 环境变量: MOONSHOT_API_KEY
-  # 可选模型: Kimi-K2.5 / Kimi-K2.5-flash
+  # 可选模型: moonshot-v1-8k / moonshot-v1-32k / moonshot-v1-128k
   # -----------------------------------------------------------------------
   Kimi:
-    model: Kimi-K2.5
+    model: Kimi-2.5
     api_key: ${MOONSHOT_API_KEY}
     base_url: https://api.moonshot.cn/v1
     temperature: 0.7
@@ -101,61 +102,32 @@ analysis:
     temperature: 0.7
     max_tokens: 8192
   
-  # -----------------------------------------------------------------------
-  # Kimi 配置（OpenAI 兼容接口）
-  # 环境变量: MOONSHOT_API_KEY
-  # -----------------------------------------------------------------------
-  kimi:
-    model: moonshotai/Kimi-K2-Instruct
-    api_key: ${MOONSHOT_API_KEY}
-    base_url: https://api.moonshot.cn/v1
-    temperature: 0.7
-    max_tokens: 16384
   
   # -----------------------------------------------------------------------
   # Qwen 配置（OpenAI 兼容接口）
   # 环境变量: QWEN_API_KEY
+  # 可选模型: qwen-turbo / qwen-plus / qwen-max
   # -----------------------------------------------------------------------
   Qwen:
-    model: Qwen3
+    model: qwen-turbo
     api_key: ${QWEN_API_KEY}
-    base_url: https://ai.第三方代理.com/v1
-    temperature: 0.7
-    max_tokens: 16384
-  
-  # -----------------------------------------------------------------------
-  # GLM 配置（OpenAI 兼容接口）
-  # 环境变量: DEEPSEEK_API_KEY
-  # deepseek-chat = V3.2 非思考模式, deepseek-reasoner = V3.2 思考模式
-  # -----------------------------------------------------------------------
-  glm:
-    model: deepseek-ai/DeepSeek-V3.1
-    api_key: ${DEEPSEEK_API_KEY}
-    base_url: https://api.deepseek.com/v1
-    temperature: 0.7
-    max_tokens: 16384
-  
-  # -----------------------------------------------------------------------
-  # 通义千问云端配置（OpenAI 兼容接口）
-  # 环境变量: DASHSCOPE_API_KEY
-  # -----------------------------------------------------------------------
-  qwen_cloud:
-    model: Qwen/Qwen3-235B-A22B-Thinking-2507
-    api_key: ${DASHSCOPE_API_KEY}
     base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
     temperature: 0.7
     max_tokens: 16384
   
   # -----------------------------------------------------------------------
-  # 智谱 GLM 配置（OpenAI 兼容接口）
+  # GLM 配置（智谱AI OpenAI 兼容接口）
   # 环境变量: ZHIPU_API_KEY
+  # 可选模型: glm-4 / glm-4-flash / glm-3-turbo
   # -----------------------------------------------------------------------
   glm:
-    model: z-ai/glm4.7
+    model: glm-4.7
     api_key: ${ZHIPU_API_KEY}
     base_url: https://open.bigmodel.cn/api/paas/v4
     temperature: 0.7
     max_tokens: 16384
+  
+  
   
   # 通用设置
   rate_limit_delay: 1.0     # API 调用间隔（秒）
@@ -192,7 +164,7 @@ agent_types:
 # =============================================================================
 training:
   # 基座模型
-  base_model: /path/to/models/Qwen3-8B-Instruct
+  base_model: Qwen/Qwen3-8B-Instruct
   
   # LoRA 配置（优化为 16GB 单卡）
   lora:
@@ -264,15 +236,15 @@ review:
 routing:
   # 复杂度阈值
   complexity_thresholds:
-    simple: 0.3             # <=0.3 -> local_qwen3 (non-thinking)
-    medium: 0.6             # <=0.6 -> local_qwen3_thinking
-                            # >0.6  -> deepseek_reasoner / DeepSeek_opus
+    simple: 0.3             # <=0.3 -> qwen_local (non-thinking)
+    medium: 0.6             # <=0.6 -> qwen_local (thinking)
+                            # >0.6  -> DeepSeek_Reasoner
   
   # 云端日预算上限（美元）
   budget_limit_daily: 5.0
   
   # 兆底模型
-  fallback_model: local_qwen3
+  fallback_model: qwen_local
   
   # 长上下文阈值（token 数，超过则路由到 kimi）
   long_context_threshold: 32000
@@ -302,10 +274,10 @@ cloud_analysis:
 # =============================================================================
 memory:
   # 向量化模型
-  embedding_model: /path/to/models/bge-m3
+  embedding_model: BAAI/bge-m3
   
   # 重排模型
-  reranker_model: /path/to/models/bge-reranker-v2-m3
+  reranker_model: BAAI/bge-reranker-v2-m3
   
   # FAISS 索引目录
   index_dir: ${workspace}/advisor_out/faiss_index
