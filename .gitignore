@@ -37,6 +37,7 @@ venv.bak/
 *.swo
 *~
 .windsurf/
+frontend/node_modules/
 
 # OS
 .DS_Store
@@ -75,6 +76,7 @@ advisor_out/
 *.txt
 data/
 datasets/
+frontend/public/chat-samples/*
 
 # Cache directories
 .cache/

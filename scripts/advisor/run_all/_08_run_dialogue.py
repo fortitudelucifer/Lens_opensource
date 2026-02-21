@@ -4,7 +4,7 @@
 
 功能：
 - 交互式终端对话界面，与关系顾问 Agent 实时对话
-- 支持 listen（即时倾听）和 consult（深度咨询）两种模式
+- 支持 listen（即时倾听）和 consult（深度互动）两种模式
 - listen 模式：快速共情响应，使用本地模型
 - consult 模式：深度分析，使用云端模型 + GraphRAG 检索
 - 支持 GraphRAG 向量检索增强
@@ -24,7 +24,7 @@
   * 使用本地模型（Qwen3-8B-Instruct via Ollama）
   * 快速共情响应，低延迟
   * 适合日常倾诉和情感支持
-- consult（深度咨询）：
+- consult（深度互动）：
   * 使用云端模型（DeepSeek 等）
   * GraphRAG 检索历史对话上下文
   * 深度关系分析和建议
@@ -83,7 +83,7 @@ from scripts.advisor.streaming import StreamingDialogueEngine
 def print_banner(mode: str):
     print("\n" + "=" * 60)
     print("  关系顾问 - 实时对话")
-    print(f"  当前模式：{'🎧 即时倾听 (listen)' if mode == 'listen' else '🔍 深度咨询 (consult)'}")
+    print(f"  当前模式：{'🎧 即时倾听 (listen)' if mode == 'listen' else '🔍 深度互动 (consult)'}")
     print("  输入 /help 查看可用命令")
     print("=" * 60 + "\n")
 
@@ -91,7 +91,7 @@ def print_banner(mode: str):
 def print_help():
     print("\n可用命令：")
     print("  /listen    - 切换到即时倾听模式（快速共情响应）")
-    print("  /consult   - 切换到深度咨询模式（云端分析 + 本地回复）")
+    print("  /consult   - 切换到深度互动模式（云端分析 + 本地回复）")
     print("  /clear     - 清空对话历史")
     print("  /history   - 查看对话历史")
     print("  /quit      - 退出")
@@ -124,7 +124,7 @@ async def run_dialogue(engine: StreamingDialogueEngine):
                 continue
             elif cmd == '/consult':
                 engine.switch_mode('consult')
-                print("✅ 已切换到深度咨询模式\n")
+                print("✅ 已切换到深度互动模式\n")
                 continue
             elif cmd == '/clear':
                 engine.clear_history()

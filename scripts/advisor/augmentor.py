@@ -2,7 +2,7 @@
 数据增强与多教师蒸馏模块
 
 功能：
-- 导入外部心理咨询数据集（PsyCLIENT-CP / CPsDD / AuraDial）并转换为统一格式
+- 导入外部心理互动数据集（PsyCLIENT-CP / CPsDD / AuraDial）并转换为统一格式
 - 多教师模型蒸馏：逻辑教师（如 DeepSeek Reasoner）+ 风格教师（如 DeepSeek V3.2）
 - CoT 蒸馏：保留 <think> 标签中的推理链，用于训练模型的思维过程
 - 质量过滤：基于多维度评分（长度/结构/关键词覆盖/CoT 质量）过滤低质量样本

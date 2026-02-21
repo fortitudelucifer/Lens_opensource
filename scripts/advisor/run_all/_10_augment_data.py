@@ -3,7 +3,7 @@
 数据增强与多教师蒸馏脚本
 
 功能：
-- 从外部心理咨询数据集导入数据（PsyCLIENT-CP、CPsDD、AuraDial）
+- 从外部心理互动数据集导入数据（PsyCLIENT-CP、CPsDD、AuraDial）
 - 通过多教师模型蒸馏生成高质量训练样本
 - 逻辑教师（DeepSeek Reasoner）+ 风格教师（DeepSeek V3.2）双教师架构
 - 质量过滤：自动过滤低质量蒸馏结果
@@ -22,9 +22,9 @@
 4. 保存增强后的训练数据
 
 支持的外部数据集：
-- PsyCLIENT-CP: 中文心理咨询对话数据集
+- PsyCLIENT-CP: 中文心理互动对话数据集
 - CPsDD: 中文心理疾病对话数据集
-- AuraDial: 多轮心理咨询对话数据集
+- AuraDial: 多轮心理互动对话数据集
 
 教师模型配置：
 - deepseek_reasoner: DeepSeek Reasoner（逻辑推理，低成本）

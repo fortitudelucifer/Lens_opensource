@@ -82,7 +82,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from scripts.advisor.generator import AnalysisGenerator
 
 # AI 审核 Prompt 模板
-REVIEW_PROMPT = """你是一位资深的关系咨询质量审核专家。请对以下 LLM 生成的关系分析进行质量审核。
+REVIEW_PROMPT = """你是一位资深的关系互动质量审核专家。请对以下 LLM 生成的关系分析进行质量审核。
 
 【原始对话片段】
 {conversation}

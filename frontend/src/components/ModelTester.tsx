@@ -9,6 +9,14 @@ interface TestState {
   result: ModelTestResult | null
 }
 
+const FALLBACK_TEST_MODELS: AvailableModel[] = [
+  { backend: "deepseek", model: "DeepSeek-V3.2", base_url: "https://api.deepseek.com", suitable_for: ["analysis", "review", "chat"] },
+  { backend: "qwen_local", model: "Qwen3-8B-Instruct", base_url: "http://localhost:8000/v1", suitable_for: ["analysis", "review", "chat"] },
+  { backend: "glm", model: "z-ai/glm4.7", base_url: "(默认)", suitable_for: ["analysis", "chat"] },
+  { backend: "kimi", model: "Kimi-K2.5", base_url: "(默认)", suitable_for: ["analysis", "chat"] },
+  { backend: "qwen_cloud", model: "Qwen/Qwen3-235B-A22B-Thinking-2507", base_url: "(默认)", suitable_for: ["analysis", "review", "chat"] },
+]
+
 export default function ModelTester() {
   const [backends, setBackends] = useState<AvailableModel[]>([])
   const [testStates, setTestStates] = useState<Record<string, TestState>>({})
@@ -16,8 +24,19 @@ export default function ModelTester() {
 
   useEffect(() => {
     api.getAvailableModels()
-      .then(setBackends)
-      .catch(() => {})
+      .then((models) => {
+        const merged = [...models]
+        const existingBackends = new Set(models.map((m) => m.backend))
+        FALLBACK_TEST_MODELS.forEach((m) => {
+          if (!existingBackends.has(m.backend)) {
+            merged.push(m)
+          }
+        })
+        setBackends(merged)
+      })
+      .catch(() => {
+        setBackends(FALLBACK_TEST_MODELS)
+      })
   }, [])
 
   const testSingle = async (backend: string) => {

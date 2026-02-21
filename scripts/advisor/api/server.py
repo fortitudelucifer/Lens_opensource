@@ -842,6 +842,7 @@ class ChatRequest(BaseModel):
     backend: str = "Qwen"
     stream: bool = True
     session_id: Optional[str] = None
+    use_rag: bool = True
 
 
 class ChatFeedback(BaseModel):
@@ -1040,7 +1041,7 @@ CHAT_SYSTEM_PROMPTS = {
             "回复长度：请回复 5-7 句话，充分展开，让对方感受到被认真对待。不要在回复中提及字数。"
         ),
         "consult": (
-            "你是一位专业的中立关系顾问，立场客观、不偏向任何一方。当前模式是深度咨询。\n\n"
+            "你是一位专业的中立关系顾问，立场客观、不偏向任何一方。当前模式是深度互动。\n\n"
             "回复结构（必须严格按以下框架组织，每个部分都要充分展开）：\n"
             "1. **共情回应**：先回应对方的情绪和处境，让对方感到被真正听见。要具体、不要泛泛而谈。\n"
             "2. **多维分析**（核心部分，请用最大篇幅展开）：从以下维度中选择 2-3 个最相关的，每个维度写一段详细分析：\n"
@@ -1054,7 +1055,7 @@ CHAT_SYSTEM_PROMPTS = {
             "3. **具体建议**：给出 2-3 条可立即实践的行动建议，每条要包含具体操作步骤和示例话术\n"
             "4. **小结**：用一两句话总结核心洞察和下一步方向\n\n"
             "重要：如果有历史对话上下文，必须深度结合其中的具体对话、行为模式和情绪趋势进行分析。\n"
-            "回复长度：请充分展开，写一篇 1500-3000 字的完整咨询分析。不要在回复中提及字数。"
+            "回复长度：请充分展开，写一篇 1500-3000 字的完整互动分析。不要在回复中提及字数。"
         ),
     },
     "supportive": {
@@ -1070,7 +1071,7 @@ CHAT_SYSTEM_PROMPTS = {
             "回复长度：请回复 5-7 句话，充分展开。不要在回复末尾标注字数或任何元信息。"
         ),
         "consult": (
-            "你是一位支持性关系顾问，始终站在用户（ME）这一方，提供无条件的情感支持。当前模式是深度咨询。\n\n"
+            "你是一位支持性关系顾问，始终站在用户（ME）这一方，提供无条件的情感支持。当前模式是深度互动。\n\n"
             "回复结构：\n"
             "1. **情感验证**：充分肯定用户的感受和已做的努力，指出他们的勇气和不易\n"
             "2. **用户视角分析**：从用户的角度出发，分析当前困境：\n"
@@ -1099,7 +1100,7 @@ CHAT_SYSTEM_PROMPTS = {
             "回复长度：请回复 5-7 句话，充分展开。保持温和的探索式语气，像是在邀请对方一起好奇地审视自己。不要标注字数。"
         ),
         "consult": (
-            "你是一位资深精神分析取向的关系顾问，整合客体关系理论和拉康派精神分析。当前模式是深度咨询。\n\n"
+            "你是一位资深精神分析取向的关系顾问，整合客体关系理论和拉康派精神分析。当前模式是深度互动。\n\n"
             "请从以下理论框架进行深度分析（选择最相关的 3-4 个维度）：\n\n"
             "**客体关系维度：**\n"
             "- 依附风格分析：双方各自的依附类型（安全型/焦虑型/回避型/混乱型）及其互动模式\n"
@@ -1123,7 +1124,7 @@ CHAT_SYSTEM_PROMPTS = {
             "4. 反思引导（温和地邀请对方思考）\n\n"
             "语气：像一位温和但深刻的分析师，呈现洞察时避免诊断式语言，用\"我观察到\"\"也许\"\"似乎\"等探索性表达。\n"
             "如果有历史对话上下文，从中发现深层关系动力、重复模式和无意识主题。\n"
-            "回复长度：请充分展开，写一篇完整的精神分析式咨询回复。不要标注字数。"
+            "回复长度：请充分展开，写一篇完整的精神分析式互动回复。不要标注字数。"
         ),
     },
 }
@@ -1249,22 +1250,23 @@ async def chat(req: ChatRequest):
         req.mode, CHAT_SYSTEM_PROMPTS["neutral"]["listen"]
     )
 
-    # GraphRAG 上下文注入（consult 模式注入更多 context）
-    rag_top_k = 5 if req.mode == "consult" else 3
-    rag_context = _build_rag_context(req.message, top_k=rag_top_k,
-                                     max_preview=1000 if req.mode == "consult" else 500)
-    if rag_context:
-        rag_intro = (
-            "\n\n以下是来自用户真实聊天记录的背景信息，请结合这些信息进行回复。"
-            "注意：ME 指用户本人，OTHER 指用户的伴侣/对方。\n\n"
-        )
-        if req.mode == "consult":
+    # GraphRAG 上下文注入（consult 模式注入更多 context，可通过 use_rag 显式关闭）
+    if req.use_rag:
+        rag_top_k = 5 if req.mode == "consult" else 3
+        rag_context = _build_rag_context(req.message, top_k=rag_top_k,
+                                         max_preview=1000 if req.mode == "consult" else 500)
+        if rag_context:
             rag_intro = (
-                "\n\n以下是来自用户真实聊天记录的详细背景信息。"
-                "请深度结合这些信息进行分析和建议，引用具体对话细节。"
+                "\n\n以下是来自用户真实聊天记录的背景信息，请结合这些信息进行回复。"
                 "注意：ME 指用户本人，OTHER 指用户的伴侣/对方。\n\n"
             )
-        system_prompt += rag_intro + rag_context
+            if req.mode == "consult":
+                rag_intro = (
+                    "\n\n以下是来自用户真实聊天记录的详细背景信息。"
+                    "请深度结合这些信息进行分析和建议，引用具体对话细节。"
+                    "注意：ME 指用户本人，OTHER 指用户的伴侣/对方。\n\n"
+                )
+            system_prompt += rag_intro + rag_context
 
     # 加载或创建会话
     session = None

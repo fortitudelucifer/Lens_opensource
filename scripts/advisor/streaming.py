@@ -4,7 +4,7 @@
 功能：
 - 支持两种对话模式的实时流式交互：
   1. listen（即时倾听）：纯本地 Qwen3-8B 非思考模式，低延迟共情响应
-  2. consult（深度咨询）：GraphRAG 检索 + 云端深度分析 → SafetyLayer 隔离 → 本地生成
+  2. consult（深度互动）：GraphRAG 检索 + 云端深度分析 → SafetyLayer 隔离 → 本地生成
 - 基于 vLLM/Ollama OpenAI 兼容接口进行流式推理
 - 对话历史管理（滑动窗口，保留最近 N 轮）
 - 意图分类驱动的模式自动切换

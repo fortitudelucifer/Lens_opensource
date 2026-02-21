@@ -36,9 +36,9 @@ function groupByPrefix(models: KeyCheckerModel[]) {
 }
 
 export default function ApiKeyChecker() {
-  const [baseUrl, setBaseUrl] = useState("https://ai.hybgzs.com")
+  const [baseUrl, setBaseUrl] = useState("https://api.deepseek.com")
   const [apiKey, setApiKey] = useState("")
-  const [manualModel, setManualModel] = useState("gpt-5.2")
+  const [manualModel, setManualModel] = useState("deepseek-chat")
   const [discoveredModels, setDiscoveredModels] = useState<KeyCheckerModel[]>([])
   const [selectedModels, setSelectedModels] = useState<Set<string>>(new Set())
   const [customGroups, setCustomGroups] = useState<Record<string, string[]>>({})
@@ -183,7 +183,7 @@ export default function ApiKeyChecker() {
             className="mt-1 w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
             value={baseUrl}
             onChange={(e) => setBaseUrl(e.target.value)}
-            placeholder="https://api.openai.com"
+            placeholder="https://api.deepseek.com"
           />
         </div>
         <div className="lg:col-span-5">
@@ -229,7 +229,7 @@ export default function ApiKeyChecker() {
                 className="w-full border border-border rounded px-2 py-1.5 text-xs bg-background"
                 value={manualModel}
                 onChange={(e) => setManualModel(e.target.value)}
-                placeholder="gpt-5.2"
+                placeholder="deepseek-chat"
               />
             </div>
           ) : (
