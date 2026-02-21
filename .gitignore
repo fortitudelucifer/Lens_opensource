@@ -74,6 +74,7 @@ advisor_out/
 *.csv
 *.html
 *.txt
+!requirements.txt
 data/
 datasets/
 frontend/public/chat-samples/*
