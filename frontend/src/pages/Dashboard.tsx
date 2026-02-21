@@ -8,7 +8,7 @@ import { ActivityFeed } from '../components/dashboard/ActivityFeed'
 const statsData = [
   {
     title: '处理消息数',
-    value: 12847,
+    value: 32847,
     change: '+18.2% 本周',
     changeType: 'up' as const,
     icon: MessageSquare,
@@ -18,7 +18,7 @@ const statsData = [
   },
   {
     title: '完成率',
-    value: 943,
+    value: 90,
     change: '+2.1% 提升',
     changeType: 'up' as const,
     icon: CheckCircle,
@@ -29,8 +29,8 @@ const statsData = [
   },
   {
     title: '活跃会话',
-    value: 247,
-    change: '今日新增 23',
+    value: 9,
+    change: '今日新增 3',
     changeType: 'up' as const,
     icon: Users,
     iconGradient: 'linear-gradient(135deg, #14b8a6, #0ea5e9)',
@@ -40,7 +40,7 @@ const statsData = [
   },
   {
     title: '平均响应时间',
-    value: 12,
+    value: 15,
     change: '-0.3s 更快',
     changeType: 'down' as const,
     icon: Zap,
