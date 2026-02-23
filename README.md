@@ -8,7 +8,7 @@
 [![Windows 11 x64](https://img.shields.io/badge/Windows-11%20x64-0078D4.svg)](https://www.microsoft.com/windows/)
 [![公众号](https://img.shields.io/badge/WeChat-ForCifer-4CAF50.svg)](https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzg2MzAxNDQwMQ==&scene=124#wechat_redirect)
 
-[English](README.md) | [中文](README_CN.md) | [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md)
+[English](README.md) | [中文](README_CN.md) | [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md) | [RoadMap](RoadMap.md)
 
 <div align="center">
   <img src="assets/lens_logo_high_precision_with_bg.svg" alt="Lens Logo" width="180" height="180">
@@ -31,7 +31,12 @@ Lens is an end-to-end data processing pipeline that converts raw CHATAPP chat ex
 - **Relationship Advisor Agent**: MoA (Mixture of Agents) fusion analysis, QLoRA fine-tuning, Hybrid RAG real-time dialogue with 3 agent personas
 - **Web Dashboard**: React + Vite frontend for pipeline control, real-time chat, human review, model management, and detection
 
-For detailed architecture and implementation details, <u>**must**</u> see [modality_fields_and_models.md](docs/modality_fields_and_models.md).
+For detailed architecture and implementation details, <u>**must**</u> see [modality_fields_and_models.md](docs/modality_fields_and_models.md). For future design and development ideas, please see [RoadMap.md](RoadMap.md) - whether they will be implemented depends on the author's future energy.
+
+<div align="center">
+  <img src="assets/lens_data.png" alt="Lens Data Flow" width="800">
+</div>
+
 
 ---
 

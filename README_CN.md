@@ -8,7 +8,7 @@
 [![Windows 11 x64](https://img.shields.io/badge/Windows-11%20x64-0078D4.svg)](https://www.microsoft.com/windows/)
 [![公众号](https://img.shields.io/badge/公众号-ForCifer-4CAF50.svg)](https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzg2MzAxNDQwMQ==&scene=124#wechat_redirect)
 
-[English](README.md) | 中文 | [贡献指南](CONTRIBUTING.md) | [安全政策](SECURITY.md)
+[English](README.md) | 中文 | [贡献指南](CONTRIBUTING.md) | [安全政策](SECURITY.md) | [开发路线图](RoadMap.md)
 
 <div align="center">
   <img src="assets/lens_logo_high_precision_with_bg.svg" alt="Lens Logo" width="180" height="180">
@@ -17,7 +17,7 @@
 
 ## 概述
 
-Lens 是一个端到端的数据处理流水线，将CHATAPP聊天导出的原始数据（文本、图片、语音、视频、表情包、链接和文件）转化为结构化、隐私安全的 JSONL 数据集，适用于大语言模型的监督微调（SFT）。系统采用**本地-云端协同处理架构**：在本地完成多模态信息解析并加上多维度匿名处理后交由云端大模型标注（本地模型标注也可以），将人工和agent审核的标注文件反匿名处理后回到本地进行真实信息训练，并最终可以在本地用真实信息对话讨论。在数据流水线之上，还包含一个基于处理后数据训练的四层检索动态RAG全栈 AI 关系顾问系统，可与网页端直接交互。多模态在本地支持NSFW成人、暴力、跨文化和敏感内容的准确解析（无未成年人内容解析能力），不会数据泄漏。
+Lens 是一个端到端的数据处理流水线，将 CHATAPP 聊天导出的原始数据（文本、图片、语音、视频、表情包、链接和文件）转化为结构化、隐私安全的 JSONL 数据集，适用于大语言模型的监督微调（SFT）。系统采用**本地-云端协同处理架构**：在本地完成多模态信息解析并加上多维度匿名处理后交由云端大模型标注（本地模型标注也可以），将人工和agent审核的标注文件反匿名处理后回到本地进行真实信息训练，并最终可以在本地用真实信息对话讨论。在数据流水线之上，还包含一个基于处理后数据训练的四层检索动态 RAG 全栈 AI 关系顾问系统，可与网页端直接交互。多模态在本地支持NSFW成人、暴力、跨文化和敏感内容的准确解析（无未成年人内容解析能力），不会数据泄漏。
 
 ### 核心能力
 
@@ -31,7 +31,12 @@ Lens 是一个端到端的数据处理流水线，将CHATAPP聊天导出的原�
 - **关系顾问 Agent**：MoA（多模型融合）分析、QLoRA 微调、Hybrid RAG 实时对话，支持 3 种 Agent 人格
 - **Web 仪表盘**：React + Vite 前端，支持流水线控制、实时对话、人工审核和模型管理和检测
 
-详细架构和实现细节<u>**务必**</u>请参考 [modality_fields_and_models.md](docs/modality_fields_and_models.md)。
+详细架构和实现细节<u>**务必**</u>请参考 [modality_fields_and_models.md](docs/modality_fields_and_models.md)。目前的未来设计开发思路详见 [RoadMap.md](RoadMap.md)，是否实现就看作者未来是否有精力实现了。
+
+<div align="center">
+  <img src="assets/lens_data.png" alt="Lens Data Flow" width="800">
+</div>
+
 
 ---
 
