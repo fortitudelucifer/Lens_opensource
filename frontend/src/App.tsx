@@ -10,6 +10,7 @@ import ApiKeyChecker from './components/ApiKeyChecker'
 import ReviewPanel from './components/ReviewPanel'
 import { PERSONAS } from './constants'
 import type { Persona } from './types'
+import type { ChatSessionSearchResult } from './lib/api'
 import { PanelLeftOpen } from 'lucide-react'
 
 export function App() {
@@ -28,6 +29,7 @@ export function App() {
     typeof window !== 'undefined' ? normalizePath(window.location.pathname) : '/dashboard',
   )
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [searchTargetSession, setSearchTargetSession] = useState<ChatSessionSearchResult | null>(null)
 
   const navigate = useCallback((path: string, replace = false) => {
     const target = normalizePath(path)
@@ -114,6 +116,13 @@ export function App() {
     navigate(`/chat/${persona.id}`)
   }
 
+  const handleOpenSessionFromSearch = useCallback((session: ChatSessionSearchResult) => {
+    const matchedPersona = PERSONAS.find((p) => p.id === session.agent_type)
+    const targetPersona = matchedPersona || PERSONAS[0]
+    setSearchTargetSession(session)
+    navigate(`/chat/${targetPersona.id}`)
+  }, [navigate])
+
   return (
     <div className="relative flex h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300 overflow-hidden">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_12%,rgba(16,185,129,0.2),transparent_32%),radial-gradient(circle_at_85%_8%,rgba(6,182,212,0.16),transparent_30%),linear-gradient(145deg,#d4e6d080,#eef5ec80,#fdf8f05e)] dark:bg-[radial-gradient(circle_at_8%_12%,rgba(16,185,129,0.16),transparent_30%),radial-gradient(circle_at_85%_8%,rgba(20,184,166,0.12),transparent_28%),linear-gradient(145deg,rgba(12,10,9,0.82),rgba(28,25,23,0.78),rgba(10,16,18,0.74))]" />
@@ -138,7 +147,10 @@ export function App() {
       )}
       
       <div className="relative z-10 flex-1 flex flex-col min-w-0">
-        <TopNav sidebarCollapsed={sidebarCollapsed} />
+        <TopNav
+          sidebarCollapsed={sidebarCollapsed}
+          onOpenSessionFromSearch={handleOpenSessionFromSearch}
+        />
         
         <main
           className={`flex-1 flex flex-col relative overflow-hidden h-full pt-16 transition-all duration-300 ${
@@ -162,12 +174,14 @@ export function App() {
               initialPersona={selectedPersona}
               onReturnToWelcome={() => navigate('/chat/select-advisor')}
               onPersonaRouteChange={(personaId) => navigate(`/chat/${personaId}`)}
+              searchTargetSession={searchTargetSession}
+              onSearchTargetConsumed={() => setSearchTargetSession(null)}
             />
           )}
 
           {activeNav === 'review' && (
             <div className="flex-1 overflow-hidden flex flex-col p-6">
-              <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-sm overflow-hidden flex-1 flex flex-col">
+              <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-sm flex-1 flex flex-col min-h-0">
                 <ReviewPanel />
               </div>
             </div>

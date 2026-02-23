@@ -4,12 +4,20 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![Ubuntu 24.04 x64](https://img.shields.io/badge/Ubuntu-24.04%20x64-orange.svg)](https://ubuntu.com/)
+[![Windows 11 x64](https://img.shields.io/badge/Windows-11%20x64-0078D4.svg)](https://www.microsoft.com/windows/)
+[![公众号](https://img.shields.io/badge/WeChat-ForCifer-4CAF50.svg)](https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzg2MzAxNDQwMQ==&scene=124#wechat_redirect)
 
 [English](README.md) | [中文](README_CN.md) | [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md)
 
+<div align="center">
+  <img src="assets/lens_logo_high_precision_with_bg.svg" alt="Lens Logo" width="180" height="180">
+  <img src="assets/lens_vector_ultra_precision.svg" alt="Lens Icon" width="180" height="180">
+</div>
+
 ## Overview
 
-CHAT_APP_DHA is an end-to-end data processing pipeline that converts raw CHAT_APP chat exports (text, images, voice messages, videos, stickers, links, and files) into structured, privacy-safe JSONL datasets suitable for Supervised Fine-Tuning (SFT) of Large Language Models. The system adopts a **local-cloud collaborative processing architecture**: completing multi-modal information parsing and multi-dimensional anonymization locally before sending to cloud large models for annotation (local model annotation is also supported). The annotated files reviewed by humans and agents are de-anonymized and returned to local for real information training, ultimately enabling local conversations with real information. On top of the data pipeline, it includes a four-layer retrieval dynamic RAG full-stack AI Relationship Advisor system trained on the processed data, which can interact directly with the web frontend. Multi-modal supports accurate parsing of NSFW adult, violent, cross-cultural, and sensitive content locally (no minor content parsing capability), with zero data leakage.
+Lens is an end-to-end data processing pipeline that converts raw CHATAPP chat exports (text, images, voice messages, videos, stickers, links, and files) into structured, privacy-safe JSONL datasets suitable for Supervised Fine-Tuning (SFT) of Large Language Models. The system adopts a **local-cloud collaborative processing architecture**: completing multi-modal information parsing and multi-dimensional anonymization locally before sending to cloud large models for annotation (local model annotation is also supported). The annotated files reviewed by humans and agents are de-anonymized and returned to local for real information training, ultimately enabling local conversations with real information. On top of the data pipeline, it includes a four-layer retrieval dynamic RAG full-stack AI Relationship Advisor system trained on the processed data, which can interact directly with the web frontend. Multi-modal supports accurate parsing of NSFW adult, violent, cross-cultural, and sensitive content locally (no minor content parsing capability), with zero data leakage.
 
 ### Key Capabilities
 
@@ -17,13 +25,13 @@ CHAT_APP_DHA is an end-to-end data processing pipeline that converts raw CHAT_AP
 - **Multi-Modal Processing**: Five dedicated sub-pipelines for Image, Voice, Video, Sticker, and Link/File messages
 - **Privacy-First Design**: Two-tier anonymization (L1 reversible / L2 irreversible) with two-stage PII detection (rule engine + LLM validation)
 - **Secure Content Parsing**: Local support for accurate parsing of NSFW adult, violent, cross-cultural, and sensitive content, zero data leakage
-- **Universal Ingestion**: Plugin-based adapter architecture supporting CHAT_APP, Telegram, WhatsApp, and generic CSV/JSONL imports
+- **Universal Ingestion**: Plugin-based adapter architecture supporting CHATAPP, Telegram, WhatsApp structured files and generic CSV/JSONL imports
 - **Intelligent Analysis**: OCR routing, VLM captioning, ASR transcription, emotion detection, and semantic compression across all modalities
-- **Expert Model Routing**: Content-aware triage system that routes NSFW, gore, and document images to specialized abliterated/uncensored models
+- **Expert Model Routing**: Content-aware triage system that routes NSFW, gore, and cross-cultural document images to specialized abliterated/uncensored models
 - **Relationship Advisor Agent**: MoA (Mixture of Agents) fusion analysis, QLoRA fine-tuning, Hybrid RAG real-time dialogue with 3 agent personas
 - **Web Dashboard**: React + Vite frontend for pipeline control, real-time chat, human review, model management, and detection
 
-For detailed architecture and implementation details, see [modality_fields_and_models.md](docs/modality_fields_and_models.md).
+For detailed architecture and implementation details, <u>**must**</u> see [modality_fields_and_models.md](docs/modality_fields_and_models.md).
 
 ---
 
@@ -346,7 +354,7 @@ Each modality has a dedicated sub-pipeline under `scripts/<modality>/run_all/`. 
 | Step | Script | Description | Models |
 |------|--------|-------------|--------|
 | 1. OCR | `_01_run_ocr.py` | Smart routing (TEXT_HEAVY / PHOTO / HYBRID) + PaddleOCR PP-OCRv4 with detection box reuse (30-40% speedup) | PaddleOCR v4 |
-| 2. Caption | `_02_run_caption.py` | Triage classification (NSFW/Gore/Normal/Doc) → Expert Router dispatches to specialized models | Qwen2.5-VL-7B, MiniCPM-V 4.5 Abliterated, Pixtral 12B GGUF |
+| 2. Caption | `_02_run_caption.py` | Triage classification (NSFW/Gore/Normal/Cross-cultural/Doc) → Expert Router dispatches to specialized models | Qwen2.5-VL-7B, MiniCPM-V 4.5 Abliterated, Pixtral 12B GGUF |
 | 2.5. Compress | `_02.5_run_compress.py` | Semantic compression of captions (4-5x ratio) | Qwen2.5-7B |
 | 3. Merge | `_03_merge_engine.py` | Merge OCR + Caption results into unified schema | — |
 | 4. Timeline | `_04_update_timeline.py` | Write back to main timeline | — |
@@ -355,7 +363,7 @@ Each modality has a dedicated sub-pipeline under `scripts/<modality>/run_all/`. 
 - `TYPE_C_NORMAL` → Qwen2.5-VL-7B-Instruct (main captioning model)
 - `TYPE_A_NSFW` → Dual-model ensemble: MiniCPM-V 4.5 Abliterated (int8) + qwen2.5-vl-7b-nsfw-caption-v3 with intelligent fusion
 - `TYPE_B_GORE` → Qwen2.5-VL Abliterated (4-bit) with warning labels
-- `TYPE_D_DOC` → Pixtral 12B GGUF (Q5_K_M) for document/screenshot analysis
+- `TYPE_D_DOC` → Pixtral 12B GGUF (Q5_K_M) for cross-cultural/document/screenshot analysis
 
 ### Voice Pipeline (4 steps)
 
@@ -387,7 +395,7 @@ Each modality has a dedicated sub-pipeline under `scripts/<modality>/run_all/`. 
 | 1. Download | `_01_run_download.py` | Download stickers from URLs with SHA256 deduplication |
 | 2. Sniff | `_02_run_sniff.py` | Magic bytes format detection (GIF/WebP/PNG/JPEG), Pillow decode verification |
 | 3. Process | `_03_run_process.py` | Animated/static classification, adaptive frame sampling (4-16 frames), Contact Sheet generation |
-| 4. Triage | `_04_run_triage.py` | Per-frame NSFW/Gore detection, max-score aggregation |
+| 4. Triage | `_04_run_triage.py` | Per-frame NSFW/Gore detection, max-score aggregation, reusing video pipeline's triage logic |
 | 5. Caption | `_05_run_caption.py` | VLM description with expert routing for sensitive content |
 | 5.5. Compress | `_05.5_run_compress.py` | Intent mapping + dictionary compression (up to 15x for repeated stickers) |
 | 6. Merge | `_06_merge_engine.py` | Merge all stage results with SHA256-based deduplication |
@@ -652,12 +660,12 @@ The MoA (Mixture of Agents) fusion pipeline is the core analysis engine. It orch
                     │  S4: Remediation Loop   ▼                   │
                     │    └── Targeted fix for dimensions ≤ 7/10   │
                     │         Up to 3 rounds, re-review each      │
-                    │         Fallback: Qwen → Kimi → Kimi      │
+                    │         Fallback: Qwen → Kimi-2.5 → Kimi-2-Instruct      │
                     └─────────────────────────────────────────────┘
 ```
 
 **Key features:**
-- **Multi-model fallback chains**: DeepSeek (primary) → DeepSeek backup → DeepSeek degraded (Sonnet); Qwen (primary) → Qwen backup → Kimi → Kimi
+- **Multi-model fallback chains**: DeepSeek-reasoner (primary) → DeepSeek backup → GLM degraded ; Qwen (primary) → Qwen backup → Kimi → Kimi
 - **Multimodal awareness**: Kimi is only invoked for chunks containing multi-modal content (images, voice, video descriptions)
 - **Thinking model truncation detection**: Detects `<think>` tag truncation and auto-switches to non-thinking fallback
 - **Cloudflare HTML error detection**: Auto-retries with 30s backoff on proxy HTML responses
@@ -697,7 +705,7 @@ python scripts/advisor/run_all/_02c_fusion_pipeline.py --moa --Qwen-backend kimi
 - **Backend:** FastAPI (port 8787) with SSE streaming, multi-turn session management, conversation history compression
 - **Frontend:** React 19 + Vite + Tailwind CSS dashboard with chat, pipeline control, human review, model management, and API key checker
 - **RAG:** Triple-layer retrieval — date-precise day index lookup + FAISS semantic search (BGE-M3) + keyword fallback + FAQ knowledge base
-- **LLM Backends:** 5 backends via unified OpenAI-compatible interface (DeepSeek, Kimi, Qwen, deepseek, GLM, local Ollama)
+- **LLM Backends:** 5 backends via unified OpenAI-compatible interface (DeepSeek, Kimi, Qwen, deepseek, GLM, Qwen-local Ollama)
 - **Safety:** SafetyLayer P0, GlobalRateLimiter (RPM≤19), auto-failover between backends, Ollama watchdog auto-restart
 - **Session Management:** Persistent sessions with agent type, mode switching, memory fact extraction, history truncation
 
@@ -1046,7 +1054,7 @@ Modality-specific fields follow the common header. See `scripts/_common/schema_u
 | PaddleOCR PP-OCRv4 | Chinese OCR | ~2GB | — |
 | Qwen2.5-VL-7B-Instruct | Main VLM captioning | ~8GB | bfloat16 |
 | MiniCPM-V 4.5 Abliterated | NSFW content analysis | ~10GB | int8 |
-| Pixtral 12B | Document analysis | ~8.3GB | GGUF Q5_K_M |
+| Pixtral 12B | Cross-cultural/Document analysis | ~8.3GB | GGUF Q5_K_M |
 | FunASR (paraformer-zh) | Chinese ASR | ~2GB | — |
 | SenseVoice Small | Voice emotion detection | ~1GB | — |
 | Qwen2-Audio-7B | Deep voice emotion analysis | ~8GB | float16 |
@@ -1074,17 +1082,36 @@ conda run -n CHAT_APP_DHA python -m pytest tests/test_advisor_analyzers_properti
 
 Detailed documentation for each subsystem is available in the `docs/` directory:
 
-- [Full Pipeline Reference](docs/pipeline.md)
-- [Image Pipeline Design](docs/image_pipeline_overview.md)
-- [Voice Pipeline Design](docs/voice_pipeline_overview.md)
-- [Video Pipeline Design](docs/video_pipeline_overview.md)
-- [Sticker Pipeline Design](docs/sticker_pipeline_overview.md)
-- [Linkfile Pipeline Design](docs/linkfile_pipeline_overview.md)
-- [Universal Ingestion](docs/ingestion_pipeline_overview.md)
-- [Agent SFT Pipeline](docs/agent_sft_pipeline_overview.md)
-- [Advisor System](docs/advisor_pipeline_overview.md)
-- [Privacy & PII Guide](docs/pii_detection_guide.md)
-- [Privacy Mapping](docs/privacy_mapping.md)
+### Core Architecture Documentation
+- [Full Pipeline Reference](docs/pipeline.md) - End-to-end pipeline complete guide
+- [Modality Fields & Models Details](docs/modality_fields_and_models.md) - All modality processing fields and model details
+- [Workspace Initialization](docs/workspace_init.md) - Environment configuration and initialization guide
+
+### Data Processing Pipeline
+- [Universal Ingestion](docs/ingestion_pipeline_overview.md) - Multi-source data normalized ingestion
+- [Image Pipeline Design](docs/image_pipeline_overview.md) - OCR + VLM image processing
+- [Voice Pipeline Design](docs/voice_pipeline_overview.md) - ASR + emotion detection
+- [Video Pipeline Design](docs/video_pipeline_overview.md) - Keyframe + transcription processing
+- [Sticker Pipeline Design](docs/sticker_pipeline_overview.md) - Animated image processing and description
+- [Linkfile Pipeline Design](docs/linkfile_pipeline_overview.md) - File extraction and summarization
+
+### AI Advisor System
+- [Advisor System Overview](docs/advisor_pipeline_overview.md) - Relationship advisor system architecture
+- [MoA Fusion Mechanism](docs/advisor_moa_fusion_overview.md) - Multi-expert fusion analysis
+- [RAG Retrieval System](docs/advisor_rag_overview.md) - Hybrid retrieval architecture
+- [Service Deployment](docs/advisor_service_overview.md) - Online service deployment
+- [Training System](docs/advisor_training_overview.md) - QLoRA fine-tuning training
+- [Step-by-Step Guide](docs/advisor_step_by_step.md) - Complete usage workflow
+
+### SFT Training System
+- [Agent SFT Pipeline](docs/agent_sft_pipeline_overview.md) - Conversation data training pipeline
+
+### Privacy & Security
+- [Privacy & PII Guide](docs/pii_detection_guide.md) - Privacy information detection
+- [Privacy Mapping](docs/privacy_mapping.md) - Anonymization mapping rules
+
+### Data Ingestion Guide
+- [Ingestion Guide](docs/ingestion_guide.md) - Data ingestion detailed instructions
 
 ---
 
@@ -1116,6 +1143,6 @@ This project builds on the following open-source models and tools:
 - [Qwen2.5-VL](https://github.com/QwenLM/Qwen2.5-VL) — Vision-Language model
 - [Qwen2-Audio](https://github.com/QwenLM/Qwen2-Audio) — Audio understanding
 - [LLaVA-NeXT](https://github.com/LLaVA-VL/LLaVA-NeXT) — Video understanding
-- [Pixtral](https://mistral.ai/) — Document analysis
+- [Pixtral](https://mistral.ai/) — Cross-cultural/Document analysis
 - [BGE-M3](https://github.com/FlagOpen/FlagEmbedding) — Multilingual embeddings
 - [Hypothesis](https://hypothesis.readthedocs.io/) — Property-based testing

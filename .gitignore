@@ -113,3 +113,7 @@ htmlcov/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# WeChat article files (not to be uploaded)
+wechat_article.md
+Lens_opensource_wechat_article_v2.md

@@ -113,6 +113,7 @@ REVIEW_DIR = ADVISOR_OUT / "review"
 
 CHAT_DIR = ADVISOR_OUT / "chat_sessions"
 VECTOR_INDEX_DIR = ADVISOR_OUT / "faiss_index"
+FRONTEND_CHAT_SAMPLES_DIR = PROJECT_ROOT / "frontend" / "public" / "chat-samples"
 
 # 确保目录存在
 for d in [CHUNKS_DIR, ANALYSIS_DIR, REVIEW_DIR, CHAT_DIR]:
@@ -1186,6 +1187,167 @@ def _list_sessions() -> list[dict]:
     return sessions
 
 
+def _build_text_snippet(text: str, keyword: str, radius: int = 45) -> str:
+    """构建包含关键词的短摘录，便于前端展示全文命中上下文。"""
+    if not text:
+        return ""
+    compact = re.sub(r"\s+", " ", text).strip()
+    if not compact:
+        return ""
+    lower_compact = compact.lower()
+    lower_keyword = keyword.lower()
+    idx = lower_compact.find(lower_keyword)
+    if idx < 0:
+        return compact[: radius * 2 + 10]
+    start = max(0, idx - radius)
+    end = min(len(compact), idx + len(keyword) + radius)
+    prefix = "..." if start > 0 else ""
+    suffix = "..." if end < len(compact) else ""
+    return f"{prefix}{compact[start:end]}{suffix}"
+
+
+def _search_sessions(query: str, limit: int = 20) -> list[dict]:
+    """搜索会话（标题匹配 + 全文匹配）。"""
+    keyword = query.strip()
+    if not keyword:
+        return []
+
+    keyword_lower = keyword.lower()
+    matches: list[dict] = []
+    for p in sorted(CHAT_DIR.glob("*.json"), key=lambda f: f.stat().st_mtime, reverse=True):
+        try:
+            with open(p, 'r', encoding='utf-8') as f:
+                s = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            continue
+
+        title = s.get("title", "") or ""
+        messages = s.get("messages", []) or []
+        full_text_parts = []
+        for msg in messages:
+            content = msg.get("content", "") if isinstance(msg, dict) else ""
+            if content:
+                full_text_parts.append(str(content))
+        full_text = "\n".join(full_text_parts)
+
+        title_hit = keyword_lower in title.lower()
+        full_hit = keyword_lower in full_text.lower() if full_text else False
+        if not (title_hit or full_hit):
+            continue
+
+        if title_hit and full_hit:
+            match_type = "title+fulltext"
+        elif title_hit:
+            match_type = "title"
+        else:
+            match_type = "fulltext"
+
+        matches.append({
+            "id": s.get("id", p.stem),
+            "title": title,
+            "agent_type": s.get("agent_type", "neutral"),
+            "mode": s.get("mode", "listen"),
+            "backend": s.get("backend", ""),
+            "message_count": len(messages),
+            "created_at": s.get("created_at", ""),
+            "updated_at": s.get("updated_at", ""),
+            "source": "chat",
+            "match_type": match_type,
+            "matched_excerpt": _build_text_snippet(full_text, keyword) if full_hit else "",
+        })
+
+        if len(matches) >= limit:
+            break
+    return matches
+
+
+def _extract_sample_full_text(payload) -> str:
+    """提取 chat-samples JSON 的对话文本，用于全文检索。"""
+    if isinstance(payload, list):
+        turns = payload
+    elif isinstance(payload, dict):
+        turns = payload.get("messages") or payload.get("conversation") or payload.get("turns") or []
+    else:
+        turns = []
+
+    parts = []
+    for item in turns:
+        if not isinstance(item, dict):
+            continue
+        content = item.get("content") or item.get("text") or item.get("message")
+        if content:
+            parts.append(str(content))
+    return "\n".join(parts)
+
+
+def _search_sample_sessions(query: str, limit: int = 20) -> list[dict]:
+    """搜索 frontend/public/chat-samples 下的会话样例（标题 + 全文）。"""
+    keyword = query.strip()
+    if not keyword:
+        return []
+    manifest_path = FRONTEND_CHAT_SAMPLES_DIR / "manifest.json"
+    if not manifest_path.exists():
+        return []
+
+    keyword_lower = keyword.lower()
+    results: list[dict] = []
+    try:
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            file_list = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return []
+
+    if not isinstance(file_list, list):
+        return []
+
+    for file_name in file_list:
+        if not isinstance(file_name, str):
+            continue
+        sample_path = FRONTEND_CHAT_SAMPLES_DIR / file_name
+        if not sample_path.exists() or not sample_path.is_file():
+            continue
+
+        try:
+            with open(sample_path, "r", encoding="utf-8") as f:
+                payload = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            continue
+
+        title = Path(file_name).stem
+        full_text = _extract_sample_full_text(payload)
+        title_hit = keyword_lower in title.lower()
+        full_hit = keyword_lower in full_text.lower() if full_text else False
+        if not (title_hit or full_hit):
+            continue
+
+        if title_hit and full_hit:
+            match_type = "title+fulltext"
+        elif title_hit:
+            match_type = "title"
+        else:
+            match_type = "fulltext"
+
+        results.append({
+            "id": f"sample:{file_name}",
+            "title": f"[样例] {title}",
+            "agent_type": "neutral",
+            "mode": "listen",
+            "backend": "sample",
+            "message_count": full_text.count("\n") + 1 if full_text else 0,
+            "created_at": "",
+            "updated_at": "",
+            "source": "sample",
+            "sample_file": file_name,
+            "match_type": match_type,
+            "matched_excerpt": _build_text_snippet(full_text, keyword) if full_hit else "",
+        })
+
+        if len(results) >= limit:
+            break
+
+    return results
+
+
 @app.post("/api/chat/sessions")
 async def create_session(
     agent_type: str = "neutral",
@@ -1201,6 +1363,21 @@ async def create_session(
 async def list_sessions():
     """列出所有会话"""
     return _list_sessions()
+
+
+@app.get("/api/chat/sessions/search")
+async def search_sessions(query: str, limit: int = 20):
+    """会话搜索：支持标题匹配和全文匹配。"""
+    safe_limit = max(1, min(limit, 100))
+    chat_results = _search_sessions(query, limit=safe_limit)
+    remain = max(0, safe_limit - len(chat_results))
+    sample_results = _search_sample_sessions(query, limit=remain) if remain > 0 else []
+    results = chat_results + sample_results
+    return {
+        "query": query,
+        "total": len(results),
+        "results": results,
+    }
 
 
 @app.get("/api/chat/sessions/{session_id}")

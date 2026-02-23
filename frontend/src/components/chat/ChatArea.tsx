@@ -18,7 +18,7 @@ export function ChatArea({ messages, currentPersona }: ChatAreaProps) {
   }, [messages])
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-8 md:px-12 scrollbar-thin scrollbar-thumb-[var(--border-color)] scrollbar-track-transparent">
+    <div className="flex-1 overflow-y-auto px-4 py-8 md:px-12">
       <div className="max-w-5xl mx-auto space-y-8">
         {messages.map((msg) => {
           const isUser = msg.role === 'user'

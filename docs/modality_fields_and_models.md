@@ -110,7 +110,7 @@ graph TB
 
     subgraph "Phase 10: RAG + 在线服务"
         M1[FAISS 向量索引<br/>BGE-M3 + Reranker]
-        M2[在线对话服务<br/>9 后端 + 3 Agent]
+        M2[在线对话服务<br/>5 后端 + 3 Agent]
         M3[React 前端<br/>localhost:5173 ✅]
     end
 
@@ -350,7 +350,7 @@ python run_all_pipelines.py --skip-compression    # 跳过压缩步骤
 | **MiniCPM-V 4.5 Abliterated** | `/data/models/minicpm-v-4.5-abliterated-int8` | ~4GB | int8 | NSFW 专家（无审查版本） |
 | **qwen2.5-vl-7b-nsfw-caption-v3** | `/data/models/qwen2.5-vl-7b-nsfw-caption-v3` | ~8GB | bfloat16 | NSFW 专家（详细描述） |
 | **Qwen2.5-VL-7B-Instruct-abliterated** | `/data/models/qwen2.5-vl-abliterated` | ~5GB | 4-bit (nf4) | Gore 专家（暴力/血腥分析） |
-| **Pixtral 12B** | `/data/models/pixtral-12b-gguf/` | ~8GB | GGUF Q5_K_M | Doc 专家（文档/截图分析） |
+| **Pixtral 12B** | `/data/models/pixtral-12b-gguf/` | ~8GB | GGUF Q5_K_M | Doc 专家（跨文化/文档/截图分析） |
 | **LLaVA-NeXT-Video-7B** | `/data/models/llava-next-video-7b` | ~8GB | bfloat16 | 视频理解 Fallback |
 
 ### 语音模型
@@ -396,13 +396,13 @@ python run_all_pipelines.py --skip-compression    # 跳过压缩步骤
 
 | 模型名称 | 角色 | 使用阶段 | 说明 |
 |----------|------|----------|------|
-| **DeepSeek V3.2** | MoA S1 专家 | Phase 8: 融合分析 | 深度心理分析，思考链推理 |
+| **DeepSeek-reasoner** | MoA S1 专家 | Phase 8: 融合分析 | 深度心理分析，思考链推理 |
 | **GLM-4.7** | MoA S1 专家 | Phase 8: 融合分析 | 批判性审查，Response API |
-| **Kimi K2.5** | MoA S1 专家（条件触发） | Phase 8: 融合分析 | 多模态信号分析，≥3 markers 时触发 |
-| **Kimi K2.5** | 审核备选 | Phase 8: 审核降级 | Qwen 不可用时的审核替代 |
+| **Kimi-2.5** | MoA S1 专家（条件触发） | Phase 8: 融合分析 | 多模态信号分析，≥3 markers 时触发 |
+| **Kimi-2** | 审核备选 | Phase 8: 审核降级 | Qwen 不可用时的审核替代 |
 | **DeepSeek V3.2-Speciale** | 分析降级 | Phase 8: DeepSeek V3.2 降级 | V3.2 不可用时的分析替代 |
-| **DeepSeek R1** | 对话后端 | Phase 10: 在线对话 | 深度推理对话 |
-| **GLM-4-Plus** | 对话后端 | Phase 10: 在线对话 | 智谱中文对话 |
+| **DeepSeek V3.2** | 对话后端 | Phase 10: 在线对话 | 深度推理对话 |
+| **GLM-4.7** | 对话后端 | Phase 10: 在线对话 | 智谱中文对话 |
 | **Qwen3-235B-A22B-Thinking** | 对话后端 | Phase 10: 在线对话 | 阿里云大模型对话 |
 
 ### 显存管理策略
@@ -1346,7 +1346,7 @@ python scripts/compression/validate_sft_quality.py --level all
 |------|------|
 | **Agent 类型** | 中立顾问 / 支持性顾问 / 精神分析顾问（3 种独立 System Prompt） |
 | **交互模式** | 倾听模式（5-7 句共情回应）/ 咨询模式（1500-3000 字结构化深度分析） |
-| **云端后端** | GLM-4.7 · DeepSeek V3.2 · Kimi K2.5 · Qwen3 · DeepSeek V3.2-Speciale · Qwen3-235B · GLM-4.7 · Kimi K2.5（共 8 个） |
+| **云端后端** | GLM-4.7 · DeepSeek V3.2 · Kimi-2.5 · Qwen3-235B · GLM-4.7 · Qwen本地（共 5 个） |
 | **本地后端** | Ollama qwen3:8b (:11434)，QLoRA 微调后 LoRA 权重加载 |
 | **硬件约束** | 单卡 RTX 5070 Ti 16GB（训练 + 推理共用，无多卡并行） |
 

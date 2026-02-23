@@ -24,7 +24,7 @@ export function ChatSidebar({ sessions, currentSessionId, onSessionSelect, onNew
       </div>
 
       {/* Session List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-thin">
+      <div className="flex-1 overflow-y-auto p-4 space-y-1">
         <div className="px-2 mb-3 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
           近期会话
         </div>

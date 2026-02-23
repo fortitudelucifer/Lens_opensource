@@ -4,12 +4,20 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![Ubuntu 24.04 x64](https://img.shields.io/badge/Ubuntu-24.04%20x64-orange.svg)](https://ubuntu.com/)
+[![Windows 11 x64](https://img.shields.io/badge/Windows-11%20x64-0078D4.svg)](https://www.microsoft.com/windows/)
+[![公众号](https://img.shields.io/badge/公众号-ForCifer-4CAF50.svg)](https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzg2MzAxNDQwMQ==&scene=124#wechat_redirect)
 
 [English](README.md) | 中文 | [贡献指南](CONTRIBUTING.md) | [安全政策](SECURITY.md)
 
+<div align="center">
+  <img src="assets/lens_logo_high_precision_with_bg.svg" alt="Lens Logo" width="180" height="180">
+  <img src="assets/lens_vector_ultra_precision.svg" alt="Lens Icon" width="180" height="180">
+</div>
+
 ## 概述
 
-CHAT_APP_DHA 是一个端到端的数据处理流水线，将CHATAPP聊天导出的原始数据（文本、图片、语音、视频、表情包、链接和文件）转化为结构化、隐私安全的 JSONL 数据集，适用于大语言模型的监督微调（SFT）。系统采用**本地-云端协同处理架构**：在本地完成多模态信息解析并加上多维度匿名处理后交由云端大模型标注（本地模型标注也可以），将人工和agent审核的标注文件反匿名处理后回到本地进行真实信息训练，并最终可以在本地用真实信息对话讨论。在数据流水线之上，还包含一个基于处理后数据训练的四层检索动态RAG全栈 AI 关系顾问系统，可与网页端直接交互。多模态在本地支持NSFW成人、暴力、跨文化和敏感内容的准确解析（无未成年人内容解析能力），不会数据泄漏。
+Lens 是一个端到端的数据处理流水线，将CHATAPP聊天导出的原始数据（文本、图片、语音、视频、表情包、链接和文件）转化为结构化、隐私安全的 JSONL 数据集，适用于大语言模型的监督微调（SFT）。系统采用**本地-云端协同处理架构**：在本地完成多模态信息解析并加上多维度匿名处理后交由云端大模型标注（本地模型标注也可以），将人工和agent审核的标注文件反匿名处理后回到本地进行真实信息训练，并最终可以在本地用真实信息对话讨论。在数据流水线之上，还包含一个基于处理后数据训练的四层检索动态RAG全栈 AI 关系顾问系统，可与网页端直接交互。多模态在本地支持NSFW成人、暴力、跨文化和敏感内容的准确解析（无未成年人内容解析能力），不会数据泄漏。
 
 ### 核心能力
 
@@ -17,13 +25,13 @@ CHAT_APP_DHA 是一个端到端的数据处理流水线，将CHATAPP聊天导出
 - **多模态处理**：五条专用子流水线分别处理图片、语音、视频、表情包和链接/文件消息
 - **隐私优先设计**：两级匿名化（L1 可逆 / L2 不可逆），两阶段 PII 检测（规则引擎 + LLM 验证）
 - **安全内容解析**：本地支持 NSFW 成人、暴力、跨文化和敏感内容准确解析，零数据泄漏
-- **通用数据接入**：插件式适配器架构，支持Wechat、Telegram、WhatsApp 及通用 CSV/JSONL 导入
+- **通用数据接入**：插件式适配器架构，支持Wechat、Telegram、WhatsApp的结构化文件以及其通用 CSV/JSONL 导入
 - **智能分析**：OCR 路由、VLM 描述生成、ASR 转写、情绪检测、语义压缩，覆盖所有模态
-- **专家模型路由**：内容感知的分诊系统，将 NSFW、暴力和文档图片路由到专用的无审查模型
+- **专家模型路由**：内容感知的分诊系统，将 NSFW、暴力和跨文化文档图片路由到专用的无审查模型
 - **关系顾问 Agent**：MoA（多模型融合）分析、QLoRA 微调、Hybrid RAG 实时对话，支持 3 种 Agent 人格
 - **Web 仪表盘**：React + Vite 前端，支持流水线控制、实时对话、人工审核和模型管理和检测
 
-详细架构和实现细节请参考 [modality_fields_and_models.md](docs/modality_fields_and_models.md)。
+详细架构和实现细节<u>**务必**</u>请参考 [modality_fields_and_models.md](docs/modality_fields_and_models.md)。
 
 ---
 
@@ -346,7 +354,7 @@ python run_all_pipelines.py --only video sticker
 | 步骤 | 脚本 | 描述 | 模型 |
 |------|------|------|------|
 | 1. OCR | `_01_run_ocr.py` | 智能路由（文本密集/照片/混合）+ PaddleOCR PP-OCRv4，检测框复用加速 30-40% | PaddleOCR v4 |
-| 2. 描述 | `_02_run_caption.py` | 分诊分类（NSFW/暴力/普通/文档）→ 专家路由分发到专用模型 | Qwen2.5-VL-7B, MiniCPM-V 4.5, Pixtral 12B |
+| 2. 描述 | `_02_run_caption.py` | 分诊分类（NSFW/暴力/普通/跨文化/文档）→ 专家路由分发到专用模型 | Qwen2.5-VL-7B, MiniCPM-V 4.5, Pixtral 12B |
 | 2.5. 压缩 | `_02.5_run_compress.py` | 语义压缩（4-5 倍压缩比） | Qwen2.5-7B |
 | 3. 合并 | `_03_merge_engine.py` | 合并 OCR + 描述结果 | — |
 | 4. 时间轴 | `_04_update_timeline.py` | 回写主时间轴 | — |
@@ -387,7 +395,7 @@ python run_all_pipelines.py --only video sticker
 | 1. 下载 | `_01_run_download.py` | 从 URL 下载表情包，SHA256 去重 |
 | 2. 嗅探 | `_02_run_sniff.py` | Magic Bytes 格式检测（GIF/WebP/PNG/JPEG），Pillow 解码验证 |
 | 3. 处理 | `_03_run_process.py` | 动图/静图分类，自适应帧采样（4-16 帧），Contact Sheet 生成 |
-| 4. 分诊 | `_04_run_triage.py` | 逐帧 NSFW/暴力检测，取最高分聚合 |
+| 4. 分诊 | `_04_run_triage.py` | 逐帧 NSFW/暴力检测，取最高分聚合，复用视频流水线的分诊逻辑 |
 | 5. 描述 | `_05_run_caption.py` | VLM 描述生成，敏感内容使用专家路由 |
 | 5.5. 压缩 | `_05.5_run_compress.py` | 意图映射 + 字典化压缩（重复表情包最高 15 倍压缩） |
 | 6. 合并 | `_06_merge_engine.py` | 合并所有阶段结果，SHA256 去重 |
@@ -611,7 +619,7 @@ enriched_full.jsonl
 |------|------|------|-------------|
 | 0 | `_00_verify_environment.py` | 验证 Python 依赖（torch、transformers、peft、bitsandbytes、trl、datasets、accelerate）、CUDA/GPU、基座模型文件、测试 4-bit 量化加载+推理 | Qwen3-8B-Instruct (NF4) |
 | 1 | `_01_extract_conversations.py` | 从 SFT 数据（L1/L2）滑动窗口提取对话片段。窗口 20 条，步长 10，最少 10 条。自动分类：冲突/甜蜜/普通 | — |
-| 2a | `_02_generate_analysis.py` | 单后端 LLM 分析。支持 5 种后端（DeepSeek、Kimi、Qwen、deepseek、GLM）。断点续跑 | 5 种 LLM 后端任选 |
+| 2a | `_02_generate_analysis.py` | 单后端 LLM 分析。支持 5 种后端（DeepSeek、Kimi、Qwen、Qwen-local、GLM）。断点续跑 | 5 种 LLM 后端任选 |
 | 2b | `_02b_model_comparison.py` | 多后端并排对比，在代表性片段上生成 Markdown 对比报告 | 多后端 |
 | 2c | `_02c_fusion_pipeline.py` | **MoA（多模型融合）流水线** — 核心分析引擎（详见下方） | DeepSeek + GLM + Kimi + Qwen |
 | 2c' | `_02c_rerun_moa.py` | 对失败/低质量片段重新运行 MoA 融合 | 同 2c |
@@ -652,14 +660,14 @@ MoA（Mixture of Agents）融合流水线是核心分析引擎，编排多个前
                     │  S4: 补齐循环           ▼                   │
                     │    └── 定向补齐 ≤7 分的维度                  │
                     │         最多 3 轮，每轮重新审核              │
-                    │         降级链: Qwen → Kimi → Kimi         │
+                    │         降级链: Qwen → Kimi-2.5 → Kimi-2-Instruct │
                     └─────────────────────────────────────────────┘
 ```
 
 **核心特性：**
-- **多模型降级链**：DeepSeek（主线）→ DeepSeek 备用 → DeepSeek 降级（Sonnet）；Qwen（主线）→ Qwen 备用 → Kimi → Kimi
+- **多模型降级链**：DeepSeek-reasoner（主线）→ DeepSeek-V3.2 备用 → GLM 降级；Qwen（主线）→ Qwen 备用 → Kimi → Kimi
 - **多模态感知**：Kimi 仅在片段包含多模态内容（图片、语音、视频描述）时调用
-- **Thinking 模型截断检测**：检测 `<think>` 标签截断，自动切换到非 thinking 备用
+- **Thinking 模型截断检测**：检测 `</think>` 标签截断，自动切换到非 thinking 备用
 - **Cloudflare HTML 错误检测**：代理返回 HTML 时自动等待 30s 重试
 - **Key Pool 轮换**：多 Key 轮询，支持单 Key 黑名单、紧急模式、全局 RPM 限制（≤19）
 - **流水线模式**：异步 4 级流水线，可配置 S1 并发和 Qwen 并发（`--pipeline --max-s1 2 --max-Qwen 3`）
@@ -697,7 +705,7 @@ python scripts/advisor/run_all/_02c_fusion_pipeline.py --moa --Qwen-backend kimi
 - **后端：** FastAPI（端口 8787），SSE 流式响应，多轮会话管理，对话历史压缩
 - **前端：** React 19 + Vite + Tailwind CSS 仪表盘，支持对话、流水线控制、人工审核、模型管理、API Key 检测
 - **RAG：** 三层检索 — 日期精确查找（Day Index）+ FAISS 语义搜索（BGE-M3）+ 关键词回退 + FAQ 知识库
-- **LLM 后端：** 5 种后端统一 OpenAI 兼容接口（DeepSeek、Kimi、Qwen、deepseek、GLM、本地 Ollama）
+- **LLM 后端：** 5 种后端统一 OpenAI 兼容接口（DeepSeek、Kimi、Qwen、deepseek、GLM、Qwen-本地 Ollama）
 - **安全：** SafetyLayer P0、GlobalRateLimiter（RPM≤19）、后端自动故障转移、Ollama 看门狗自动重启
 - **会话管理：** 持久化会话，支持 Agent 类型/模式切换、记忆事实提取、历史截断
 
@@ -873,7 +881,7 @@ cd frontend && npm run dev
 | PaddleOCR PP-OCRv4 | 中文 OCR | ~2GB | — |
 | Qwen2.5-VL-7B-Instruct | 主力 VLM 描述 | ~8GB | bfloat16 |
 | MiniCPM-V 4.5 Abliterated | NSFW 内容分析 | ~10GB | int8 |
-| Pixtral 12B | 文档分析 | ~8.3GB | GGUF Q5_K_M |
+| Pixtral 12B | 跨文化/文档分析 | ~8.3GB | GGUF Q5_K_M |
 | FunASR (paraformer-zh) | 中文 ASR | ~2GB | — |
 | SenseVoice Small | 语音情绪检测 | ~1GB | — |
 | Qwen2-Audio-7B | 深度语音情绪分析 | ~8GB | float16 |
@@ -901,17 +909,36 @@ conda run -n CHAT_APP_DHA python -m pytest tests/test_advisor_analyzers_properti
 
 各子系统的详细文档位于 `docs/` 目录：
 
-- [完整流水线参考](docs/pipeline.md)
-- [图片流水线设计](docs/image_pipeline_overview.md)
-- [语音流水线设计](docs/voice_pipeline_overview.md)
-- [视频流水线设计](docs/video_pipeline_overview.md)
-- [表情包流水线设计](docs/sticker_pipeline_overview.md)
-- [链接/文件流水线设计](docs/linkfile_pipeline_overview.md)
-- [通用数据接入](docs/ingestion_pipeline_overview.md)
-- [Agent SFT 流水线](docs/agent_sft_pipeline_overview.md)
-- [顾问系统](docs/advisor_pipeline_overview.md)
-- [隐私与 PII 指南](docs/pii_detection_guide.md)
-- [隐私映射](docs/privacy_mapping.md)
+### 核心架构文档
+- [完整流水线参考](docs/pipeline.md) - 端到端流水线完整说明
+- [模态字段与模型详解](docs/modality_fields_and_models.md) - 所有模态处理字段和模型详情
+- [工作空间初始化](docs/workspace_init.md) - 环境配置和初始化指南
+
+### 数据处理流水线
+- [通用数据接入](docs/ingestion_pipeline_overview.md) - 多源数据归一化接入
+- [图片流水线设计](docs/image_pipeline_overview.md) - OCR + VLM 图片处理
+- [语音流水线设计](docs/voice_pipeline_overview.md) - ASR + 情绪检测
+- [视频流水线设计](docs/video_pipeline_overview.md) - 关键帧 + 转写处理
+- [表情包流水线设计](docs/sticker_pipeline_overview.md) - 动图处理和描述
+- [链接/文件流水线设计](docs/linkfile_pipeline_overview.md) - 文件提取和摘要
+
+### AI 顾问系统
+- [顾问系统概览](docs/advisor_pipeline_overview.md) - 关系顾问系统架构
+- [MoA 融合机制](docs/advisor_moa_fusion_overview.md) - 多专家融合分析
+- [RAG 检索系统](docs/advisor_rag_overview.md) - 混合检索架构
+- [服务部署](docs/advisor_service_overview.md) - 在线服务部署
+- [训练系统](docs/advisor_training_overview.md) - QLoRA 微调训练
+- [分步指南](docs/advisor_step_by_step.md) - 完整使用流程
+
+### SFT 训练系统
+- [Agent SFT 流水线](docs/agent_sft_pipeline_overview.md) - 对话数据训练流水线
+
+### 隐私与安全
+- [隐私与 PII 指南](docs/pii_detection_guide.md) - 隐私信息检测
+- [隐私映射](docs/privacy_mapping.md) - 匿名化映射规则
+
+### 数据接入指南
+- [接入指南](docs/ingestion_guide.md) - 数据接入详细说明
 
 ---
 

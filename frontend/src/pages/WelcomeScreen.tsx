@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
-import { Heart, ChevronRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
+import lensLogo from '../assets/lens_logo_high_precision.svg'
 import type { Persona } from '../types'
 import { PERSONAS } from '../constants'
 
@@ -16,8 +17,8 @@ export function WelcomeScreen({ onSelect }: WelcomeScreenProps) {
         transition={{ duration: 0.6 }}
         className="text-center mb-12"
       >
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-[var(--border-color)] mb-6 shadow-lg">
-          <Heart className="w-8 h-8 text-emerald-500" />
+        <div className="inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-[var(--border-color)] mb-6 shadow-lg">
+          <img src={lensLogo} alt="Lens 聆诉" className="w-16 h-16 object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(1382%) hue-rotate(119deg) brightness(96%) contrast(92%) drop-shadow(0 0 4px rgba(16, 185, 129, 0.5))' }} />
         </div>
         <h1 className="text-4xl font-bold mb-4 tracking-tight text-[var(--text-primary)]">
           欢迎来到 Lens 聆诉

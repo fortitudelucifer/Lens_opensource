@@ -5,9 +5,39 @@ interface MarkdownContentProps {
   isUser?: boolean
 }
 
+function normalizeMarkdownContent(raw: string): string {
+  const normalized = raw
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\u00A0\u3000]/g, ' ')
+    .replace(/\t/g, '    ')
+
+  const lines = normalized.split('\n').map((line) => line.replace(/\s+$/g, ''))
+  const rebuilt: string[] = []
+
+  for (const line of lines) {
+    // 修复同一行混入多个 markdown 标记导致的“半渲染”问题
+    const splitLine = line
+      .replace(/\s{3,}(?=(?:>\s*|[*+-]\s+|\d+\.\s+))/g, '\n')
+      .replace(/^(\s*>\s*)\*\s*"?/g, '$1* "')
+    rebuilt.push(...splitLine.split('\n'))
+  }
+
+  return rebuilt.join('\n')
+}
+
+function parseTableRow(line: string): string[] {
+  const trimmed = line.trim()
+  const withoutOuterPipes = trimmed.replace(/^\|/, '').replace(/\|$/, '')
+  return withoutOuterPipes.split('|').map((cell) => cell.trim())
+}
+
+function isTableSeparator(line: string): boolean {
+  return /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line)
+}
+
 function renderInline(text: string, keyPrefix: string): ReactNode[] {
   const result: ReactNode[] = []
-  const pattern = /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g
+  const pattern = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g
   let lastIndex = 0
   let match: RegExpExecArray | null
   let part = 0
@@ -22,6 +52,8 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
 
     if (token.startsWith('**') && token.endsWith('**')) {
       result.push(<strong key={key}>{token.slice(2, -2)}</strong>)
+    } else if (token.startsWith('*') && token.endsWith('*')) {
+      result.push(<em key={key}>{token.slice(1, -1)}</em>)
     } else if (token.startsWith('`') && token.endsWith('`')) {
       result.push(
         <code key={key} className="rounded bg-black/10 px-1 py-0.5 text-[0.92em] dark:bg-white/10">
@@ -58,11 +90,20 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
 }
 
 export function MarkdownContent({ content, isUser = false }: MarkdownContentProps) {
-  const lines = content.split('\n')
+  const lines = normalizeMarkdownContent(content).split('\n')
   const blocks: ReactNode[] = []
+
+  const nextNonEmptyLineIndex = (from: number) => {
+    let idx = from
+    while (idx < lines.length && !lines[idx].trim()) {
+      idx += 1
+    }
+    return idx
+  }
 
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i]
+    const trimmedStart = line.trimStart()
 
     if (!line.trim()) {
       blocks.push(<div key={`gap-${i}`} className="h-2" />)
@@ -87,11 +128,51 @@ export function MarkdownContent({ content, isUser = false }: MarkdownContentProp
       continue
     }
 
-    if (line.startsWith('- ') || line.startsWith('* ')) {
-      const items: string[] = [line.slice(2)]
-      while (i + 1 < lines.length && (lines[i + 1].startsWith('- ') || lines[i + 1].startsWith('* '))) {
+    if (/^\d+\.\s+/.test(trimmedStart)) {
+      const items: string[] = [trimmedStart.replace(/^\d+\.\s+/, '')]
+      while (i + 1 < lines.length && /^\d+\.\s+/.test(lines[i + 1].trimStart())) {
         i += 1
-        items.push(lines[i].slice(2))
+        items.push(lines[i].trimStart().replace(/^\d+\.\s+/, ''))
+      }
+      blocks.push(
+        <ol key={`olist-${i}`} className="list-decimal space-y-1 pl-5">
+          {items.map((item, idx) => (
+            <li key={`olist-item-${i}-${idx}`}>{renderInline(item, `olist-${i}-${idx}`)}</li>
+          ))}
+        </ol>,
+      )
+      continue
+    }
+
+    const quoteMatch = line.match(/^\s*>\s?(.*)$/)
+    if (quoteMatch) {
+      const quoteLines: string[] = [quoteMatch[1]]
+      while (i + 1 < lines.length) {
+        const nextQuote = lines[i + 1].match(/^\s*>\s?(.*)$/)
+        if (!nextQuote) break
+        i += 1
+        quoteLines.push(nextQuote[1])
+      }
+      blocks.push(
+        <blockquote
+          key={`quote-${i}`}
+          className="rounded-lg border-l-4 border-emerald-500/50 bg-emerald-500/5 px-3 py-2 text-[var(--text-secondary)]"
+        >
+          {quoteLines.map((quoteLine, idx) => (
+            <p key={`quote-line-${i}-${idx}`} className="whitespace-pre-wrap leading-relaxed">
+              {renderInline(quoteLine, `quote-${i}-${idx}`)}
+            </p>
+          ))}
+        </blockquote>,
+      )
+      continue
+    }
+
+    if (/^[-*+]\s+/.test(trimmedStart)) {
+      const items: string[] = [trimmedStart.replace(/^[-*+]\s+/, '')]
+      while (i + 1 < lines.length && /^[-*+]\s+/.test(lines[i + 1].trimStart())) {
+        i += 1
+        items.push(lines[i].trimStart().replace(/^[-*+]\s+/, ''))
       }
       blocks.push(
         <ul key={`list-${i}`} className="list-disc space-y-1 pl-5">
@@ -99,6 +180,59 @@ export function MarkdownContent({ content, isUser = false }: MarkdownContentProp
             <li key={`item-${i}-${idx}`}>{renderInline(item, `list-${i}-${idx}`)}</li>
           ))}
         </ul>,
+      )
+      continue
+    }
+
+    const separatorIdx = nextNonEmptyLineIndex(i + 1)
+    if (line.includes('|') && separatorIdx < lines.length && isTableSeparator(lines[separatorIdx])) {
+      const headerCells = parseTableRow(line)
+      const rows: string[][] = []
+      i = separatorIdx + 1
+
+      while (i < lines.length) {
+        if (!lines[i].trim()) {
+          const peek = nextNonEmptyLineIndex(i + 1)
+          if (peek < lines.length && lines[peek].includes('|')) {
+            i = peek
+          } else {
+            break
+          }
+        }
+        if (!lines[i].includes('|')) {
+          break
+        }
+        rows.push(parseTableRow(lines[i]))
+        i += 1
+      }
+
+      i -= 1
+
+      blocks.push(
+        <div key={`table-${i}`} className="overflow-x-auto rounded-xl border border-black/10 dark:border-white/10">
+          <table className="min-w-full text-sm">
+            <thead className="bg-black/5 dark:bg-white/5">
+              <tr>
+                {headerCells.map((cell, idx) => (
+                  <th key={`th-${i}-${idx}`} className="border-b border-black/10 px-3 py-2 text-left font-semibold dark:border-white/10">
+                    {renderInline(cell, `th-${i}-${idx}`)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, rowIdx) => (
+                <tr key={`tr-${i}-${rowIdx}`} className="border-b last:border-b-0 border-black/10 dark:border-white/10">
+                  {headerCells.map((_, colIdx) => (
+                    <td key={`td-${i}-${rowIdx}-${colIdx}`} className="px-3 py-2 align-top">
+                      {renderInline(row[colIdx] || '', `td-${i}-${rowIdx}-${colIdx}`)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>,
       )
       continue
     }

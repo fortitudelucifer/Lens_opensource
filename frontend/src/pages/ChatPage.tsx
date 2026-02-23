@@ -5,7 +5,7 @@ import { ChatArea } from '../components/chat/ChatArea'
 import { BottomInput } from '../components/chat/BottomInput'
 import type { Message, Persona, ChatMode, Session } from '../types'
 import { PERSONAS } from '../constants'
-import { api, type AvailableModel, type ModelPreferences } from '../lib/api'
+import { api, type AvailableModel, type ChatSessionSearchResult, type ModelPreferences } from '../lib/api'
 
 const MOCK_SESSIONS: Session[] = [
   { id: 1, title: '关于伴侣沟通边界的困扰', time: '2小时前', personaId: 'supportive', active: true },
@@ -55,9 +55,17 @@ interface ChatPageProps {
   initialPersona: Persona | null
   onReturnToWelcome: () => void
   onPersonaRouteChange?: (personaId: Persona['id']) => void
+  searchTargetSession?: ChatSessionSearchResult | null
+  onSearchTargetConsumed?: () => void
 }
 
-export function ChatPage({ initialPersona, onReturnToWelcome, onPersonaRouteChange }: ChatPageProps) {
+export function ChatPage({
+  initialPersona,
+  onReturnToWelcome,
+  onPersonaRouteChange,
+  searchTargetSession,
+  onSearchTargetConsumed,
+}: ChatPageProps) {
   const [currentPersona, setCurrentPersona] = useState<Persona>(initialPersona || PERSONAS[0])
   const [currentSessionId, setCurrentSessionId] = useState<number | null>(1)
   const [mode, setMode] = useState<ChatMode>('listen')
@@ -363,6 +371,62 @@ export function ChatPage({ initialPersona, onReturnToWelcome, onPersonaRouteChan
     handleClearMessages()
     onPersonaRouteChange?.(next.id)
   }, [currentPersona.id, handleClearMessages, onPersonaRouteChange])
+
+  useEffect(() => {
+    if (!searchTargetSession) return
+
+    const matchedPersona = PERSONAS.find((p) => p.id === searchTargetSession.agent_type)
+    const targetPersonaId = matchedPersona?.id || PERSONAS[0].id
+    if (matchedPersona && matchedPersona.id !== currentPersona.id) {
+      setCurrentPersona(matchedPersona)
+      onPersonaRouteChange?.(matchedPersona.id)
+    }
+
+    let active = true
+    setIsTyping(true)
+    const loadPromise = searchTargetSession.source === 'sample' && searchTargetSession.sample_file
+      ? fetch(`/chat-samples/${searchTargetSession.sample_file}`)
+        .then(async (res) => {
+          if (!res.ok) throw new Error('sample missing')
+          const payload = await res.json() as RawConversationPayload
+          const parsed = parseConversationPayload(payload).map((m) => ({ ...m, personaId: targetPersonaId }))
+          if (!active) return
+          setMessages(parsed)
+          setBackendSessionId(null)
+          setMode('listen')
+        })
+      : api.getSession(searchTargetSession.id)
+        .then((session) => {
+          if (!active) return
+          const nextMessages: Message[] = (session.messages || []).map((msg, idx) => {
+            const rawTime = msg.timestamp ? new Date(msg.timestamp) : new Date(Date.now() + idx * 1000)
+            return {
+              id: `${searchTargetSession.id}-${idx}`,
+              role: msg.role,
+              content: msg.content || '',
+              timestamp: Number.isNaN(rawTime.getTime()) ? new Date() : rawTime,
+              personaId: targetPersonaId,
+            }
+          })
+          setMessages(nextMessages)
+          setBackendSessionId(session.id)
+          setMode(session.mode === 'consult' ? 'deep' : 'listen')
+        })
+
+    loadPromise
+      .catch(() => {
+        if (!active) return
+      })
+      .finally(() => {
+        if (!active) return
+        setIsTyping(false)
+        onSearchTargetConsumed?.()
+      })
+
+    return () => {
+      active = false
+    }
+  }, [onPersonaRouteChange, onSearchTargetConsumed, parseConversationPayload, searchTargetSession])
 
   return (
     <div className="flex-1 flex h-full overflow-hidden bg-[var(--bg-primary)] transition-all duration-300">

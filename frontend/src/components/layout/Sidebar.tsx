@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   MessageSquare,
   Settings,
-  Heart,
   Sun,
   Moon,
   ShieldCheck,
@@ -14,6 +13,7 @@ import {
   UsersRound,
   BookOpen,
 } from 'lucide-react'
+import lensLogo from '../../assets/lens_logo_high_precision.svg'
 import type { NavItem } from '../../types'
 
 interface SidebarProps {
@@ -48,7 +48,7 @@ export function Sidebar({ active, setActive, theme, toggleTheme, collapsed, onTo
       <div className="h-16 flex items-center justify-between px-6 border-b border-[var(--border-color)]">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center border border-[var(--border-color)]">
-            <Heart className="w-4 h-4 text-emerald-500" />
+            <img src={lensLogo} alt="Lens 聆诉" className="w-7 h-7 object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(1382%) hue-rotate(119deg) brightness(96%) contrast(92%) drop-shadow(0 0 2px rgba(16, 185, 129, 0.4))' }} />
           </div>
           <span className="font-bold tracking-wide truncate">Lens 聆诉</span>
         </div>
