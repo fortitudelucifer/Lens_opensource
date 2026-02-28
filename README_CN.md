@@ -21,6 +21,14 @@ Lens 是一个端到端的数据处理流水线，将 CHATAPP 聊天导出的原
 
 ### 核心能力
 
+<div align="center">
+  <img src="assets/4.png" alt="架构概览" width="400">
+  <img src="assets/7.png" alt="系统组件" width="400">
+  <br>
+  <img src="assets/8.png" alt="数据处理" width="400">
+  <img src="assets/10.png" alt="用户界面" width="400">
+</div>
+
 - **本地-云端协同处理**：本地多模态解析+匿名化，云端大模型标注，反匿名化后本地真实信息训练
 - **多模态处理**：五条专用子流水线分别处理图片、语音、视频、表情包和链接/文件消息
 - **隐私优先设计**：两级匿名化（L1 可逆 / L2 不可逆），两阶段 PII 检测（规则引擎 + LLM 验证）
@@ -35,6 +43,7 @@ Lens 是一个端到端的数据处理流水线，将 CHATAPP 聊天导出的原
 
 <div align="center">
   <img src="assets/lens_data.png" alt="Lens Data Flow" width="800">
+  <img src="assets/2.png" alt="Additional Data Flow" width="800">
 </div>
 
 

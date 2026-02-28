@@ -21,6 +21,14 @@ Lens is an end-to-end data processing pipeline that converts raw CHATAPP chat ex
 
 ### Key Capabilities
 
+<div align="center">
+  <img src="assets/4.png" alt="Architecture Overview" width="400">
+  <img src="assets/7.png" alt="System Components" width="400">
+  <br>
+  <img src="assets/8.png" alt="Data Processing" width="400">
+  <img src="assets/10.png" alt="User Interface" width="400">
+</div>
+
 - **Local-Cloud Collaborative Processing**: Local multi-modal parsing + anonymization, cloud large model annotation, de-anonymized local real information training
 - **Multi-Modal Processing**: Five dedicated sub-pipelines for Image, Voice, Video, Sticker, and Link/File messages
 - **Privacy-First Design**: Two-tier anonymization (L1 reversible / L2 irreversible) with two-stage PII detection (rule engine + LLM validation)
@@ -35,6 +43,7 @@ For detailed architecture and implementation details, <u>**must**</u> see [modal
 
 <div align="center">
   <img src="assets/lens_data.png" alt="Lens Data Flow" width="800">
+  <img src="assets/2.png" alt="Additional Data Flow" width="800">
 </div>
 
 
