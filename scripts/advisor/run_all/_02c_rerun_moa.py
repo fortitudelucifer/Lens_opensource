@@ -3,25 +3,25 @@
 MoA 重融合/修复脚本 — 复用已有分析，只跑融合+审核+补齐
 
 功能：
-- 从已有结果文件中提取 DeepSeek/GLM 独立分析（DeepSeek_raw / GLM_raw）
-- 对有独立分析的 chunk → Qwen MoA 有机融合 + 审核 + 补齐
+- 从已有结果文件中提取 Claude/GPT 独立分析（claude_raw / gpt_raw）
+- 对有独立分析的 chunk → Grok MoA 有机融合 + 审核 + 补齐
 - 对只有 v1 合并结果的 chunk → 直接审核 + 补齐
-- 支持完整重跑模式（重新调用 DeepSeek/GLM 分析）
-- 零 DeepSeek + GLM + Qwen + Kimi（备用）
+- 支持完整重跑模式（重新调用 Claude/GPT 分析）
+- 零 Claude/GPT API 调用（默认模式），仅调用 Grok/Kimi/Gemini
 
 处理流程：
 1. 加载主输出文件中的所有已有结果
 2. 根据过滤条件确定待处理 chunk（按 verdict、chunk_id 或全量）
 3. 对每个 chunk：
    a. MoA 融合（有 raw 数据时）或复用已有分析
-   b. 审核评分（Kimi 主审 → Kimi 备 → Qwen 兜底）
-   c. 低分维度补齐（Kimi 主补 → Kimi 备 → Qwen 兜底）
+   b. 审核评分（Kimi 主审 → Gemini 备 → Grok 兜底）
+   c. 低分维度补齐（Gemini 主补 → Kimi 备 → Grok 兜底）
 4. 原地更新主结果集，每 10 条自动保存
 
 三种运行模式：
-- 默认模式：MoA 重融合（复用 DeepSeek_raw + GLM_raw）
+- 默认模式：MoA 重融合（复用 claude_raw + gpt_raw）
 - --review-only：仅重跑审核+补齐，复用已有 analysis_features
-- --full-rerun：完整重跑 S1→S4（需要 DeepSeek/GLM 重新分析）
+- --full-rerun：完整重跑 S1→S4（需要 Claude/GPT 重新分析）
 
 输入：
 - advisor_out/analysis/fused_analysis_neutral_moa.jsonl: 主输出文件（已有结果）
@@ -59,12 +59,12 @@ MoA 重融合/修复脚本 — 复用已有分析，只跑融合+审核+补齐
 - 完整重跑：约 30-50 秒/chunk
 
 注意事项：
-- 默认模式不调用 DeepSeek + GLM + Qwen + Kimi（备用）配额
-- --full-rerun 模式会重新调用 DeepSeek/GLM，注意 API 费用
+- 默认模式不调用 Claude/GPT，仅消耗 Grok/Kimi/Gemini 配额
+- --full-rerun 模式会重新调用 Claude/GPT，注意 API 费用
 - 原子写入保证中断后数据不丢失
-- 审核 verdict 总分 ≥44 自动强制 pass（Qwen verdict 偏严）
+- 审核 verdict 总分 ≥44 自动强制 pass（Grok verdict 偏严）
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -94,10 +94,10 @@ from scripts.advisor.run_all._02c_fusion_pipeline import (
     _extract_json_robust,
     _try_moa_with_gen,
     moa_merge_analyses,
-    run_Qwen_review,
-    run_Qwen_remediation,
+    run_grok_review,
+    run_grok_remediation,
     MOA_AGGREGATOR_PROMPT,
-    Kimi_SECTION_TEMPLATE,
+    GEMINI_SECTION_TEMPLATE,
     _run_step_analysis,
 )
 
@@ -109,7 +109,7 @@ def collect_raw_analyses(source_files: list[str]) -> dict:
     """
     从多个已有结果文件中收集每个 chunk 的最佳数据
     
-    优先保留有 DeepSeek_raw + GLM_raw 独立分析的版本，
+    优先保留有 claude_raw + gpt_raw 独立分析的版本，
     其次保留 v1 merged 结果。
     
     Args:
@@ -117,8 +117,8 @@ def collect_raw_analyses(source_files: list[str]) -> dict:
     
     Returns:
         dict: {chunk_id: chunk_data} 映射，chunk_data 包含：
-        - DeepSeek_raw (dict, 可选): DeepSeek 独立分析结果
-        - GLM_raw (dict, 可选): GLM 独立分析结果
+        - claude_raw (dict, 可选): Claude 独立分析结果
+        - gpt_raw (dict, 可选): GPT 独立分析结果
         - analysis_features (dict): 分析特征
         - conversation (str): 对话文本
     """
@@ -138,9 +138,9 @@ def collect_raw_analyses(source_files: list[str]) -> dict:
                 if not cid:
                     continue
                 
-                has_raw = "DeepSeek_raw" in r and "GLM_raw" in r
+                has_raw = "claude_raw" in r and "gpt_raw" in r
                 existing = chunks.get(cid)
-                existing_has_raw = existing and "DeepSeek_raw" in existing and "GLM_raw" in existing
+                existing_has_raw = existing and "claude_raw" in existing and "gpt_raw" in existing
                 
                 # 优先保留有 raw 数据的版本
                 if not existing or (has_raw and not existing_has_raw):
@@ -152,18 +152,18 @@ def collect_raw_analyses(source_files: list[str]) -> dict:
                         "analysis_features": r.get("analysis_features", {}),
                     }
                     if has_raw:
-                        chunks[cid]["DeepSeek_raw"] = r["DeepSeek_raw"]
-                        chunks[cid]["GLM_raw"] = r["GLM_raw"]
+                        chunks[cid]["claude_raw"] = r["claude_raw"]
+                        chunks[cid]["gpt_raw"] = r["gpt_raw"]
     
     return chunks
 
 
 def rerun_moa_single(
     chunk_data: dict,
-    Qwen_gen: AnalysisGenerator,
+    grok_gen: AnalysisGenerator,
     moa_backup: Optional[AnalysisGenerator],
-    Qwen_backup_gen: Optional[AnalysisGenerator] = None,
-    Kimi_gen: Optional[AnalysisGenerator] = None,
+    grok_backup_gen: Optional[AnalysisGenerator] = None,
+    gemini_gen: Optional[AnalysisGenerator] = None,
     review_only: bool = False,
     generators: Optional[dict] = None,
 ) -> dict:
@@ -176,11 +176,11 @@ def rerun_moa_single(
     - review_only=False + no raw + generators: 完整 S1→S4 重跑
     
     Args:
-        chunk_data (dict): chunk 数据（含 conversation, DeepSeek_raw, GLM_raw 等）
-        Qwen_gen (AnalysisGenerator): Qwen 主生成器
+        chunk_data (dict): chunk 数据（含 conversation, claude_raw, gpt_raw 等）
+        grok_gen (AnalysisGenerator): Grok 主生成器
         moa_backup (AnalysisGenerator): Kimi 备用生成器
-        Qwen_backup_gen (AnalysisGenerator, optional): Qwen 备用生成器
-        Kimi_gen (AnalysisGenerator, optional): Kimi 生成器
+        grok_backup_gen (AnalysisGenerator, optional): Grok 备用生成器
+        gemini_gen (AnalysisGenerator, optional): Gemini 生成器
         review_only (bool): 是否仅审核+补齐模式
         generators (dict, optional): 完整重跑所需的生成器集合
     
@@ -190,7 +190,7 @@ def rerun_moa_single(
     """
     chunk_id = chunk_data["chunk_id"]
     conversation = chunk_data["conversation"]
-    has_raw = "DeepSeek_raw" in chunk_data and "GLM_raw" in chunk_data
+    has_raw = "claude_raw" in chunk_data and "gpt_raw" in chunk_data
     
     # ── Step 1: MoA 融合 or 复用 ──
     moa_elapsed = 0
@@ -204,11 +204,11 @@ def rerun_moa_single(
         # 复用已有分析，仅审核+补齐
         pass
     elif has_raw:
-        DeepSeek_result = {"success": True, "features": chunk_data["DeepSeek_raw"]}
-        GLM_result = {"success": True, "features": chunk_data["GLM_raw"]}
+        claude_result = {"success": True, "features": chunk_data["claude_raw"]}
+        gpt_result = {"success": True, "features": chunk_data["gpt_raw"]}
         merged = moa_merge_analyses(
-            Qwen_gen, DeepSeek_result, GLM_result, None,
-            conversation, backup_gen=moa_backup, Qwen_backup_gen=Qwen_backup_gen,
+            grok_gen, claude_result, gpt_result, None,
+            conversation, backup_gen=moa_backup, grok_backup_gen=grok_backup_gen,
         )
         analysis_features = merged["merged_features"]
         moa_elapsed = merged.get("moa_elapsed", 0)
@@ -221,21 +221,21 @@ def rerun_moa_single(
         agent_type = chunk_data.get("agent_type", "neutral")
         futures = {}
         with ThreadPoolExecutor(max_workers=3) as pool:
-            futures["DeepSeek"] = pool.submit(
-                _run_step_analysis, generators["DeepSeek"], conversation, agent_type, "DeepSeek"
+            futures["claude"] = pool.submit(
+                _run_step_analysis, generators["claude"], conversation, agent_type, "claude"
             )
-            futures["GLM"] = pool.submit(
-                _run_step_analysis, generators["GLM"], conversation, agent_type, "GLM"
+            futures["gpt"] = pool.submit(
+                _run_step_analysis, generators["gpt"], conversation, agent_type, "gpt"
             )
-        DeepSeek_result = futures["DeepSeek"].result()
-        GLM_result = futures["GLM"].result()
+        claude_result = futures["claude"].result()
+        gpt_result = futures["gpt"].result()
         step_details = {
-            "DeepSeek": {"success": DeepSeek_result and DeepSeek_result.get("success"), "elapsed": DeepSeek_result.get("elapsed", 0) if DeepSeek_result else 0},
-            "GLM": {"success": GLM_result and GLM_result.get("success"), "elapsed": GLM_result.get("elapsed", 0) if GLM_result else 0},
+            "claude": {"success": claude_result and claude_result.get("success"), "elapsed": claude_result.get("elapsed", 0) if claude_result else 0},
+            "gpt": {"success": gpt_result and gpt_result.get("success"), "elapsed": gpt_result.get("elapsed", 0) if gpt_result else 0},
         }
         merged = moa_merge_analyses(
-            Qwen_gen, DeepSeek_result, GLM_result, None,
-            conversation, backup_gen=moa_backup, Qwen_backup_gen=Qwen_backup_gen,
+            grok_gen, claude_result, gpt_result, None,
+            conversation, backup_gen=moa_backup, grok_backup_gen=grok_backup_gen,
         )
         analysis_features = merged["merged_features"]
         moa_elapsed = merged.get("moa_elapsed", 0)
@@ -246,34 +246,34 @@ def rerun_moa_single(
         merge_quality = "v1_reuse"
         merge_source = "v1_existing"
     
-    # ── Step 2: 审核 — Kimi 主审 → Kimi 备 → Qwen-jiuuij 兜底 ──
+    # ── Step 2: 审核 — Kimi 主审 → Gemini 备 → Grok-jiuuij 兜底 ──
     review = None
-    _review_gen = moa_backup or Qwen_gen  # Kimi; 若不可用回退 Qwen
+    _review_gen = moa_backup or grok_gen  # Kimi; 若不可用回退 Grok
     if analysis_features:
         analysis_text = json.dumps(analysis_features, ensure_ascii=False)
-        review = run_Qwen_review(
+        review = run_grok_review(
             _review_gen, conversation, analysis_text,
-            backup_gen=Kimi_gen, kimi_gen=Qwen_backup_gen,
+            backup_gen=gemini_gen, kimi_gen=grok_backup_gen,
         )
     
-    # ── Step 3: 补齐 — Kimi 主补 → Kimi 备 → Qwen-jiuuij 兜底 ──
+    # ── Step 3: 补齐 — Gemini 主补 → Kimi 备 → Grok-jiuuij 兜底 ──
     remediation_rounds = 0
     if review and review.get("scores") and analysis_features:
         low_dims = {d: s for d, s in review["scores"].items()
                     if isinstance(s, (int, float)) and s <= REMEDIATION_THRESHOLD}
         if low_dims:
             logger.info(f"  [{chunk_id}] 低分维度: {low_dims}, 启动补齐...")
-            _rem_primary = Kimi_gen or moa_backup or Qwen_gen
-            _rem_backup = moa_backup if Kimi_gen else Qwen_backup_gen
-            analysis_features, remediation_rounds = run_Qwen_remediation(
+            _rem_primary = gemini_gen or moa_backup or grok_gen
+            _rem_backup = moa_backup if gemini_gen else grok_backup_gen
+            analysis_features, remediation_rounds = run_grok_remediation(
                 _rem_primary, analysis_features, review["scores"], conversation,
-                backup_gen=_rem_backup, Kimi_gen=Qwen_backup_gen, kimi_gen=None,
+                backup_gen=_rem_backup, gemini_gen=grok_backup_gen, kimi_gen=None,
             )
             if remediation_rounds > 0:
-                re_review = run_Qwen_review(
+                re_review = run_grok_review(
                     _review_gen, conversation,
                     json.dumps(analysis_features, ensure_ascii=False),
-                    backup_gen=Kimi_gen, kimi_gen=Qwen_backup_gen,
+                    backup_gen=gemini_gen, kimi_gen=grok_backup_gen,
                 )
                 if re_review and re_review.get("success"):
                     review = re_review
@@ -296,8 +296,8 @@ def rerun_moa_single(
         result["step_details"] = step_details
     
     if has_raw:
-        result["DeepSeek_raw"] = chunk_data["DeepSeek_raw"]
-        result["GLM_raw"] = chunk_data["GLM_raw"]
+        result["claude_raw"] = chunk_data["claude_raw"]
+        result["gpt_raw"] = chunk_data["gpt_raw"]
     if moa_fallback:
         result["moa_fallback"] = True
     
@@ -305,7 +305,7 @@ def rerun_moa_single(
         result["review_scores"] = review["scores"]
         result["review_verdict"] = review.get("verdict", "unknown")
         result["review_total"] = review.get("total_score", 0)
-        # 分数覆盖: 总分 ≥44 强制 pass (Qwen verdict 偏严)
+        # 分数覆盖: 总分 ≥44 强制 pass (Grok verdict 偏严)
         if result["review_total"] >= 44 and result["review_verdict"] != "pass":
             result["review_verdict"] = "pass"
     else:
@@ -370,11 +370,11 @@ def save_main_results(by_id: dict, path: str):
 def main():
     parser = argparse.ArgumentParser(description="MoA 重融合/修复 — 复用已有分析或完整重跑")
     parser.add_argument("--sources", type=str, nargs="+", default=None,
-                        help="源文件列表 (包含 DeepSeek_raw/GLM_raw 或 v1 结果)")
+                        help="源文件列表 (包含 claude_raw/gpt_raw 或 v1 结果)")
     parser.add_argument("--output", type=str, default=None,
                         help="输出文件 (默认: 主 MoA 输出文件)")
-    parser.add_argument("--Qwen-model", type=str, default=None,
-                        help="Qwen 模型 (默认从 key_pool 读取)")
+    parser.add_argument("--grok-model", type=str, default=None,
+                        help="Grok 模型 (默认从 key_pool 读取)")
     parser.add_argument("--limit", type=int, default=None,
                         help="限制处理数量")
     parser.add_argument("--delay", type=float, default=3.0,
@@ -387,7 +387,7 @@ def main():
     parser.add_argument("--review-only", action="store_true",
                         help="仅重跑审核+补齐，复用已有 analysis_features")
     parser.add_argument("--full-rerun", action="store_true",
-                        help="完整重跑 S1→S4 (需要 DeepSeek/GLM 重新分析)")
+                        help="完整重跑 S1→S4 (需要 Claude/GPT 重新分析)")
     
     args = parser.parse_args()
     
@@ -459,22 +459,22 @@ def main():
         with open(pool_path, "r") as f:
             pool_config = yaml.safe_load(f)
     
-    Qwen_gen = _create_generator("Qwen", model=args.Qwen_model)
-    print(f"  Qwen: {Qwen_gen.model}")
+    grok_gen = _create_generator("grok", model=args.grok_model)
+    print(f"  Grok: {grok_gen.model}")
     
-    # Qwen 备用 (jiuuij)
-    Qwen_backup_gen = None
-    if pool_config and "Qwen_backup" in pool_config:
-        gb_cfg = pool_config["Qwen_backup"]
+    # Grok 备用 (jiuuij)
+    grok_backup_gen = None
+    if pool_config and "grok_backup" in pool_config:
+        gb_cfg = pool_config["grok_backup"]
         gb_keys = gb_cfg.get("keys", [])
         if gb_keys:
-            Qwen_backup_gen = _create_generator(
-                "Qwen_backup",
+            grok_backup_gen = _create_generator(
+                "grok_backup",
                 api_key=gb_keys[0],
                 base_url=gb_cfg.get("base_url"),
                 model=gb_cfg.get("model"),
             )
-            print(f"  Qwen 备用: {Qwen_backup_gen.model} @ {Qwen_backup_gen.base_url}")
+            print(f"  Grok 备用: {grok_backup_gen.model} @ {grok_backup_gen.base_url}")
     
     # Kimi 备用 (优先从 key_pool 读取)
     moa_backup = None
@@ -494,35 +494,35 @@ def main():
     except Exception as e:
         logger.warning(f"  Kimi 创建失败 (非致命): {e}")
     
-    # Kimi (补齐 fallback, 优先从 key_pool 读取)
-    Kimi_gen = None
-    Kimi_cfg = pool_config.get("Kimi", {}) if pool_config else {}
-    Kimi_keys = Kimi_cfg.get("keys", [])
+    # Gemini (补齐 fallback, 优先从 key_pool 读取)
+    gemini_gen = None
+    gemini_cfg = pool_config.get("gemini", {}) if pool_config else {}
+    gemini_keys = gemini_cfg.get("keys", [])
     try:
-        if Kimi_keys:
-            Kimi_gen = _create_generator(
-                "Kimi",
-                api_key=Kimi_keys[0],
-                base_url=Kimi_cfg.get("base_url"),
-                model=Kimi_cfg.get("model"),
+        if gemini_keys:
+            gemini_gen = _create_generator(
+                "gemini",
+                api_key=gemini_keys[0],
+                base_url=gemini_cfg.get("base_url"),
+                model=gemini_cfg.get("model"),
             )
         else:
-            Kimi_gen = _create_generator("Kimi")
-        print(f"  Kimi: {Kimi_gen.model} @ {Kimi_gen.base_url}")
+            gemini_gen = _create_generator("gemini")
+        print(f"  Gemini: {gemini_gen.model} @ {gemini_gen.base_url}")
     except Exception as e:
-        logger.warning(f"  Kimi 创建失败 (非致命): {e}")
+        logger.warning(f"  Gemini 创建失败 (非致命): {e}")
     
-    # 完整重跑需要 DeepSeek + GLM
+    # 完整重跑需要 Claude + GPT
     generators = None
     if args.full_rerun:
         generators = {
-            "DeepSeek": _create_generator("DeepSeek"),
-            "GLM": _create_generator("GLM"),
-            "Qwen": Qwen_gen,
-            "Kimi": Kimi_gen,
+            "claude": _create_generator("claude"),
+            "gpt": _create_generator("gpt"),
+            "grok": grok_gen,
+            "gemini": gemini_gen,
         }
-        print(f"  DeepSeek: {generators['DeepSeek'].model}")
-        print(f"  GLM: {generators['GLM'].model}")
+        print(f"  Claude: {generators['claude'].model}")
+        print(f"  GPT: {generators['gpt'].model}")
     
     print()
     
@@ -537,7 +537,7 @@ def main():
     updated_count = 0
     for i, chunk_data in enumerate(chunks_to_process):
         cid = chunk_data["chunk_id"]
-        has_raw = "DeepSeek_raw" in chunk_data
+        has_raw = "claude_raw" in chunk_data
         if args.review_only:
             mode = "审核+补齐"
         elif args.full_rerun:
@@ -549,9 +549,9 @@ def main():
         
         start = time.time()
         result = rerun_moa_single(
-            chunk_data, Qwen_gen, moa_backup,
-            Qwen_backup_gen=Qwen_backup_gen,
-            Kimi_gen=Kimi_gen,
+            chunk_data, grok_gen, moa_backup,
+            grok_backup_gen=grok_backup_gen,
+            gemini_gen=gemini_gen,
             review_only=args.review_only,
             generators=generators if args.full_rerun else None,
         )

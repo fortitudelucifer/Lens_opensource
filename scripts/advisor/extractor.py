@@ -56,12 +56,13 @@
 - 多模态密度（mm_density）用于下游 LLM 判断是否需要多模态深度分析
 - save_chunks 保存时不包含原始消息列表（messages），仅保存格式化文本以节省空间
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
 import json
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 from tqdm import tqdm
@@ -118,6 +119,10 @@ class ConversationExtractor:
         self.window_size = config.get('window_size', 20)
         self.step_size = config.get('step_size', 10)
         self.min_messages = config.get('min_messages', 10)
+        self.max_messages = config.get('max_messages', self.window_size)
+        self.segmentation_strategy = config.get('segmentation_strategy', 'sliding_window')
+        self.time_gap_threshold = config.get('time_gap_threshold', 21600)
+        self.emotion_shift_threshold = config.get('emotion_shift_threshold', 0.5)
         self.exclude_system = config.get('exclude_system', True)
         self.exclude_types = config.get('exclude_types', [])
         
@@ -138,6 +143,105 @@ class ConversationExtractor:
             'sweet_chunks': 0,
             'normal_chunks': 0,
         }
+
+    def _filter_messages(self, messages: list[dict]) -> list[dict]:
+        filtered = []
+        for msg in messages:
+            msg_type = msg.get('type', '')
+            if msg_type in self.exclude_types:
+                continue
+            if self.exclude_system and msg.get('speaker') == 'SYSTEM' and msg_type != 'time_gap':
+                continue
+            filtered.append(msg)
+        return filtered
+
+    def _parse_time(self, msg: dict) -> Optional[datetime]:
+        value = msg.get('ts') or msg.get('time_local') or msg.get('datetime')
+        if not value:
+            return None
+        if isinstance(value, (int, float)):
+            return datetime.fromtimestamp(value)
+        if isinstance(value, str):
+            for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S'):
+                try:
+                    return datetime.strptime(value[:19], fmt)
+                except ValueError:
+                    continue
+        return None
+
+    def _compute_time_gap(self, left: dict, right: dict) -> Optional[float]:
+        left_time = self._parse_time(left)
+        right_time = self._parse_time(right)
+        if left_time is None or right_time is None:
+            return None
+        return (right_time - left_time).total_seconds()
+
+    def _get_sentiment(self, msg: dict) -> Optional[float]:
+        text = self._extract_searchable_text(msg)
+        if not text:
+            return 0.0
+        negative = sum(1 for keyword in NEGATIVE_KEYWORDS if keyword in text)
+        positive = sum(1 for keyword in POSITIVE_KEYWORDS if keyword in text)
+        if negative == positive == 0:
+            return 0.0
+        return (positive - negative) / max(positive + negative, 1)
+
+    def _segment_by_sliding_window(self, messages: list[dict]) -> list[list[dict]]:
+        segments = []
+        window_size = min(self.window_size, self.max_messages)
+        for i in range(0, len(messages) - self.min_messages + 1, self.step_size):
+            window = messages[i:i + window_size]
+            if len(window) >= self.min_messages:
+                segments.append(window)
+        return segments
+
+    def _segment_by_events(self, messages: list[dict]) -> list[list[dict]]:
+        segments = []
+        current = []
+        for msg in messages:
+            if current:
+                gap = self._compute_time_gap(current[-1], msg)
+                last_sentiment = self._get_sentiment(current[-1])
+                next_sentiment = self._get_sentiment(msg)
+                has_time_gap = gap is not None and gap >= self.time_gap_threshold
+                has_emotion_shift = (
+                    last_sentiment is not None
+                    and next_sentiment is not None
+                    and abs(last_sentiment - next_sentiment) >= self.emotion_shift_threshold
+                )
+                should_split = (
+                    len(current) >= self.max_messages
+                    or (len(current) >= self.min_messages and (has_time_gap or has_emotion_shift))
+                )
+                if should_split:
+                    segments.append(current)
+                    current = []
+            current.append(msg)
+        if len(current) >= self.min_messages:
+            segments.append(current)
+        elif current and segments and len(segments[-1]) + len(current) <= self.max_messages:
+            segments[-1].extend(current)
+        return segments
+
+    def extract_chunks_from_messages(self, messages: list[dict], num_chunks: int = 100) -> list[dict]:
+        filtered = self._filter_messages(messages)
+        if self.segmentation_strategy == 'event_based':
+            segments = self._segment_by_events(filtered)
+        else:
+            segments = self._segment_by_sliding_window(filtered)
+        chunks = []
+        for i, segment in enumerate(segments[:num_chunks]):
+            score, chunk_type = self._score_chunk(segment)
+            chunks.append({
+                'chunk_id': f"chunk_{i+1:04d}",
+                'messages': segment,
+                'conversation_text': self._format_chunk(segment),
+                'score': score,
+                'chunk_type': chunk_type,
+                'message_count': len(segment),
+                'mm_density': self._compute_mm_density(segment),
+            })
+        return chunks
     
     def extract_chunks(self, input_path: str, num_chunks: int = 100) -> list[dict]:
         """
@@ -407,7 +511,7 @@ class ConversationExtractor:
         D1 优化: 计算 chunk 的多模态信号密度
 
         量化语音/图片/表情/视频/位置消息的分布，
-        帮助下游 LLM (尤其 Kimi) 判断是否需要多模态深度分析。
+        帮助下游 LLM (尤其 Gemini) 判断是否需要多模态深度分析。
 
         Returns:
             mm_density dict: voice/image/sticker/video/location 计数 + density 比例

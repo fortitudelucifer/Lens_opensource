@@ -29,7 +29,7 @@ Linkfile 提取和匿名化步骤
 - 19: 聊天记录（chat_history）
 
 匿名化策略：
-- 引用文本中的说话人前缀（"用户A: 你好" -> "P1: 你好"）
+- 引用文本中的说话人前缀（"张三: 你好" -> "P1: 你好"）
 - 使用 anonymizer.py 的 anonymize_speaker_prefix() 函数
 - 保护隐私，避免泄露真实姓名
 
@@ -53,7 +53,7 @@ Linkfile 提取和匿名化步骤
 - sub_type 分布
 - link_sub_type 分布
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-02
 """
 
@@ -178,7 +178,7 @@ def build_quote_lookup(html_messages: list) -> dict:
     
     匿名化策略：
         - 使用 anonymize_speaker_prefix() 处理引用文本
-        - 将 "用户A: 你好" 转换为 "P1: 你好"
+        - 将 "张三: 你好" 转换为 "P1: 你好"
         - 保护隐私，避免泄露真实姓名
     
     Example:

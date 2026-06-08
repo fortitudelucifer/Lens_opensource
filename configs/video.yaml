@@ -80,9 +80,9 @@ fusion:
 
     '
 paths:
-  keyframes_cache: /path/to/cache/video_keyframes
-  audio_cache: /path/to/cache/video_audio
-  normalized_cache: /path/to/cache/video_normalized
+  keyframes_cache: /data/cache/video_keyframes
+  audio_cache: /data/cache/video_audio
+  normalized_cache: /data/cache/video_normalized
 vram:
   budget_gb: 16
   serial_loading: true

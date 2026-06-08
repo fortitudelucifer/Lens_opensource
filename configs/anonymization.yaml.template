@@ -1,0 +1,28 @@
+me_names:
+  - "<YOUR_NAME>"
+  - "<YOUR_NICKNAME>"
+
+other_names:
+  - "<OTHER_NAME>"
+  - "<OTHER_NICKNAME>"
+
+me_alias: "ME"
+other_alias: "OTHER"
+
+location_mapping:
+  "<REAL_CITY_1>": "<ANON_CITY_1>"
+  "<REAL_CITY_2>": "<ANON_CITY_2>"
+  "<REAL_DISTRICT_1>": "<ANON_DISTRICT_1>"
+
+exclude_patterns:
+  - "<PUBLIC_FIGURE_OR_COMMON_WORD>"
+  - "<DO_NOT_ANONYMIZE_TERM>"
+
+l2_cloud:
+  timestamp_shift:
+    enabled: true
+    shift_days: 0
+  relative_time:
+    enabled: true
+  location_replacement:
+    enabled: true

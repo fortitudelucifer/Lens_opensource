@@ -49,7 +49,7 @@ ChunkAwareRAG — 分析增强的多维检索系统
 - 多维评分中的情感匹配度依赖 chunk 的 analysis_features.relationship_status
 - GPU 显存占用与 GraphRAGManager 相同（BGE-M3 约 2GB）
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 

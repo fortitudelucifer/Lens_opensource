@@ -4,7 +4,7 @@ LLM 关系分析生成脚本
 
 功能：
 - 调用 LLM API 为对话片段生成关系分析报告
-- 支持 5 种 LLM 后端（DeepSeek、Kimi、Qwen、deepseek、GLM）
+- 支持 9 种 LLM 后端（OpenAI、Claude、Gemini、Kimi、Grok、DeepSeek、Qwen 本地/云端、GLM）
 - 支持 3 种 Agent 分析视角（中立、支持性、精神分析）
 - 内置断点续跑机制，支持大批量任务中断恢复
 
@@ -19,11 +19,15 @@ LLM 关系分析生成脚本
    d. 支持断点续跑（默认启用，--no-resume 可禁用）
 5. 输出生成统计（成功/失败/重试/Token 用量）
 
-支持的后端（5 个）：
-- DeepSeek:     Anthropic DeepSeek API (DeepSeek-V3.2)，使用原生 SDK
-- Kimi:     Moonshot Kimi API (Kimi-K2.5)
-- Qwen:     Qwen API (Qwen3)
+支持的后端（9 个）：
+- openai:     OpenAI API (gpt-5.2)
+- claude:     Anthropic Claude API (claude-opus-4.6-think)，使用原生 SDK
+- gemini:     Google Gemini API (gemini-3-pro-preview)
+- kimi:       Moonshot Kimi API (kimi-k2.5)
+- grok:       xAI Grok API (grok-4.1-thinking)
 - deepseek:   DeepSeek API (deepseek-ai/DeepSeek-V3.1)
+- qwen_local: 本地 Qwen（vLLM/Ollama OpenAI 兼容接口）
+- qwen_cloud: 通义千问云端 (Qwen3-235B-A22B-Thinking)
 - glm:        智谱 GLM (glm4.7)
 
 Agent 分析类型：
@@ -40,15 +44,15 @@ Agent 分析类型：
 
 依赖：
 - scripts/advisor/generator.py: AnalysisGenerator 分析生成器
-- OpenAI 兼容 API 客户端
-- anthropic: DeepSeek 原生 SDK（仅 DeepSeek 后端）
+- openai: OpenAI 兼容 API 客户端
+- anthropic: Claude 原生 SDK（仅 claude 后端）
 
 使用示例：
-    # 使用 DeepSeek 生成中立分析（默认）
-    python scripts/advisor/run_all/_02_generate_analysis.py --backend DeepSeek --agent-type neutral
+    # 使用 Claude 生成中立分析（默认）
+    python scripts/advisor/run_all/_02_generate_analysis.py --backend claude --agent-type neutral
 
-    # 使用 GLM-4.7 生成支持性分析
-    python scripts/advisor/run_all/_02_generate_analysis.py --backend glm --agent-type supportive
+    # 使用 GPT-5 生成支持性分析
+    python scripts/advisor/run_all/_02_generate_analysis.py --backend openai --agent-type supportive
 
     # 使用 DeepSeek 生成精神分析，限制处理 10 条
     python scripts/advisor/run_all/_02_generate_analysis.py --backend deepseek --agent-type psychoanalytic --limit 10
@@ -70,7 +74,7 @@ Agent 分析类型：
 - 不同后端的模型能力和价格差异较大，建议先用 --limit 测试
 - 确保先运行 _01_extract_conversations.py 生成对话片段
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -124,7 +128,7 @@ def main():
     6. 输出统计信息（成功/失败/重试/Token 用量）
     
     命令行参数：
-        --backend: LLM 后端（openai/DeepSeek/Kimi/kimi/Qwen/deepseek/qwen_local/qwen_cloud/glm）
+        --backend: LLM 后端（openai/claude/gemini/kimi/grok/deepseek/qwen_local/qwen_cloud/glm）
         --model: 模型名称（默认根据后端自动选择）
         --agent-type: Agent 类型（neutral/supportive/psychoanalytic）
         --input: 输入文件路径
@@ -137,8 +141,8 @@ def main():
         --no-resume: 禁用断点续跑
     """
     parser = argparse.ArgumentParser(description='使用 LLM 生成关系分析')
-    parser.add_argument('--backend', type=str, default='DeepSeek',
-                        choices=['openai', 'DeepSeek', 'Kimi', 'kimi', 'Qwen', 'deepseek', 'qwen_local', 'qwen_cloud', 'glm'],
+    parser.add_argument('--backend', type=str, default='claude',
+                        choices=['openai', 'claude', 'gemini', 'kimi', 'grok', 'deepseek', 'qwen_local', 'qwen_cloud', 'glm'],
                         help='LLM 后端')
     parser.add_argument('--model', type=str, default=None,
                         help='模型名称（默认根据后端自动选择）')
@@ -164,27 +168,13 @@ def main():
     
     args = parser.parse_args()
     
-    # 默认模型
-    default_models = {
-        'openai': 'GLM-4.7',
-        'DeepSeek': 'DeepSeek-V3.2',
-        'Kimi': 'Kimi-K2.5',
-        'kimi': 'kimi-k2.5',
-        'Qwen': 'Qwen3',
-        'deepseek': 'deepseek-ai/DeepSeek-V3.1',
-        'qwen_local': 'Qwen3-8B-Instruct',
-        'qwen_cloud': 'Qwen/Qwen3-235B-A22B-Thinking-2507',
-        'glm': 'z-ai/glm4.7',
-    }
-    model = args.model or default_models.get(args.backend, 'GLM-4.7')
-    
     # 输入输出路径
     workspace = PROJECT_ROOT
     input_path = args.input or str(workspace / 'advisor_out' / 'chunks' / 'conversation_chunks.jsonl')
     output_path = args.output or str(workspace / 'advisor_out' / 'analysis' / f'raw_analysis_{args.agent_type}.jsonl')
     
     print(f"后端: {args.backend}")
-    print(f"模型: {model}")
+    print(f"模型: {args.model or '从环境变量自动读取'}")
     print(f"Agent 类型: {args.agent_type}")
     print(f"输入文件: {input_path}")
     print(f"输出文件: {output_path}")
@@ -198,15 +188,16 @@ def main():
         chunks = chunks[:args.limit]
         print(f"限制处理 {args.limit} 个片段")
     
-    # 创建生成器
+    # 创建生成器（不传 model → 让 AnalysisGenerator 自动从 .env.advisor 环境变量读取）
     config = {
         'backend': args.backend,
-        'model': model,
         'api_key': args.api_key,
         'base_url': args.base_url,
         'temperature': args.temperature,
         'rate_limit_delay': args.delay,
     }
+    if args.model:
+        config['model'] = args.model
     
     generator = AnalysisGenerator(config)
     

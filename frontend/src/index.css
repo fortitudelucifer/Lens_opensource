@@ -190,23 +190,62 @@ body {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(20, 184, 166, 0.1));
   border: 1px solid rgba(16, 185, 129, 0.2);
 }
-.scrollbar-thin::-webkit-scrollbar {
+/* ── 全局滚动条：与玻璃拟态 + 翡翠主题融合 ── */
+
+/* 所有可滚动区域的默认滚动条 */
+*::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
-.scrollbar-thin::-webkit-scrollbar-track {
+*::-webkit-scrollbar-track {
   background: transparent;
 }
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--accent-rose) 20%, var(--border-color) 80%);
+  border-radius: 999px;
+  border: 1px solid transparent;
+  transition: background 0.3s ease;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--accent-rose) 50%, var(--border-color) 50%);
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox 全局 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--accent-rose) 20%, var(--border-color) 80%) transparent;
+}
+
+/* .scrollbar-thin：更窄更隐蔽，用于侧边栏、输入框等紧凑区域 */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--text-muted) 45%, var(--border-color) 55%);
+  background: color-mix(in srgb, var(--text-muted) 30%, transparent 70%);
   border-radius: 999px;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--text-secondary) 55%, var(--border-color) 45%);
+  background: color-mix(in srgb, var(--accent-rose) 45%, var(--border-color) 55%);
 }
-
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--text-muted) 45%, var(--border-color) 55%) transparent;
+  scrollbar-color: color-mix(in srgb, var(--text-muted) 30%, transparent 70%) transparent;
+}
+
+/* 滚动条淡入：默认隐藏，hover 时显现 */
+.scrollbar-fade::-webkit-scrollbar-thumb {
+  background: transparent;
+  transition: background 0.3s ease;
+}
+.scrollbar-fade:hover::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--accent-rose) 25%, var(--border-color) 75%);
+}
+.scrollbar-fade::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--accent-rose) 50%, var(--border-color) 50%);
 }
 @keyframes shimmer {
   0% { background-position: -200% 0; }
@@ -223,4 +262,112 @@ body {
 }
 .float-animation {
   animation: float 3s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   圆桌讨论专用动画（roundtable · 对齐 MP 评审方案 §5.3）
+   ══════════════════════════════════════════════════════════════ */
+
+@keyframes mp-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes mp-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes mp-line-grow {
+  from { transform: scaleX(0); opacity: 0; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+
+@keyframes mp-breathe {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes mp-char-in {
+  from { opacity: 0; filter: blur(2px); }
+  to { opacity: 1; filter: blur(0); }
+}
+
+@keyframes mp-pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.35); }
+  70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Day 7 · D7.2.d · Typing accent line 呼吸光晕
+ * 使用 filter: drop-shadow + currentColor,
+ * 让 glow 色跟随元素自身的 text color（由 persona.accentText 驱动）。 */
+@keyframes mp-breathe-glow {
+  0%, 100% { filter: drop-shadow(0 0 0 transparent); }
+  50%      { filter: drop-shadow(0 0 6px currentColor); }
+}
+
+.mp-fade-up {
+  animation: mp-fade-up 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.mp-fade-in {
+  animation: mp-fade-in 400ms ease-out both;
+}
+.mp-line-grow {
+  animation: mp-line-grow 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: left center;
+}
+.mp-char-in {
+  animation: mp-char-in 350ms ease-out both;
+}
+.mp-typing-dot {
+  animation: mp-breathe 1.3s ease-in-out infinite both;
+}
+.mp-pulse-ring {
+  animation: mp-pulse-ring 1.8s ease-out infinite;
+}
+.mp-breathe-glow {
+  animation: mp-breathe-glow 2.4s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   prefers-reduced-motion · 低端设备 / 用户辅助功能设置兜底
+   ─────────────────────────────────────────────────────────────
+   Day 5 · D5.4 / Day 7 · D7.1.i · 2026-04-23
+   触发：OS 层勾选「减少动态效果」或用户设备性能不佳自动启用
+   策略：保留"静态到达"，屏蔽所有动画 / 过渡 / 视差 / 无限循环
+   - 圆桌讨论：关闭 Moderator 打字机 + phase 过渡淡入 + typing dots 呼吸
+   - 全局：.shimmer / .float-animation / .live-dot 等无限循环动画
+   - 通用兜底：所有 transition 缩至 0.01ms（保留响应但无视觉延迟）
+   ══════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  /* ① 圆桌讨论专用动画 · 全部关闭（JS 侧用 useReducedMotion hook 联动跳过打字机 / sleep） */
+  .mp-fade-up,
+  .mp-fade-in,
+  .mp-line-grow,
+  .mp-char-in,
+  .mp-typing-dot,
+  .mp-pulse-ring,
+  .mp-breathe-glow {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* ② 全局无限循环装饰动画 · 关闭避免 CPU 常占 + 视觉干扰 */
+  .shimmer,
+  .float-animation,
+  .live-dot {
+    animation: none !important;
+  }
+
+  /* ③ 通用兜底 · 所有元素的 animation / transition 降为「无感」
+     用 0.01ms 而非 0 是 WCAG 推荐做法（保留 transitionend 事件绑定者的兼容性） */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

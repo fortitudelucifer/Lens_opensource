@@ -269,7 +269,7 @@ class ChunkState:
 ```yaml
 # local_secrets/key_pool.yaml 配置示例
 platforms:
-  hybgzs:
+  OpenAI-compatible proxy:
     base_url: "https://api.proxy.example/v1"
     keys:
       - sk-key1  # DeepSeek

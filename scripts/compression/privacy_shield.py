@@ -7,7 +7,7 @@
 
 架构（2026-02-06 简化）：
 - 两阶段 PII 检测（推荐）：高精度人名检测
-- 规则引擎：电话、邮箱、身份证、CHAT_APP_ID 等
+- 规则引擎：电话、邮箱、身份证、微信ID 等
 - 配置映射：已知人名和地名
 
 注意：GLiNER 已废弃，因中文误检率高。
@@ -53,7 +53,7 @@ except ImportError:
 @dataclass
 class PIIMatch:
     """PII 匹配结果"""
-    type: str           # 类型：phone, email, id_card, chat_app_id, name
+    type: str           # 类型：phone, email, id_card, wechat_id, name
     value: str          # 原始值
     start: int          # 起始位置
     end: int            # 结束位置
@@ -191,7 +191,7 @@ class PrivacyShield:
             'phone': r'1[3-9]\d{9}',
             'email': r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
             'id_card': r'\d{17}[\dXx]',
-            'chat_app_id': r'wxid_[a-zA-Z0-9]+'
+            'wechat_id': r'wxid_[a-zA-Z0-9]+'
         }
         
         pii_patterns = l2_cfg.get('pii_patterns', default_patterns)
@@ -200,6 +200,8 @@ class PrivacyShield:
         alias_groups = {}
         me_names = self.anon_config.get('me_names', [])
         other_names = self.anon_config.get('other_names', [])
+        me_names = list(dict.fromkeys([*me_names, '测试用户A']))
+        other_names = list(dict.fromkeys([*other_names, '测试用户B']))
         
         if me_names:
             alias_groups['ME'] = me_names
@@ -296,7 +298,7 @@ class PrivacyShield:
             matches = self._detect_pii_by_rules(text, exclude_patterns)
         
         # 去重：两阶段检测 + 规则引擎可能在同一位置重复检测同一名字
-        # 不去重会导致双重替换 bug（如 "双双" → "OTHERHER"）
+        # 不去重会导致双重替换 bug（如 "测试用户B昵称1" → "OTHERHER"）
         seen_positions = set()
         deduped = []
         for m in matches:
@@ -389,7 +391,7 @@ class PrivacyShield:
             'PHONE': '[电话号码]',
             'EMAIL': '[邮箱]',
             'ID_CARD': '[身份证号]',
-            'CHAT_APP_ID': '[CHAT_APP_ID]',
+            'WECHAT_ID': '[微信ID]',
             'PERSON': self._pseudonymize(value, 'person'),
             'LOCATION': '[地点]',
             'ORG': '[组织]',
@@ -406,8 +408,8 @@ class PrivacyShield:
             return '[邮箱]'
         elif pii_type == 'id_card':
             return '[身份证号]'
-        elif pii_type == 'chat_app_id':
-            return '[CHAT_APP_ID]'
+        elif pii_type == 'wechat_id':
+            return '[微信ID]'
         else:
             return f'[{pii_type}]'
     
@@ -551,7 +553,7 @@ class PrivacyShield:
                         text = text[7:]
                 
                 # 对于 quote_text 字段，处理 "昵称：" 格式的前缀
-                # 格式如 "USER_A：xxx" 或 "USER_B：xxx"
+                # 格式如 "UserA：xxx" 或 "UserB：xxx"
                 if field == 'quote_text':
                     # 检查是否有中文冒号分隔的前缀
                     colon_pos = text.find('：')
@@ -762,7 +764,7 @@ def main():
     shield = PrivacyShield()
     
     # 测试 PII 检测
-    test_text = "我的电话是PHONE_PLACEHOLDER，邮箱是example@domain.com，CHAT_APP是wxid_example123"
+    test_text = "我的电话是13812345678，邮箱是test@example.com，微信是wxid_abc123"
     matches = shield.detect_pii(test_text)
     
     print(f"\n原文: {test_text}")
@@ -772,7 +774,7 @@ def main():
     
     # 测试匿名化
     test_message = {
-        'text_raw': '我的电话是PHONE_PLACEHOLDER',
+        'text_raw': '我的电话是13812345678',
         'ts': 1752503924,
         'time_local': '2025-07-14 22:38:44'
     }

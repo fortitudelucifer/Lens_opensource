@@ -19,7 +19,7 @@
 输入：
 - 无外部文件输入
 - 依赖系统环境（CUDA、GPU 驱动）
-- 依赖模型文件（/path/to/models/Qwen3-8B-Instruct/）
+- 依赖模型文件（/data/models/Qwen3-8B-Instruct/）
 
 输出：
 - 终端输出：各项检查的详细结果（✓ 通过 / ✗ 失败）
@@ -50,10 +50,10 @@
 注意事项：
 - 模型加载测试会占用 GPU 显存，测试完成后会自动清理
 - 如果前三项检查未通过，将跳过模型加载测试
-- 基座模型路径硬编码为 /path/to/models/Qwen3-8B-Instruct，如需修改请编辑脚本
+- 基座模型路径硬编码为 /data/models/Qwen3-8B-Instruct，如需修改请编辑脚本
 - 建议在训练前先运行此脚本确认环境正确
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -162,7 +162,7 @@ def check_base_model():
     Example:
         >>> ok = check_base_model()
         >>> # 输出示例：
-        >>> # ✓ 模型目录存在: /path/to/models/Qwen3-8B-Instruct
+        >>> # ✓ 模型目录存在: /data/models/Qwen3-8B-Instruct
         >>> # ✓ config.json
         >>> # ✓ 模型权重: 4 个 safetensors 文件
     """
@@ -170,7 +170,7 @@ def check_base_model():
     print("3. 检查基座模型")
     print("=" * 60)
     
-    model_path = Path('/path/to/models/Qwen3-8B-Instruct')
+    model_path = Path('/data/models/Qwen3-8B-Instruct')
     
     if model_path.exists():
         print(f"  ✓ 模型目录存在: {model_path}")
@@ -205,7 +205,7 @@ def check_base_model():
         return all_ok
     else:
         print(f"  ✗ 模型目录不存在: {model_path}")
-        print("    请下载 Qwen2.5-7B-Instruct 模型到 /path/to/models/")
+        print("    请下载 Qwen2.5-7B-Instruct 模型到 /data/models/")
         return False
 
 
@@ -241,7 +241,7 @@ def test_model_loading():
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
         
-        model_path = '/path/to/models/Qwen3-8B-Instruct'
+        model_path = '/data/models/Qwen3-8B-Instruct'
         
         print("  加载 tokenizer...")
         tokenizer = AutoTokenizer.from_pretrained(

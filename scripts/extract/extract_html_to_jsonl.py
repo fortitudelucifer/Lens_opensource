@@ -1,6 +1,6 @@
 """
 extract_html_to_jsonl.py
-从CHAT_APP导出的 HTML 文件中提取 chatMessages 数组，并从 CSV 补充元数据字段，
+从微信导出的 HTML 文件中提取 chatMessages 数组，并从 CSV 补充元数据字段，
 转换为 P1_messages_raw.jsonl
 
 数据源说明：
@@ -431,7 +431,7 @@ def print_stats(stats: dict):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="从CHAT_APP导出HTML+CSV提取消息到JSONL")
+    parser = argparse.ArgumentParser(description="从微信导出HTML+CSV提取消息到JSONL")
     parser.add_argument("--html", type=str, help="指定HTML文件路径")
     parser.add_argument("--csv", type=str, help="指定CSV文件路径")
     parser.add_argument("--output", type=str, help="指定输出JSONL路径")

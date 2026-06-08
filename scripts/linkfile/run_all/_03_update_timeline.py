@@ -64,7 +64,7 @@ Linkfile 时间轴更新步骤
 输出统计：
 - 更新的记录数（full 和 slim）
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-02
 """
 

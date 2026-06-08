@@ -63,7 +63,7 @@ def fix_recall_text_raw(text_raw: str, fix_nickname: bool = False) -> str:
     例如：
     - "[日期]\" recalled a message" -> "OTHER recalled a message"
     - "\"OTHER [日期]\" recalled a message" -> "OTHER recalled a message"
-    - "\"CONTACT_USERNAME\" recalled a message" -> "OTHER recalled a message" (当 fix_nickname=True)
+    - "\"UserB\" recalled a message" -> "OTHER recalled a message" (当 fix_nickname=True)
     
     Args:
         text_raw: 消息文本

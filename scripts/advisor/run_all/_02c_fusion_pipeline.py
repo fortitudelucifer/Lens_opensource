@@ -3,30 +3,30 @@
 多专家并行融合流水线 — Phase 2 升级版
 
 功能：
-- 并行调用 DeepSeek / GLM / Kimi 三个 LLM 生成独立关系分析
-- 使用 Qwen 作为 MoA（Mixture of Agents）聚合器进行有机融合
-- Qwen 审核校验融合结果，低分维度自动补齐
+- 并行调用 Claude / GPT / Gemini 三个 LLM 生成独立关系分析
+- 使用 Grok 作为 MoA（Mixture of Agents）聚合器进行有机融合
+- Grok 审核校验融合结果，低分维度自动补齐
 - 支持多 API Key 轮转、全局限速、断点续跑
 
 处理流程（每个 chunk）：
 1. Step 1-3（并行）：
-   a. DeepSeek V3.2 — 深度心理分析（主分析师）
-   b. GLM-4.7 — 批判性审视（独立审视）
-   c. Kimi K2.5 — 多模态信号分析（可选，仅多模态对话触发）
-2. Step 4: MoA 有机融合（Qwen 聚合器重写两份独立分析）
-   - Fallback 链：Qwen(第三方代理) → Qwen(第三方代理备用) → Kimi → v1 程序合并
-3. Step 5: Qwen 审核校验（5 维度 1-10 分评分）
+   a. Claude Opus 4.6 Think — 深度心理分析（主分析师）
+   b. GPT-5.2 xhigh — 批判性审视（独立审视）
+   c. Gemini 3 Pro — 多模态信号分析（可选，仅多模态对话触发）
+2. Step 4: MoA 有机融合（Grok 聚合器重写两份独立分析）
+   - Fallback 链：Grok(OpenAI-compatible proxy) → Grok(backup provider) → Kimi → v1 程序合并
+3. Step 5: Grok 审核校验（5 维度 1-10 分评分）
 4. Step 6: 低分维度补齐（≤7 分触发，最多 3 轮）
 5. 输出最终融合分析 JSONL
 
 并行策略：
 - Steps 1/2/3 使用不同 API Key → ThreadPoolExecutor 真并行
-- 账户总 RPM ≤ 20（第三方代理 所有 key 合计），全局限速器控制
+- 账户总 RPM ≤ 20（OpenAI-compatible proxy 所有 key 合计），全局限速器控制
 - 整体吞吐：约 3 chunks/min（瓶颈为单步最慢的模型）
 
 MoA 融合策略：
-- v2（默认）：Qwen 聚合器有机重写，取两家之长、去冗余、补盲点、解决冲突
-- v1（回退）：程序合并规则（DeepSeek 主体 + GLM 补充 + Kimi 多模态覆盖）
+- v2（默认）：Grok 聚合器有机重写，取两家之长、去冗余、补盲点、解决冲突
+- v1（回退）：程序合并规则（Claude 主体 + GPT 补充 + Gemini 多模态覆盖）
 
 审核维度：
 - 准确性（1-10）：分析是否准确反映对话内容
@@ -42,7 +42,7 @@ MoA 融合策略：
 
 输出：
 - advisor_out/analysis/fused_analysis_neutral_moa.jsonl: 融合分析结果
-  * 包含：analysis_features, DeepSeek_raw, GLM_raw, review_scores, merge_quality 等
+  * 包含：analysis_features, claude_raw, gpt_raw, review_scores, merge_quality 等
 
 依赖：
 - scripts/advisor/generator.py: AnalysisGenerator 分析生成器
@@ -57,8 +57,8 @@ MoA 融合策略：
     # 全量处理 500 个 chunks
     python scripts/advisor/run_all/_02c_fusion_pipeline.py
 
-    # 跳过 Kimi（非多模态对话不需要）
-    python scripts/advisor/run_all/_02c_fusion_pipeline.py --skip-Kimi
+    # 跳过 Gemini（非多模态对话不需要）
+    python scripts/advisor/run_all/_02c_fusion_pipeline.py --skip-gemini
 
 性能参考：
 - 单个 chunk 完整流程：约 20-40 秒（取决于最慢的模型）
@@ -67,13 +67,13 @@ MoA 融合策略：
 - 审核+补齐：约 10-15 秒/chunk
 
 注意事项：
-- 需要配置多个 API Key（DeepSeek、GLM、Kimi、Qwen）
+- 需要配置多个 API Key（Claude、GPT、Gemini、Grok）
 - 建议先用 --limit 10 测试小批量
-- Qwen thinking 模型可能出现截断，已内置自动检测和备用切换
+- Grok thinking 模型可能出现截断，已内置自动检测和备用切换
 - Cloudflare HTML 错误页面已内置检测和重试机制
 - 断点续跑通过检查输出文件已有记录实现
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -113,15 +113,15 @@ def _init_key_rotator():
 
 # ── 融合步骤配置 ─────────────────────────────────────────────
 STEP_CONFIGS = {
-    "DeepSeek": {
-        "backend": "DeepSeek",
+    "claude": {
+        "backend": "claude",
         "role": "主分析师 (深度心理分析)",
         "max_tokens": 65536,
         "rate_limit_delay": 5.0,
         "retry_delay": 18.0,
         "max_retries": 7,
     },
-    "GLM": {
+    "gpt": {
         "backend": "openai",
         "role": "独立审视 (批判性分析)",
         "max_tokens": 65536,
@@ -129,16 +129,16 @@ STEP_CONFIGS = {
         "retry_delay": 18.0,
         "max_retries": 7,
     },
-    "Kimi": {
-        "backend": "Kimi",
+    "gemini": {
+        "backend": "gemini",
         "role": "多模态专家",
         "max_tokens": 65536,
         "rate_limit_delay": 5.0,
         "retry_delay": 18.0,
         "max_retries": 5,
     },
-    "Qwen": {
-        "backend": "Qwen",
+    "grok": {
+        "backend": "grok",
         "role": "审核校验",
         "max_tokens": 65536,
         "rate_limit_delay": 5.0,
@@ -153,9 +153,9 @@ STEP_CONFIGS = {
         "retry_delay": 18.0,
         "max_retries": 5,
     },
-    "Qwen_backup": {
-        "backend": "Qwen",
-        "role": "Qwen 备用 (第三方代理)",
+    "grok_backup": {
+        "backend": "grok",
+        "role": "Grok 备用 (backup provider)",
         "max_tokens": 65536,
         "rate_limit_delay": 5.0,
         "retry_delay": 18.0,
@@ -165,7 +165,7 @@ STEP_CONFIGS = {
 
 # 多模态触发关键词
 MULTIMODAL_TRIGGERS = ["[图片:", "[语音:", "[表情:", "情绪:"]
-MULTIMODAL_THRESHOLD = 3  # 多模态标记数量 >= 此值才触发 Kimi
+MULTIMODAL_THRESHOLD = 3  # 多模态标记数量 >= 此值才触发 Gemini
 
 
 def _is_multimodal(conversation: str, mm_density: dict | None = None) -> bool:
@@ -215,16 +215,16 @@ def _create_generator(
 def _create_generators_from_pool(
     pool_config: dict,
     rotators: dict,
-    skip_Kimi: bool = False,
-    Qwen_model: str = None,
-    Qwen_backend: str = None,
+    skip_gemini: bool = False,
+    grok_model: str = None,
+    grok_backend: str = None,
 ) -> dict:
     """
     从 key_pool 配置创建 generators 集合。
     每个 generator 使用 pool 中的第一个 key 初始化，后续由 rotator 动态切换。
     """
     generators = {}
-    for step_key in ("DeepSeek", "GLM", "Qwen"):
+    for step_key in ("claude", "gpt", "grok"):
         agent_cfg = pool_config.get(step_key, {})
         keys = agent_cfg.get("keys", [])
         if keys:
@@ -232,30 +232,30 @@ def _create_generators_from_pool(
                 step_key,
                 api_key=keys[0],
                 base_url=agent_cfg.get("base_url"),
-                model=Qwen_model if step_key == "Qwen" and Qwen_model else agent_cfg.get("model"),
-                backend=Qwen_backend if step_key == "Qwen" and Qwen_backend else None,
+                model=grok_model if step_key == "grok" and grok_model else agent_cfg.get("model"),
+                backend=grok_backend if step_key == "grok" and grok_backend else None,
             )
         else:
             generators[step_key] = _create_generator(
                 step_key,
-                model=Qwen_model if step_key == "Qwen" else None,
-                backend=Qwen_backend if step_key == "Qwen" else None,
+                model=grok_model if step_key == "grok" else None,
+                backend=grok_backend if step_key == "grok" else None,
             )
 
-    if not skip_Kimi:
-        agent_cfg = pool_config.get("Kimi", {})
+    if not skip_gemini:
+        agent_cfg = pool_config.get("gemini", {})
         keys = agent_cfg.get("keys", [])
         if keys:
-            generators["Kimi"] = _create_generator(
-                "Kimi",
+            generators["gemini"] = _create_generator(
+                "gemini",
                 api_key=keys[0],
                 base_url=agent_cfg.get("base_url"),
                 model=agent_cfg.get("model"),
             )
         else:
-            generators["Kimi"] = _create_generator("Kimi")
+            generators["gemini"] = _create_generator("gemini")
     else:
-        generators["Kimi"] = None
+        generators["gemini"] = None
 
     return generators
 
@@ -294,88 +294,88 @@ def _run_step_analysis(
 
 # ── Step 4 v1: 程序合并规则 (保留作为 fallback) ───────────────
 def merge_analyses(
-    DeepSeek_result: Optional[dict],
-    GLM_result: Optional[dict],
-    Kimi_result: Optional[dict] = None,
+    claude_result: Optional[dict],
+    gpt_result: Optional[dict],
+    gemini_result: Optional[dict] = None,
 ) -> dict:
     """
-    v1 程序合并: DeepSeek 主体 + GLM 补充 + Kimi 多模态覆盖。
+    v1 程序合并: Claude 主体 + GPT 补充 + Gemini 多模态覆盖。
     """
-    # 如果 DeepSeek 失败，降级到 GLM
-    if not DeepSeek_result or not DeepSeek_result.get("success"):
-        if GLM_result and GLM_result.get("success"):
+    # 如果 Claude 失败，降级到 GPT
+    if not claude_result or not claude_result.get("success"):
+        if gpt_result and gpt_result.get("success"):
             return {
-                "merged_features": GLM_result["features"],
-                "source": "GLM_only (DeepSeek_failed)",
+                "merged_features": gpt_result["features"],
+                "source": "gpt_only (claude_failed)",
                 "merge_quality": "degraded",
             }
         return {"merged_features": {}, "source": "all_failed", "merge_quality": "failed"}
 
-    base = dict(DeepSeek_result["features"])
+    base = dict(claude_result["features"])
 
-    # GLM 补充
-    if GLM_result and GLM_result.get("success"):
-        GLM_f = GLM_result["features"]
+    # GPT 补充
+    if gpt_result and gpt_result.get("success"):
+        gpt_f = gpt_result["features"]
 
         # key_issues: 合并去重 top 4
         base_issues = base.get("key_issues", [])
-        GLM_issues = GLM_f.get("key_issues", [])
-        merged_issues = _merge_string_lists(base_issues, GLM_issues, max_items=4)
+        gpt_issues = gpt_f.get("key_issues", [])
+        merged_issues = _merge_string_lists(base_issues, gpt_issues, max_items=4)
         base["key_issues"] = merged_issues
 
         # criticism: 合并
         base_crit = base.get("criticism", {})
-        GLM_crit = GLM_f.get("criticism", {})
-        if isinstance(base_crit, dict) and isinstance(GLM_crit, dict):
+        gpt_crit = gpt_f.get("criticism", {})
+        if isinstance(base_crit, dict) and isinstance(gpt_crit, dict):
             for party in ["party_a", "party_b"]:
                 base_list = base_crit.get(party, [])
-                GLM_list = GLM_crit.get(party, [])
-                if isinstance(base_list, list) and isinstance(GLM_list, list):
-                    base_crit[party] = _merge_string_lists(base_list, GLM_list, max_items=4)
+                gpt_list = gpt_crit.get(party, [])
+                if isinstance(base_list, list) and isinstance(gpt_list, list):
+                    base_crit[party] = _merge_string_lists(base_list, gpt_list, max_items=4)
             base["criticism"] = base_crit
 
         # advice: 合并去重
         base_advice = base.get("advice", [])
-        GLM_advice = GLM_f.get("advice", [])
-        base["advice"] = _merge_string_lists(base_advice, GLM_advice, max_items=4)
+        gpt_advice = gpt_f.get("advice", [])
+        base["advice"] = _merge_string_lists(base_advice, gpt_advice, max_items=4)
 
-        # time_patterns: DeepSeek 主导, GLM 补充漏检
+        # time_patterns: Claude 主导, GPT 补充漏检
         base_tp = base.get("time_patterns", [])
-        GLM_tp = GLM_f.get("time_patterns", [])
-        base["time_patterns"] = _merge_string_lists(base_tp, GLM_tp, max_items=4)
+        gpt_tp = gpt_f.get("time_patterns", [])
+        base["time_patterns"] = _merge_string_lists(base_tp, gpt_tp, max_items=4)
 
         # conflict_root_causes: 取并集 top 3
         base_crc = base.get("conflict_root_causes", [])
-        GLM_crc = GLM_f.get("conflict_root_causes", [])
-        base["conflict_root_causes"] = _merge_string_lists(base_crc, GLM_crc, max_items=3)
+        gpt_crc = gpt_f.get("conflict_root_causes", [])
+        base["conflict_root_causes"] = _merge_string_lists(base_crc, gpt_crc, max_items=3)
 
         # risk_level: 取更高风险
         risk_order = {"低": 0, "中": 1, "高": 2, "极高": 3, "low": 0, "medium": 1, "high": 2, "critical": 3}
         base_risk = base.get("risk_level", "低")
-        GLM_risk = GLM_f.get("risk_level", "低")
-        if risk_order.get(GLM_risk, 0) > risk_order.get(base_risk, 0):
-            base["risk_level"] = GLM_risk
+        gpt_risk = gpt_f.get("risk_level", "低")
+        if risk_order.get(gpt_risk, 0) > risk_order.get(base_risk, 0):
+            base["risk_level"] = gpt_risk
 
         # overall_assessment: 融合
         base_oa = base.get("overall_assessment", "")
-        GLM_oa = GLM_f.get("overall_assessment", "")
-        if GLM_oa and base_oa and GLM_oa != base_oa:
+        gpt_oa = gpt_f.get("overall_assessment", "")
+        if gpt_oa and base_oa and gpt_oa != base_oa:
             base["overall_assessment"] = (
-                f"{base_oa}\n\n【GLM 补充视角】{GLM_oa}"
+                f"{base_oa}\n\n【GPT 补充视角】{gpt_oa}"
             )
 
-    # Kimi 多模态覆盖
-    if Kimi_result and Kimi_result.get("success"):
-        gem_f = Kimi_result["features"]
+    # Gemini 多模态覆盖
+    if gemini_result and gemini_result.get("success"):
+        gem_f = gemini_result["features"]
         gem_mm = gem_f.get("multimodal_signals", [])
         if gem_mm:
             base["multimodal_signals"] = gem_mm
 
-    source_parts = ["DeepSeek"]
-    if GLM_result and GLM_result.get("success"):
-        source_parts.append("GLM")
-    if Kimi_result and Kimi_result.get("success"):
-        source_parts.append("Kimi")
+    source_parts = ["claude"]
+    if gpt_result and gpt_result.get("success"):
+        source_parts.append("gpt")
+    if gemini_result and gemini_result.get("success"):
+        source_parts.append("gemini")
 
     return {
         "merged_features": base,
@@ -384,23 +384,23 @@ def merge_analyses(
     }
 
 
-# ── Step 4 v2: MoA 有机融合 (Qwen Aggregator) ────────────────
+# ── Step 4 v2: MoA 有机融合 (Grok Aggregator) ────────────────
 
 MOA_AGGREGATOR_PROMPT = """你是一位资深关系心理学专家。现在需要将两位独立分析师的报告有机融合成一份更完整、更精确的关系分析。
 
-【分析师 A (DeepSeek — 擅长深层心理洞察) 的独立分析】
-{DeepSeek_analysis}
+【分析师 A (Claude — 擅长深层心理洞察) 的独立分析】
+{claude_analysis}
 
-【分析师 B (GLM — 擅长结构化批判) 的独立分析】
-{GLM_analysis}
+【分析师 B (GPT — 擅长结构化批判) 的独立分析】
+{gpt_analysis}
 
-{Kimi_section}
+{gemini_section}
 
 【原始对话】
 {conversation}
 
 【融合要求】
-1. 取两家之长：整合 DeepSeek 的心理深度洞察和 GLM 的结构化批判视角
+1. 取两家之长：整合 Claude 的心理深度洞察和 GPT 的结构化批判视角
 2. 去除冗余：两家重复的观点只保留表述更精准、更有证据支撑的版本
 3. 补盲点：一家遗漏而另一家发现的重要洞察，必须纳入
 4. 冲突解决：如两家判断矛盾，结合原始对话给出你的独立判断，并说明理由
@@ -426,8 +426,8 @@ MOA_AGGREGATOR_PROMPT = """你是一位资深关系心理学专家。现在需�
 
 再次强调：只输出一个纯 JSON 对象，不要任何其他文字。"""
 
-Kimi_SECTION_TEMPLATE = """【分析师 C (Kimi — 多模态专家) 的补充分析】
-{Kimi_analysis}
+GEMINI_SECTION_TEMPLATE = """【分析师 C (Gemini — 多模态专家) 的补充分析】
+{gemini_analysis}
 """
 
 REMEDIATION_THRESHOLD = 7   # 单项 ≤ 此值触发补齐
@@ -504,84 +504,84 @@ def _try_moa_with_gen(gen: AnalysisGenerator, prompt: str, label: str) -> tuple:
 
 
 def moa_merge_analyses(
-    Qwen_gen: AnalysisGenerator,
-    DeepSeek_result: Optional[dict],
-    GLM_result: Optional[dict],
-    Kimi_result: Optional[dict],
+    grok_gen: AnalysisGenerator,
+    claude_result: Optional[dict],
+    gpt_result: Optional[dict],
+    gemini_result: Optional[dict],
     conversation: str,
     backup_gen: Optional[AnalysisGenerator] = None,
-    Qwen_backup_gen: Optional[AnalysisGenerator] = None,
+    grok_backup_gen: Optional[AnalysisGenerator] = None,
 ) -> dict:
     """
-    v2 MoA 有机融合: Qwen Aggregator 重写两份独立分析。
-    Fallback 链: Qwen(第三方代理) → Qwen(第三方代理备用) → Kimi → v1 程序合并。
+    v2 MoA 有机融合: Grok Aggregator 重写两份独立分析。
+    Fallback 链: Grok(OpenAI-compatible proxy) → Grok(backup provider) → Kimi → v1 程序合并。
 
     即使一方失败，另一方的完整分析仍可独立使用。
-    双方都成功时，Qwen 做有机融合重写。
+    双方都成功时，Grok 做有机融合重写。
     """
-    DeepSeek_ok = DeepSeek_result and DeepSeek_result.get("success")
-    GLM_ok = GLM_result and GLM_result.get("success")
-    Kimi_ok = Kimi_result and Kimi_result.get("success")
+    claude_ok = claude_result and claude_result.get("success")
+    gpt_ok = gpt_result and gpt_result.get("success")
+    gemini_ok = gemini_result and gemini_result.get("success")
 
     # 都失败
-    if not DeepSeek_ok and not GLM_ok:
+    if not claude_ok and not gpt_ok:
         return {"merged_features": {}, "source": "all_failed", "merge_quality": "failed"}
 
-    # 仅一方成功 → 直接用该方结果（不需要 Qwen 融合）
-    if DeepSeek_ok and not GLM_ok:
+    # 仅一方成功 → 直接用该方结果（不需要 Grok 融合）
+    if claude_ok and not gpt_ok:
         return {
-            "merged_features": DeepSeek_result["features"],
-            "source": "DeepSeek_only (GLM_failed)",
+            "merged_features": claude_result["features"],
+            "source": "claude_only (gpt_failed)",
             "merge_quality": "partial",
         }
-    if GLM_ok and not DeepSeek_ok:
+    if gpt_ok and not claude_ok:
         return {
-            "merged_features": GLM_result["features"],
-            "source": "GLM_only (DeepSeek_failed)",
+            "merged_features": gpt_result["features"],
+            "source": "gpt_only (claude_failed)",
             "merge_quality": "partial",
         }
 
     # 双方都成功 → MoA 有机融合
-    DeepSeek_json = json.dumps(DeepSeek_result["features"], ensure_ascii=False, indent=2)
-    GLM_json = json.dumps(GLM_result["features"], ensure_ascii=False, indent=2)
+    claude_json = json.dumps(claude_result["features"], ensure_ascii=False, indent=2)
+    gpt_json = json.dumps(gpt_result["features"], ensure_ascii=False, indent=2)
 
-    Kimi_section = ""
-    if Kimi_ok:
-        Kimi_json = json.dumps(Kimi_result["features"], ensure_ascii=False, indent=2)
-        Kimi_section = Kimi_SECTION_TEMPLATE.format(Kimi_analysis=Kimi_json)
+    gemini_section = ""
+    if gemini_ok:
+        gemini_json = json.dumps(gemini_result["features"], ensure_ascii=False, indent=2)
+        gemini_section = GEMINI_SECTION_TEMPLATE.format(gemini_analysis=gemini_json)
 
     prompt = MOA_AGGREGATOR_PROMPT.format(
-        DeepSeek_analysis=DeepSeek_json,
-        GLM_analysis=GLM_json,
-        Kimi_section=Kimi_section,
+        claude_analysis=claude_json,
+        gpt_analysis=gpt_json,
+        gemini_section=gemini_section,
         conversation=conversation[:4000],
     )
 
-    # 主聚合器 (Qwen 第三方代理)
-    fused, elapsed = _try_moa_with_gen(Qwen_gen, prompt, f"Qwen({Qwen_gen.model})")
+    # 主聚合器 (Grok OpenAI-compatible proxy)
+    fused, elapsed = _try_moa_with_gen(grok_gen, prompt, f"Grok({grok_gen.model})")
 
-    # 备用聚合器 1: Qwen (第三方代理)
-    if fused is None and Qwen_backup_gen is not None:
-        logger.info(f"[MoA] Qwen 主线失败，切换到 第三方代理 {Qwen_backup_gen.model}...")
-        fused, backup_elapsed = _try_moa_with_gen(Qwen_backup_gen, prompt, f"QwenBackup({Qwen_backup_gen.model})")
+    # 备用聚合器 1: Grok (backup provider)
+    if fused is None and grok_backup_gen is not None:
+        logger.info(f"[MoA] Grok 主线失败，切换到 backup provider {grok_backup_gen.model}...")
+        fused, backup_elapsed = _try_moa_with_gen(grok_backup_gen, prompt, f"GrokBackup({grok_backup_gen.model})")
         elapsed += backup_elapsed
 
     # 备用聚合器 2: Kimi
     if fused is None and backup_gen is not None:
-        logger.info(f"[MoA] Qwen 全线失败，切换到 Kimi {backup_gen.model}...")
+        logger.info(f"[MoA] Grok 全线失败，切换到 Kimi {backup_gen.model}...")
         fused, backup_elapsed = _try_moa_with_gen(backup_gen, prompt, f"Kimi({backup_gen.model})")
         elapsed += backup_elapsed
 
     # 全部失败 → v1 程序合并
     if fused is None:
         logger.warning("[MoA] 主备聚合器均失败，回退到 v1 程序合并")
-        v1_result = merge_analyses(DeepSeek_result, GLM_result, Kimi_result)
+        v1_result = merge_analyses(claude_result, gpt_result, gemini_result)
         v1_result["moa_fallback"] = True
         return v1_result
 
-    source_parts = ["moa(DeepSeek+GLM)"]
-    if Kimi_ok:
-        source_parts.append("Kimi")
+    source_parts = ["moa(claude+gpt)"]
+    if gemini_ok:
+        source_parts.append("gemini")
 
     return {
         "merged_features": fused,
@@ -591,18 +591,18 @@ def moa_merge_analyses(
     }
 
 
-def run_Qwen_remediation(
-    Qwen_gen: AnalysisGenerator,
+def run_grok_remediation(
+    grok_gen: AnalysisGenerator,
     fused_features: dict,
     review_scores: dict,
     conversation: str,
     backup_gen: Optional[AnalysisGenerator] = None,
-    Kimi_gen: Optional[AnalysisGenerator] = None,
+    gemini_gen: Optional[AnalysisGenerator] = None,
     kimi_gen: Optional[AnalysisGenerator] = None,
 ) -> tuple[dict, int]:
     """
-    Qwen 补齐循环: 单项 ≤ REMEDIATION_THRESHOLD 的维度定向补齐。
-    Fallback 链: Qwen(第三方代理) → Qwen(第三方代理备用) → Kimi → Kimi
+    Grok 补齐循环: 单项 ≤ REMEDIATION_THRESHOLD 的维度定向补齐。
+    Fallback 链: Grok(OpenAI-compatible proxy) → Grok(jiuuij) → Gemini → Kimi
 
     Returns:
         (补齐后的 features, 实际补齐轮次)
@@ -630,12 +630,12 @@ def run_Qwen_remediation(
             conversation=conversation[:3000],
         )
 
-        # 主 Qwen (第三方代理) — HTML / 截断检测
+        # 主 Grok (OpenAI-compatible proxy) — HTML / 截断检测
         raw = None
         attempt = 0
         while attempt < 4:
             try:
-                raw = Qwen_gen._call_api(prompt)
+                raw = grok_gen._call_api(prompt)
                 if raw and _is_html_error(raw):
                     logger.warning(f"[Remediation R{round_num}] Cloudflare HTML，等待 30s (不计入重试)")
                     raw = None
@@ -655,9 +655,9 @@ def run_Qwen_remediation(
             attempt += 1
             time.sleep(18)
 
-        # 备用 1: Qwen (jiuuij) — 非 thinking 模型
+        # 备用 1: Grok (jiuuij) — 非 thinking 模型
         if not raw and backup_gen is not None:
-            logger.info(f"[Remediation R{round_num}] 主线失败，切换到备用 Qwen...")
+            logger.info(f"[Remediation R{round_num}] 主线失败，切换到备用 Grok...")
             for att in range(3):
                 try:
                     raw = backup_gen._call_api(prompt)
@@ -668,22 +668,22 @@ def run_Qwen_remediation(
                     logger.warning(f"[Remediation R{round_num} Backup] attempt {att+1}: {e}")
                     time.sleep(18)
 
-        # 备用 2: Kimi
-        if not raw and Kimi_gen is not None:
-            logger.info(f"[Remediation R{round_num}] Qwen 全线失败，切换到 Kimi...")
+        # 备用 2: Gemini
+        if not raw and gemini_gen is not None:
+            logger.info(f"[Remediation R{round_num}] Grok 全线失败，切换到 Gemini...")
             for att in range(3):
                 try:
-                    raw = Kimi_gen._call_api(prompt)
+                    raw = gemini_gen._call_api(prompt)
                     if raw and not _is_html_error(raw):
                         break
                     raw = None
                 except Exception as e:
-                    logger.warning(f"[Remediation R{round_num} Kimi] attempt {att+1}: {e}")
+                    logger.warning(f"[Remediation R{round_num} Gemini] attempt {att+1}: {e}")
                     time.sleep(15)
 
         # 备用 3: Kimi (最后手段)
         if not raw and kimi_gen is not None:
-            logger.info(f"[Remediation R{round_num}] Kimi 也失败，切换到 Kimi...")
+            logger.info(f"[Remediation R{round_num}] Gemini 也失败，切换到 Kimi...")
             for att in range(3):
                 try:
                     raw = kimi_gen._call_api(prompt)
@@ -714,8 +714,8 @@ def run_Qwen_remediation(
         current = updated
 
         # 重新审核以检查是否达标
-        re_review = run_Qwen_review(
-            Qwen_gen, conversation, json.dumps(current, ensure_ascii=False),
+        re_review = run_grok_review(
+            grok_gen, conversation, json.dumps(current, ensure_ascii=False),
             backup_gen=backup_gen, kimi_gen=kimi_gen,
         )
         if re_review and re_review.get("scores"):
@@ -745,7 +745,7 @@ def _merge_string_lists(base: list, extra: list, max_items: int = 4) -> list:
     return merged
 
 
-# ── Step 5: Qwen 审核 ────────────────────────────────────────
+# ── Step 5: Grok 审核 ────────────────────────────────────────
 import re
 
 
@@ -759,7 +759,7 @@ def _strip_thinking_tags(text: str) -> str:
 
 
 def _extract_json_robust(text: str) -> dict | None:
-    """多策略 JSON 提取 — 处理 Qwen 各种输出格式"""
+    """多策略 JSON 提取 — 处理 Grok 各种输出格式"""
     # 策略 1: ```json ... ``` 代码块
     if '```json' in text:
         try:
@@ -970,7 +970,7 @@ REVIEW_PROMPT_TEMPLATE = """你是一位资深的关系心理学审核专家。�
 }}"""
 
 
-def run_Qwen_review(
+def run_grok_review(
     gen: AnalysisGenerator,
     conversation: str,
     analysis_text: str,
@@ -980,21 +980,21 @@ def run_Qwen_review(
     kimi_gen: Optional[AnalysisGenerator] = None,
 ) -> Optional[dict]:
     """审核 (3 级 fallback: gen → backup_gen → kimi_gen)
-    架构 v2: Kimi 主审 → Kimi 备 → Qwen-jiuuij 兜底"""
+    架构 v2: Kimi 主审 → Gemini 备 → Grok-jiuuij 兜底"""
     prompt = REVIEW_PROMPT_TEMPLATE.format(
         conversation=conversation[:3000],
         analysis=analysis_text[:4000],
     )
     start = time.time()
 
-    # 主 Qwen (第三方代理) — HTML / 截断检测
+    # 主 Grok (OpenAI-compatible proxy) — HTML / 截断检测
     raw = None
     attempt = 0
     while attempt < max_retries:
         try:
             raw = gen._call_api(prompt)
             if raw and _is_html_error(raw):
-                logger.warning(f"[Qwen 审核] Cloudflare HTML，等待 30s (不计入重试)")
+                logger.warning(f"[Grok 审核] Cloudflare HTML，等待 30s (不计入重试)")
                 raw = None
                 time.sleep(30)
                 continue
@@ -1002,20 +1002,20 @@ def run_Qwen_review(
             if raw and '</think>' in raw:
                 after_think = raw[raw.index('</think>') + len('</think>'):]
                 if len(after_think.strip()) < 80:
-                    logger.warning(f"[Qwen 审核] thinking 模型输出截断 ({len(after_think.strip())} chars)，切换备用")
+                    logger.warning(f"[Grok 审核] thinking 模型输出截断 ({len(after_think.strip())} chars)，切换备用")
                     raw = None
                     break  # 直接跳到备用，不再重试主线
             if raw:
                 break
         except Exception as e:
-            logger.warning(f"[Qwen 审核] API 异常 (attempt {attempt+1}): {e}")
+            logger.warning(f"[Grok 审核] API 异常 (attempt {attempt+1}): {e}")
         attempt += 1
         if attempt < max_retries:
             time.sleep(retry_delay)
 
-    # 备用 1: Qwen (jiuuij) — 非 thinking 模型，不会截断
+    # 备用 1: Grok (jiuuij) — 非 thinking 模型，不会截断
     if not raw and backup_gen is not None:
-        logger.info(f"[Qwen 审核] 主线失败，切换到备用 {backup_gen.model}...")
+        logger.info(f"[Grok 审核] 主线失败，切换到备用 {backup_gen.model}...")
         for att in range(1, 4):
             try:
                 raw = backup_gen._call_api(prompt)
@@ -1023,13 +1023,13 @@ def run_Qwen_review(
                     break
                 raw = None
             except Exception as e:
-                logger.warning(f"[Qwen 审核 Backup] attempt {att}: {e}")
+                logger.warning(f"[Grok 审核 Backup] attempt {att}: {e}")
             if att < 3:
                 time.sleep(retry_delay)
 
     # 备用 2: Kimi
     if not raw and kimi_gen is not None:
-        logger.info(f"[Qwen 审核] Qwen 全线失败，切换到 Kimi {kimi_gen.model}...")
+        logger.info(f"[Grok 审核] Grok 全线失败，切换到 Kimi {kimi_gen.model}...")
         for att in range(1, 4):
             try:
                 raw = kimi_gen._call_api(prompt)
@@ -1037,7 +1037,7 @@ def run_Qwen_review(
                     break
                 raw = None
             except Exception as e:
-                logger.warning(f"[Qwen 审核 Kimi] attempt {att}: {e}")
+                logger.warning(f"[Grok 审核 Kimi] attempt {att}: {e}")
             if att < 3:
                 time.sleep(15)
 
@@ -1086,7 +1086,7 @@ def run_Qwen_review(
             "verdict": "parse_error",
         }
 
-    # 确保 verdict 字段存在 (Qwen 未返回 verdict 时自动推导)
+    # 确保 verdict 字段存在 (Grok 未返回 verdict 时自动推导)
     if not review.get("verdict") or review["verdict"] == "parse_error":
         total = review.get("total_score", 0)
         if not total and review.get("scores"):
@@ -1094,7 +1094,7 @@ def run_Qwen_review(
             review["total_score"] = total
         review["verdict"] = "pass" if total >= 36 else "needs_revision" if total >= 20 else "fail"
 
-    # 分数覆盖: Qwen 审核 verdict 偏严，总分 ≥44 强制判 pass
+    # 分数覆盖: Grok 审核 verdict 偏严，总分 ≥44 强制判 pass
     total = review.get("total_score", 0)
     if not total and review.get("scores"):
         total = sum(v for v in review["scores"].values() if isinstance(v, (int, float)))
@@ -1114,12 +1114,12 @@ def process_single_chunk(
     chunk: dict,
     agent_type: str,
     generators: dict,
-    skip_Kimi_non_multimodal: bool = True,
+    skip_gemini_non_multimodal: bool = True,
     skip_review: bool = False,
     use_moa: bool = False,
-    DeepSeek_backup: Optional[AnalysisGenerator] = None,
+    claude_backup: Optional[AnalysisGenerator] = None,
     moa_backup: Optional[AnalysisGenerator] = None,
-    Qwen_backup_gen: Optional[AnalysisGenerator] = None,
+    grok_backup_gen: Optional[AnalysisGenerator] = None,
 ) -> dict:
     """
     处理单个 chunk 的完整融合流程。
@@ -1127,13 +1127,13 @@ def process_single_chunk(
     Args:
         chunk: 对话片段
         agent_type: neutral / supportive / psychoanalytic
-        generators: {"DeepSeek": gen, "GLM": gen, "Kimi": gen, "Qwen": gen}
-        skip_Kimi_non_multimodal: 非多模态 chunk 跳过 Kimi
-        skip_review: 跳过 Qwen 审核 (用于快速测试)
+        generators: {"claude": gen, "gpt": gen, "gemini": gen, "grok": gen}
+        skip_gemini_non_multimodal: 非多模态 chunk 跳过 Gemini
+        skip_review: 跳过 Grok 审核 (用于快速测试)
         use_moa: True=v2 MoA 有机融合, False=v1 程序合并
-        DeepSeek_backup: DeepSeek 备用 generator (第三方代理)
+        claude_backup: Claude 备用 generator (backup provider)
         moa_backup: MoA 备用聚合器 (Kimi)
-        Qwen_backup_gen: Qwen 备用 (第三方代理 Qwen3)
+        grok_backup_gen: Grok 备用 (backup provider grok-4.1)
 
     Returns:
         融合结果 dict
@@ -1145,73 +1145,73 @@ def process_single_chunk(
     # Step 1-3: 并行独立分析
     futures = {}
     with ThreadPoolExecutor(max_workers=3) as pool:
-        futures["DeepSeek"] = pool.submit(
-            _run_step_analysis, generators["DeepSeek"], conversation, agent_type, "DeepSeek"
+        futures["claude"] = pool.submit(
+            _run_step_analysis, generators["claude"], conversation, agent_type, "claude"
         )
-        futures["GLM"] = pool.submit(
-            _run_step_analysis, generators["GLM"], conversation, agent_type, "GLM"
+        futures["gpt"] = pool.submit(
+            _run_step_analysis, generators["gpt"], conversation, agent_type, "gpt"
         )
-        if generators.get("Kimi") and (is_mm or not skip_Kimi_non_multimodal):
-            futures["Kimi"] = pool.submit(
-                _run_step_analysis, generators["Kimi"], conversation, agent_type, "Kimi"
+        if generators.get("gemini") and (is_mm or not skip_gemini_non_multimodal):
+            futures["gemini"] = pool.submit(
+                _run_step_analysis, generators["gemini"], conversation, agent_type, "gemini"
             )
 
-    DeepSeek_result = futures["DeepSeek"].result()
-    GLM_result = futures["GLM"].result()
-    Kimi_result = futures.get("Kimi", None)
-    if Kimi_result is not None:
-        Kimi_result = Kimi_result.result()
+    claude_result = futures["claude"].result()
+    gpt_result = futures["gpt"].result()
+    gemini_result = futures.get("gemini", None)
+    if gemini_result is not None:
+        gemini_result = gemini_result.result()
 
-    # DeepSeek 备用: 如果主 DeepSeek 失败且有备用，自动重试
-    if DeepSeek_backup and (not DeepSeek_result or not DeepSeek_result.get("success")):
-        logger.info(f"[{chunk_id}] DeepSeek 主线失败，切换备用 ({DeepSeek_backup.model})...")
-        DeepSeek_result = _run_step_analysis(DeepSeek_backup, conversation, agent_type, "DeepSeek_backup")
-        if DeepSeek_result and DeepSeek_result.get("success"):
-            DeepSeek_result["step"] = "DeepSeek"  # 统一标识
-            DeepSeek_result["model"] = f"{DeepSeek_backup.model} (backup)"
+    # Claude 备用: 如果主 Claude 失败且有备用，自动重试
+    if claude_backup and (not claude_result or not claude_result.get("success")):
+        logger.info(f"[{chunk_id}] Claude 主线失败，切换备用 ({claude_backup.model})...")
+        claude_result = _run_step_analysis(claude_backup, conversation, agent_type, "claude_backup")
+        if claude_result and claude_result.get("success"):
+            claude_result["step"] = "claude"  # 统一标识
+            claude_result["model"] = f"{claude_backup.model} (backup)"
 
     # Step 4: 融合
     if use_moa:
         merged = moa_merge_analyses(
-            generators["Qwen"], DeepSeek_result, GLM_result, Kimi_result,
-            conversation, backup_gen=moa_backup, Qwen_backup_gen=Qwen_backup_gen,
+            generators["grok"], claude_result, gpt_result, gemini_result,
+            conversation, backup_gen=moa_backup, grok_backup_gen=grok_backup_gen,
         )
     else:
-        merged = merge_analyses(DeepSeek_result, GLM_result, Kimi_result)
+        merged = merge_analyses(claude_result, gpt_result, gemini_result)
 
-    # Step 5: 审核 — Kimi 主审 → Kimi 备 → Qwen-jiuuij 兜底
+    # Step 5: 审核 — Kimi 主审 → Gemini 备 → Grok-jiuuij 兜底
     review = None
     if not skip_review and merged["merge_quality"] != "failed":
         analysis_text = json.dumps(merged["merged_features"], ensure_ascii=False)
-        _review_gen = moa_backup or generators["Qwen"]  # Kimi; 若不可用回退 Qwen
-        review = run_Qwen_review(
+        _review_gen = moa_backup or generators["grok"]  # Kimi; 若不可用回退 Grok
+        review = run_grok_review(
             _review_gen, conversation, analysis_text,
-            backup_gen=generators.get("Kimi"),
-            kimi_gen=Qwen_backup_gen,
+            backup_gen=generators.get("gemini"),
+            kimi_gen=grok_backup_gen,
         )
 
-    # Step 5b: 补齐 — Kimi 主补 → Kimi 备 → Qwen-jiuuij 兜底
+    # Step 5b: 补齐 — Gemini 主补 → Kimi 备 → Grok-jiuuij 兜底
     remediation_rounds = 0
     if use_moa and review and review.get("scores") and merged["merge_quality"] != "failed":
         low_dims = {d: s for d, s in review["scores"].items()
                     if isinstance(s, (int, float)) and s <= REMEDIATION_THRESHOLD}
         if low_dims:
             logger.info(f"[{chunk_id}] 低分维度: {low_dims}, 启动补齐...")
-            _rem_primary = generators.get("Kimi") or moa_backup or generators["Qwen"]
-            _rem_backup = moa_backup if generators.get("Kimi") else Qwen_backup_gen
-            merged["merged_features"], remediation_rounds = run_Qwen_remediation(
+            _rem_primary = generators.get("gemini") or moa_backup or generators["grok"]
+            _rem_backup = moa_backup if generators.get("gemini") else grok_backup_gen
+            merged["merged_features"], remediation_rounds = run_grok_remediation(
                 _rem_primary, merged["merged_features"], review["scores"], conversation,
                 backup_gen=_rem_backup,
-                Kimi_gen=Qwen_backup_gen,
+                gemini_gen=grok_backup_gen,
                 kimi_gen=None,
             )
-            # 补齐后重新审核 (Kimi → Kimi → Qwen-jiuuij)
+            # 补齐后重新审核 (Kimi → Gemini → Grok-jiuuij)
             if remediation_rounds > 0:
-                re_review = run_Qwen_review(
+                re_review = run_grok_review(
                     _review_gen, conversation,
                     json.dumps(merged["merged_features"], ensure_ascii=False),
-                    backup_gen=generators.get("Kimi"),
-                    kimi_gen=Qwen_backup_gen,
+                    backup_gen=generators.get("gemini"),
+                    kimi_gen=grok_backup_gen,
                 )
                 if re_review and re_review.get("success"):
                     review = re_review
@@ -1226,9 +1226,9 @@ def process_single_chunk(
         "merge_source": merged["source"],
         "merge_quality": merged["merge_quality"],
         "step_details": {
-            "DeepSeek": _summarize_step(DeepSeek_result),
-            "GLM": _summarize_step(GLM_result),
-            "Kimi": _summarize_step(Kimi_result) if Kimi_result else {"skipped": True},
+            "claude": _summarize_step(claude_result),
+            "gpt": _summarize_step(gpt_result),
+            "gemini": _summarize_step(gemini_result) if gemini_result else {"skipped": True},
             "review": review if review else {"skipped": True, "reason": "skip_flag" if skip_review else "no_analysis"},
         },
         "timestamp": datetime.now().isoformat(),
@@ -1236,10 +1236,10 @@ def process_single_chunk(
 
     # MoA: 保留原始独立分析供审核
     if use_moa:
-        if DeepSeek_result and DeepSeek_result.get("success"):
-            result["DeepSeek_raw"] = DeepSeek_result["features"]
-        if GLM_result and GLM_result.get("success"):
-            result["GLM_raw"] = GLM_result["features"]
+        if claude_result and claude_result.get("success"):
+            result["claude_raw"] = claude_result["features"]
+        if gpt_result and gpt_result.get("success"):
+            result["gpt_raw"] = gpt_result["features"]
         result["moa_elapsed"] = merged.get("moa_elapsed", 0)
         result["remediation_rounds"] = remediation_rounds
         if merged.get("moa_fallback"):
@@ -1259,12 +1259,12 @@ def _process_chunk_with_rotation(
     agent_type: str,
     generators: dict,
     rotators: dict,
-    skip_Kimi_non_multimodal: bool = True,
+    skip_gemini_non_multimodal: bool = True,
     skip_review: bool = False,
     use_moa: bool = False,
-    DeepSeek_backup: Optional[AnalysisGenerator] = None,
+    claude_backup: Optional[AnalysisGenerator] = None,
     moa_backup: Optional[AnalysisGenerator] = None,
-    Qwen_backup_gen: Optional[AnalysisGenerator] = None,
+    grok_backup_gen: Optional[AnalysisGenerator] = None,
 ) -> dict:
     """
     带 key 轮换的 chunk 处理。
@@ -1272,24 +1272,24 @@ def _process_chunk_with_rotation(
     """
     # 为每个 agent 获取下一个可用 key 并切换
     acquired_keys = {}
-    for agent_name in ("DeepSeek", "GLM", "Qwen"):
+    for agent_name in ("claude", "gpt", "grok"):
         if agent_name in rotators and generators.get(agent_name):
             key = rotators[agent_name].acquire()
             generators[agent_name].swap_api_key(key)
             acquired_keys[agent_name] = key
-    if "Kimi" in rotators and generators.get("Kimi"):
-        key = rotators["Kimi"].acquire()
-        generators["Kimi"].swap_api_key(key)
-        acquired_keys["Kimi"] = key
+    if "gemini" in rotators and generators.get("gemini"):
+        key = rotators["gemini"].acquire()
+        generators["gemini"].swap_api_key(key)
+        acquired_keys["gemini"] = key
 
     result = process_single_chunk(
         chunk, agent_type, generators,
-        skip_Kimi_non_multimodal=skip_Kimi_non_multimodal,
+        skip_gemini_non_multimodal=skip_gemini_non_multimodal,
         skip_review=skip_review,
         use_moa=use_moa,
-        DeepSeek_backup=DeepSeek_backup,
+        claude_backup=claude_backup,
         moa_backup=moa_backup,
-        Qwen_backup_gen=Qwen_backup_gen,
+        grok_backup_gen=grok_backup_gen,
     )
 
     # 根据结果标记 key 成功/失败
@@ -1363,30 +1363,30 @@ def main():
     parser.add_argument("--no-resume", action="store_true",
                         help="禁用断点续跑")
     parser.add_argument("--skip-review", action="store_true",
-                        help="跳过 Qwen 审核 (快速测试)")
-    parser.add_argument("--skip-Kimi", action="store_true",
-                        help="跳过 Kimi (即使多模态)")
+                        help="跳过 Grok 审核 (快速测试)")
+    parser.add_argument("--skip-gemini", action="store_true",
+                        help="跳过 Gemini (即使多模态)")
     parser.add_argument("--delay", type=float, default=2.0,
                         help="chunk 间隔秒数 (避免 RPM 超限)")
     parser.add_argument("--moa", action="store_true",
-                        help="启用 MoA v2 有机融合 (Qwen Aggregator + 补齐循环)")
+                        help="启用 MoA v2 有机融合 (Grok Aggregator + 补齐循环)")
     parser.add_argument("--workers", type=int, default=1,
                         help="并发 Worker 数 (需要 --key-pool, 默认 1=串行)")
     parser.add_argument("--key-pool", type=str, default=None,
                         help="key_pool.yaml 路径 (多 key 轮换, 默认 local_secrets/key_pool.yaml)")
     parser.add_argument("--max-rpm", type=int, default=16,
-                        help="账户总 RPM 硬限制 (默认 16, 第三方代理 总限 20 留余量+前端)")
-    parser.add_argument("--Qwen-backend", type=str, default="Qwen",
-                        choices=["Qwen", "kimi"],
-                        help="MoA 聚合器后端 (Qwen 或 kimi) — Qwen-thinking 不稳定时可切换")
-    parser.add_argument("--Qwen-model", type=str, default=None,
-                        help="MoA 聚合器模型名覆盖 (例如 Qwen3 / Qwen3-thinking / moonshotai/Kimi-K2-Instruct)")
+                        help="账户总 RPM 硬限制 (默认 16, OpenAI-compatible proxy 总限 20 留余量+前端)")
+    parser.add_argument("--grok-backend", type=str, default="grok",
+                        choices=["grok", "kimi"],
+                        help="MoA 聚合器后端 (grok 或 kimi) — grok-thinking 不稳定时可切换")
+    parser.add_argument("--grok-model", type=str, default=None,
+                        help="MoA 聚合器模型名覆盖 (例如 grok-4 / grok-4.1-thinking / moonshotai/Kimi-K2-Instruct)")
     parser.add_argument("--pipeline", action="store_true",
                         help="启用 CPU 流水线式并行 (S1 与 S2-S4 并行, 强制启用 --moa)")
     parser.add_argument("--max-s1", type=int, default=2,
                         help="流水线模式: S1 最大并发数 (默认 2)")
-    parser.add_argument("--max-Qwen", type=int, default=3,
-                        help="流水线模式: Qwen 最大并发数 (默认 3)")
+    parser.add_argument("--max-grok", type=int, default=3,
+                        help="流水线模式: Grok 最大并发数 (默认 3)")
     parser.add_argument("--no-rich", action="store_true",
                         help="流水线模式: 禁用 rich 可视化 (用纯文本输出)")
 
@@ -1396,9 +1396,9 @@ def main():
     if args.pipeline:
         args.moa = True
 
-    # MoA 模式默认用 Qwen3 普通 (thinking 模型 JSON 不稳定)
-    if args.moa and args.Qwen_model is None:
-        args.Qwen_model = "Qwen3"
+    # MoA 模式默认用 grok-4 普通 (thinking 模型 JSON 不稳定)
+    if args.moa and args.grok_model is None:
+        args.grok_model = "grok-4"
 
     workspace = PROJECT_ROOT
     input_path = args.input or str(workspace / "advisor_out" / "chunks" / "conversation_chunks.jsonl")
@@ -1459,51 +1459,51 @@ def main():
             gens = _create_generators_from_pool(
                 pool_config,
                 rotators,
-                skip_Kimi=args.skip_Kimi,
-                Qwen_model=args.Qwen_model,
-                Qwen_backend=args.Qwen_backend,
+                skip_gemini=args.skip_gemini,
+                grok_model=args.grok_model,
+                grok_backend=args.grok_backend,
             )
         else:
             gens = {
-                "DeepSeek": _create_generator("DeepSeek"),
-                "GLM": _create_generator("GLM"),
-                "Qwen": _create_generator(
-                    "Qwen",
-                    model=args.Qwen_model,
-                    backend=args.Qwen_backend,
+                "claude": _create_generator("claude"),
+                "gpt": _create_generator("gpt"),
+                "grok": _create_generator(
+                    "grok",
+                    model=args.grok_model,
+                    backend=args.grok_backend,
                 ),
             }
-            if not args.skip_Kimi:
-                gens["Kimi"] = _create_generator("Kimi")
+            if not args.skip_gemini:
+                gens["gemini"] = _create_generator("gemini")
             else:
-                gens["Kimi"] = None
+                gens["gemini"] = None
         worker_generators.append(gens)
 
     # ── 备用 generators (优先从 key_pool.yaml 读取, 回退 env) ────────
-    # DeepSeek 备用 (第三方代理): 第三方代理 不稳定时自动 fallback
-    DeepSeek_backup = None
-    cb_cfg = pool_config.get("DeepSeek_backup", {}) if pool_config else {}
+    # Claude 备用 (backup provider): OpenAI-compatible proxy 不稳定时自动 fallback
+    claude_backup = None
+    cb_cfg = pool_config.get("claude_backup", {}) if pool_config else {}
     cb_keys = cb_cfg.get("keys", [])
     if cb_keys:
-        DeepSeek_backup = _create_generator(
-            "DeepSeek",
+        claude_backup = _create_generator(
+            "claude",
             api_key=cb_keys[0],
             base_url=cb_cfg.get("base_url"),
             model=cb_cfg.get("model"),
         )
-        print(f"  DeepSeek 备用: {DeepSeek_backup.model} ({cb_cfg.get('base_url', '?')})")
+        print(f"  Claude 备用: {claude_backup.model} ({cb_cfg.get('base_url', '?')})")
     else:
         backup_key = os.environ.get("ANTHROPIC_BACKUP_API_KEY")
         if backup_key:
-            DeepSeek_backup = _create_generator(
-                "DeepSeek",
+            claude_backup = _create_generator(
+                "claude",
                 api_key=backup_key,
                 base_url=os.environ.get("ANTHROPIC_BACKUP_BASE_URL"),
                 model=os.environ.get("ANTHROPIC_BACKUP_MODEL"),
             )
-            print(f"  DeepSeek 备用: {DeepSeek_backup.model} ({os.environ.get('ANTHROPIC_BACKUP_BASE_URL', '?')})")
+            print(f"  Claude 备用: {claude_backup.model} ({os.environ.get('ANTHROPIC_BACKUP_BASE_URL', '?')})")
 
-    # Kimi 备用 (MoA 聚合器): Qwen MoA 失败时自动 fallback
+    # Kimi 备用 (MoA 聚合器): grok MoA 失败时自动 fallback
     moa_backup = None
     if args.moa:
         kimi_cfg = pool_config.get("kimi", {}) if pool_config else {}
@@ -1522,29 +1522,29 @@ def main():
         except Exception as e:
             logger.warning(f"Kimi 备用创建失败 (非致命): {e}")
 
-    # Qwen 备用 (第三方代理): 第三方代理 Qwen 失败时自动 fallback
-    Qwen_backup_gen = None
-    Qwen_backup_cfg = pool_config.get("Qwen_backup", {}) if pool_config else {}
-    Qwen_backup_keys = Qwen_backup_cfg.get("keys", [])
-    if Qwen_backup_keys:
+    # Grok 备用 (backup provider): OpenAI-compatible proxy Grok 失败时自动 fallback
+    grok_backup_gen = None
+    grok_backup_cfg = pool_config.get("grok_backup", {}) if pool_config else {}
+    grok_backup_keys = grok_backup_cfg.get("keys", [])
+    if grok_backup_keys:
         try:
-            Qwen_backup_gen = _create_generator(
-                "Qwen_backup",
-                api_key=Qwen_backup_keys[0],
-                base_url=Qwen_backup_cfg.get("base_url"),
-                model=Qwen_backup_cfg.get("model", "Qwen3"),
+            grok_backup_gen = _create_generator(
+                "grok_backup",
+                api_key=grok_backup_keys[0],
+                base_url=grok_backup_cfg.get("base_url"),
+                model=grok_backup_cfg.get("model", "grok-4.1"),
             )
-            print(f"  Qwen 备用: {Qwen_backup_gen.model} ({Qwen_backup_cfg.get('base_url', '?')})")
+            print(f"  Grok 备用: {grok_backup_gen.model} ({grok_backup_cfg.get('base_url', '?')})")
         except Exception as e:
-            logger.warning(f"Qwen 备用创建失败 (非致命): {e}")
+            logger.warning(f"Grok 备用创建失败 (非致命): {e}")
 
     # 打印配置信息（使用第一个 worker 的 generators）
     g0 = worker_generators[0]
-    print(f"  DeepSeek: {g0['DeepSeek'].model}")
-    print(f"  GLM:    {g0['GLM'].model} (ResponseAPI={g0['GLM']._use_response_api})")
-    if g0.get("Kimi"):
-        print(f"  Kimi: {g0['Kimi'].model}")
-    print(f"  Qwen:   {g0['Qwen'].model}")
+    print(f"  Claude: {g0['claude'].model}")
+    print(f"  GPT:    {g0['gpt'].model} (ResponseAPI={g0['gpt']._use_response_api})")
+    if g0.get("gemini"):
+        print(f"  Gemini: {g0['gemini'].model}")
+    print(f"  Grok:   {g0['grok'].model}")
     print(f"  模式:   {'MoA v2 有机融合' if args.moa else 'v1 程序合并'}")
     if args.moa:
         print(f"  补齐阈值: 单项 ≤{REMEDIATION_THRESHOLD} → 补齐到 ≥8 (最多 {MAX_REMEDIATION_ROUNDS} 轮)")
@@ -1557,36 +1557,36 @@ def main():
         import asyncio
         from scripts.advisor.pipeline_executor import PipelineExecutor
 
-        # 创建 DeepSeek 降级 generator (sonnet-4.5-think)
-        DeepSeek_degraded_gen = None
-        DeepSeek_cfg = pool_config.get("DeepSeek", {}) if pool_config else {}
-        degraded_model = DeepSeek_cfg.get("degraded_model", "DeepSeek-V3.2")
+        # 创建 Claude 降级 generator (sonnet-4.5-think)
+        claude_degraded_gen = None
+        claude_cfg = pool_config.get("claude", {}) if pool_config else {}
+        degraded_model = claude_cfg.get("degraded_model", "claude-sonnet-4.5-think")
         if degraded_model:
             try:
-                DeepSeek_degraded_gen = _create_generator(
-                    "DeepSeek",
+                claude_degraded_gen = _create_generator(
+                    "claude",
                     model=degraded_model,
                 )
-                print(f"  DeepSeek 降级: {degraded_model} (Opus 失败时自动切换)")
+                print(f"  Claude 降级: {degraded_model} (Opus 失败时自动切换)")
             except Exception as e:
-                logger.warning(f"DeepSeek 降级 generator 创建失败: {e}")
+                logger.warning(f"Claude 降级 generator 创建失败: {e}")
 
         executor = PipelineExecutor(
             generators=g0,
             agent_type=args.agent_type,
-            DeepSeek_backup=DeepSeek_backup,
+            claude_backup=claude_backup,
             moa_backup=moa_backup,
-            Qwen_backup_gen=Qwen_backup_gen,
+            grok_backup_gen=grok_backup_gen,
             skip_review=args.skip_review,
-            skip_Kimi_non_multimodal=True,
+            skip_gemini_non_multimodal=True,
             max_concurrent_s1=args.max_s1,
-            max_concurrent_Qwen=args.max_Qwen,
+            max_concurrent_grok=args.max_grok,
             use_rich=not args.no_rich,
-            DeepSeek_degradation_to_dual=True,
-            DeepSeek_degraded_gen=DeepSeek_degraded_gen,
+            claude_degradation_to_dual=True,
+            claude_degraded_gen=claude_degraded_gen,
         )
 
-        print(f"  🔧 流水线模式: S1×{args.max_s1} Qwen×{args.max_Qwen}")
+        print(f"  🔧 流水线模式: S1×{args.max_s1} Grok×{args.max_grok}")
         print()
 
         results = asyncio.run(executor.run(pending, output_path))
@@ -1639,18 +1639,18 @@ def main():
 
         # 打印摘要
         step_d = result.get("step_details", {})
-        c_ok = "✅" if step_d.get("DeepSeek", {}).get("success") else "❌"
-        g_ok = "✅" if step_d.get("GLM", {}).get("success") else "❌"
+        c_ok = "✅" if step_d.get("claude", {}).get("success") else "❌"
+        g_ok = "✅" if step_d.get("gpt", {}).get("success") else "❌"
         gem_status = "⏭"
-        if not step_d.get("Kimi", {}).get("skipped", True):
-            gem_status = "✅" if step_d["Kimi"].get("success") else "❌"
+        if not step_d.get("gemini", {}).get("skipped", True):
+            gem_status = "✅" if step_d["gemini"].get("success") else "❌"
         rev_status = "⏭"
         review_d = step_d.get("review", {})
         if review_d.get("success") or (not review_d.get("skipped", True)):
             rev_status = result.get("review_verdict", "") or review_d.get("verdict", "?")
 
-        c_time = step_d.get("DeepSeek", {}).get("elapsed", 0)
-        g_time = step_d.get("GLM", {}).get("elapsed", 0)
+        c_time = step_d.get("claude", {}).get("elapsed", 0)
+        g_time = step_d.get("gpt", {}).get("elapsed", 0)
         moa_t = result.get("moa_elapsed", 0)
         rem_r = result.get("remediation_rounds", 0)
 
@@ -1686,22 +1686,22 @@ def main():
                 if rotators:
                     result = _process_chunk_with_rotation(
                         chunk, args.agent_type, generators, rotators,
-                        skip_Kimi_non_multimodal=True,
+                        skip_gemini_non_multimodal=True,
                         skip_review=args.skip_review,
                         use_moa=args.moa,
-                        DeepSeek_backup=DeepSeek_backup,
+                        claude_backup=claude_backup,
                         moa_backup=moa_backup,
-                        Qwen_backup_gen=Qwen_backup_gen,
+                        grok_backup_gen=grok_backup_gen,
                     )
                 else:
                     result = process_single_chunk(
                         chunk, args.agent_type, generators,
-                        skip_Kimi_non_multimodal=True,
+                        skip_gemini_non_multimodal=True,
                         skip_review=args.skip_review,
                         use_moa=args.moa,
-                        DeepSeek_backup=DeepSeek_backup,
+                        claude_backup=claude_backup,
                         moa_backup=moa_backup,
-                        Qwen_backup_gen=Qwen_backup_gen,
+                        grok_backup_gen=grok_backup_gen,
                     )
 
                 elapsed = time.time() - start
@@ -1730,12 +1730,12 @@ def main():
                     start = time.time()
                     result = _process_chunk_with_rotation(
                         chunk, args.agent_type, gens, rotators,
-                        skip_Kimi_non_multimodal=True,
+                        skip_gemini_non_multimodal=True,
                         skip_review=args.skip_review,
                         use_moa=args.moa,
-                        DeepSeek_backup=DeepSeek_backup,
+                        claude_backup=claude_backup,
                         moa_backup=moa_backup,
-                        Qwen_backup_gen=Qwen_backup_gen,
+                        grok_backup_gen=grok_backup_gen,
                     )
                     elapsed = time.time() - start
                     with stats_lock:

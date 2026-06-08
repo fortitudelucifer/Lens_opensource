@@ -46,7 +46,7 @@
 - JSON 提取支持多种格式：```json 代码块、裸 JSON、混合文本中的 JSON
 - 修复 prompt 中包含具体的 Pydantic 校验错误信息，帮助 LLM 精确修复
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 

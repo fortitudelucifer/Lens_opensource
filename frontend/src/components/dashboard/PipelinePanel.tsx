@@ -1,51 +1,61 @@
+import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Activity, Brain, Zap, ShieldCheck, FileInput } from 'lucide-react'
+import { Activity, Brain, Zap, ShieldCheck, FileInput, Database, Layers, Image, Mic } from 'lucide-react'
+import { api, type PipelineState } from '@/lib/api'
 
-const pipelineStages = [
-  {
-    id: 1,
-    name: 'Ingestion & Triage',
-    icon: FileInput,
-    status: 'completed' as const,
-    time: '120ms',
-    throughput: '342/s',
-    progress: 100,
-    metrics: [{ label: '媒体解析', value: '100%' }, { label: 'OCR', value: '99.8%' }],
-  },
-  {
-    id: 2,
-    name: 'MoA Fusion (S1/S2)',
-    icon: Brain,
-    status: 'processing' as const,
-    time: '24s',
-    throughput: '12/s',
-    progress: 68,
-    metrics: [{ label: 'DeepSeek', value: '85%' }, { label: 'GLM-4.7', value: '60%' }],
-    active: true,
-  },
-  {
-    id: 3,
-    name: 'Review & Remediation (S3/S4)',
-    icon: ShieldCheck,
-    status: 'waiting' as const,
-    time: '-',
-    throughput: '-',
-    progress: 0,
-    metrics: [{ label: '通过率', value: '--' }, { label: '补齐率', value: '--' }],
-  },
-  {
-    id: 4,
-    name: 'Vector Indexing',
-    icon: Zap,
-    status: 'waiting' as const,
-    time: '-',
-    throughput: '-',
-    progress: 0,
-    metrics: [{ label: 'FAISS', value: '--' }, { label: 'BGE-M3', value: '--' }],
-  },
-]
+const PHASE_META: Record<number, { name: string; icon: React.ElementType }> = {
+  0: { name: '数据导入 (Ingestion)', icon: FileInput },
+  1: { name: '多模态处理 (Multimodal)', icon: Image },
+  2: { name: '语义压缩 (Compression)', icon: Layers },
+  3: { name: '合并 & 时间轴 (Merge)', icon: Database },
+  4: { name: 'L1/L2 分支 & SFT', icon: ShieldCheck },
+  5: { name: 'MoA 融合分析', icon: Brain },
+  6: { name: 'QLoRA 训练', icon: Mic },
+  7: { name: 'RAG 索引 (FAISS)', icon: Zap },
+}
 
 export function PipelinePanel() {
+  const [pipeline, setPipeline] = useState<PipelineState | null>(null)
+
+  const fetchStatus = useCallback(() => {
+    api.getPipelineStatus().then(setPipeline).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    fetchStatus()
+    const timer = setInterval(fetchStatus, 5000)
+    return () => clearInterval(timer)
+  }, [fetchStatus])
+
+  const pipelineStages = pipeline
+    ? Object.entries(pipeline.phases).map(([key, phase]) => {
+        const phaseNum = parseInt(key)
+        const meta = PHASE_META[phaseNum] || { name: phase.name, icon: Database }
+        const isRunning = phase.status === 'running'
+        const isDone = phase.status === 'done'
+        return {
+          id: phaseNum,
+          name: meta.name,
+          icon: meta.icon,
+          status: isDone ? 'completed' as const : isRunning ? 'processing' as const : 'waiting' as const,
+          time: isRunning ? '进行中' : isDone ? '完成' : '-',
+          throughput: phase.detail || '-',
+          progress: isDone ? 100 : isRunning ? 50 : 0,
+          metrics: [{ label: '状态', value: phase.status }, { label: '详情', value: phase.detail || '--' }],
+          active: isRunning,
+        }
+      })
+    : Object.entries(PHASE_META).map(([key, meta]) => ({
+        id: parseInt(key),
+        name: meta.name,
+        icon: meta.icon,
+        status: 'waiting' as const,
+        time: '-',
+        throughput: '-',
+        progress: 0,
+        metrics: [{ label: '状态', value: '等待中' }, { label: '详情', value: '--' }],
+        active: false,
+      }))
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}

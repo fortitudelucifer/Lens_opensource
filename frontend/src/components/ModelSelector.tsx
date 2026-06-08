@@ -55,9 +55,7 @@ const backendLabels: Record<string, string> = {
 
 export default function ModelSelector() {
   const [prefs, setPrefs] = useState<ModelPreferences | null>(null)
-  const [available, setAvailable] = useState<AvailableModel[]>([
-    { backend: "deepseek", model: "deepseek-chat", base_url: "https://api.deepseek.com", suitable_for: ["analysis", "review", "chat"] }
-  ])
+  const [available, setAvailable] = useState<AvailableModel[]>([])
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -66,17 +64,8 @@ export default function ModelSelector() {
     setLoading(true)
     try {
       const [p, a] = await Promise.all([
-        api.getModelPreferences().catch(() => ({
-          analysis_backend: "deepseek",
-          analysis_model: "deepseek-chat",
-          review_backend: "deepseek",
-          review_model: "deepseek-chat",
-          chat_backend: "deepseek",
-          chat_model: "deepseek-chat",
-        } as ModelPreferences)),
-        api.getAvailableModels().catch(() => [
-          { backend: "deepseek", model: "deepseek-chat", base_url: "https://api.deepseek.com", suitable_for: ["analysis", "review", "chat"] }
-        ]),
+        api.getModelPreferences(),
+        api.getAvailableModels(),
       ])
       setPrefs(p)
       setAvailable(a)

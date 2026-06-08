@@ -62,7 +62,7 @@ QLoRA 配置：
 - 建议先运行 _00_verify_environment.py 验证环境
 - 训练完成后运行 _07_run_inference.py 测试推理效果
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 

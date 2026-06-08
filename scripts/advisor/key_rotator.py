@@ -15,7 +15,7 @@ API Key 轮换器与全局限流模块
 5. 所有常规 Key 不可用时自动切换到紧急备用 Key
 
 约束条件：
-- 第三方代理 代理商约束: 所有 Key 合计 RPM ≤ 20（账户总限制）
+- OpenAI-compatible proxy 代理商约束: 所有 Key 合计 RPM ≤ 20（账户总限制）
 - 单个 Key 连续失败 3 次后进入 60 秒冷却期
 
 输入：
@@ -49,7 +49,7 @@ API Key 轮换器与全局限流模块
 - 紧急备用 Key 仅在所有常规 Key 不可用时使用
 - 线程安全，可在多线程环境中安全使用
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -65,7 +65,7 @@ logger = logging.getLogger(__name__)
 
 
 class GlobalRateLimiter:
-    """全局 RPM 限制器 — 第三方代理 账户总限制 (所有 key/model 合计)"""
+    """全局 RPM 限制器 — OpenAI-compatible proxy 账户总限制 (所有 key/model 合计)"""
 
     def __init__(self, max_rpm: int = 19):
         self.max_rpm = max_rpm
@@ -226,8 +226,8 @@ def load_key_pool(yaml_path: str | Path) -> dict:
     """
     加载 key_pool.yaml，返回结构:
     {
-        "DeepSeek": {"keys": [...], "base_url": ..., "model": ..., ...},
-        "GLM": {...},
+        "claude": {"keys": [...], "base_url": ..., "model": ..., ...},
+        "gpt": {...},
         ...
         "emergency": {"keys": [...], ...},
     }
@@ -259,10 +259,10 @@ def create_rotators_from_pool(
     """
     从 key_pool 配置创建每个 agent 的 KeyRotator + 全局限速器。
 
-    第三方代理 账户总 RPM ≤ max_rpm，所有 agent 共享。
+    OpenAI-compatible proxy 账户总 RPM ≤ max_rpm，所有 agent 共享。
 
     Returns:
-        ({"DeepSeek": KeyRotator, "GLM": KeyRotator, ...}, GlobalRateLimiter)
+        ({"claude": KeyRotator, "gpt": KeyRotator, ...}, GlobalRateLimiter)
     """
     emergency_keys = pool.get("emergency", {}).get("keys", [])
     global_limiter = GlobalRateLimiter(max_rpm=max_rpm)

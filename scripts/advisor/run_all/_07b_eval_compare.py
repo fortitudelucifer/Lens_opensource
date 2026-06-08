@@ -40,7 +40,7 @@ Strategy B 模型评估对比脚本
 
 使用示例：
     # 完整评估
-    conda run -n CHAT_APP_DHA python scripts/advisor/run_all/_07b_eval_compare.py
+    conda run -n wechatDHA python scripts/advisor/run_all/_07b_eval_compare.py
 
     # 限制测试样本数（调试用）
     python scripts/advisor/run_all/_07b_eval_compare.py --limit 10
@@ -58,7 +58,7 @@ Strategy B 模型评估对比脚本
 - 低温度（0.1）保证推理结果可重复
 - ROUGE-L 基于字符级 LCS，限制最大 5000 字符避免 OOM
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 

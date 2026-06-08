@@ -56,7 +56,7 @@
 - 关键帧会缓存到 /data/cache/，注意磁盘空间
 - 运动检测可能耗时，建议使用 --sample 测试
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-02
 """
 import os

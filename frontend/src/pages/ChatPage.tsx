@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, type ChangeEvent } from 'react'
+import { toast } from 'sonner'
 import { ChatSidebar } from '../components/chat/ChatSidebar'
 import { ChatTopBar } from '../components/chat/ChatTopBar'
 import { ChatArea } from '../components/chat/ChatArea'
@@ -6,19 +7,13 @@ import { BottomInput } from '../components/chat/BottomInput'
 import type { Message, Persona, ChatMode, Session } from '../types'
 import { PERSONAS } from '../constants'
 import { api, type AvailableModel, type ChatSessionSearchResult, type ModelPreferences } from '../lib/api'
-
-const MOCK_SESSIONS: Session[] = [
-  { id: 1, title: '关于伴侣沟通边界的困扰', time: '2小时前', personaId: 'supportive', active: true },
-  { id: 2, title: '与父母的关系问题', time: '昨天', personaId: 'neutral', active: false },
-  { id: 3, title: '自我价值感的探索', time: '3天前', personaId: 'psychoanalytic', active: false },
-]
+import { SafetyDisclaimer } from '../components/safety/SafetyDisclaimer'
+import { ExportDialog, chatToExportData } from '../components/shared/ExportDialog'
+import { SupervisionStatePanel } from '../components/supervision/SupervisionStatePanel'
+import { DialogueProgressAnalysis } from '../components/supervision/DialogueProgressAnalysis'
 
 const FALLBACK_CHAT_MODELS: AvailableModel[] = [
-  { backend: 'deepseek', model: 'DeepSeek-V3.2', base_url: 'https://api.deepseek.com', suitable_for: ['chat'] },
-  { backend: 'qwen_local', model: 'Qwen3-8B-Instruct', base_url: 'http://localhost:8000/v1', suitable_for: ['chat'] },
-  { backend: 'glm', model: 'z-ai/glm4.7', base_url: '(默认)', suitable_for: ['chat'] },
-  { backend: 'kimi', model: 'Kimi-K2.5', base_url: '(默认)', suitable_for: ['chat'] },
-  { backend: 'qwen_cloud', model: 'Qwen/Qwen3-235B-A22B-Thinking-2507', base_url: '(默认)', suitable_for: ['chat'] },
+  { backend: 'deepseek', model: 'deepseek-ai/DeepSeek-V3.1', base_url: 'https://api.example.com/v1', suitable_for: ['chat'] },
 ]
 
 const modelKey = (m: AvailableModel) => `${m.backend}::${m.model}`
@@ -75,8 +70,58 @@ export function ChatPage({
   const [chatModels, setChatModels] = useState<AvailableModel[]>(FALLBACK_CHAT_MODELS)
   const [selectedModelKey, setSelectedModelKey] = useState(modelKey(FALLBACK_CHAT_MODELS[0]))
   const [useRag, setUseRag] = useState(true)
+  const [useKnowledge, setUseKnowledge] = useState(true)
+  const [eftStage, setEftStage] = useState<string | null>(null)
   const [sampleConversations, setSampleConversations] = useState<SampleConversationEntry[]>([])
   const [loadingSample, setLoadingSample] = useState<string | null>(null)
+  const [remoteSessions, setRemoteSessions] = useState<Session[]>([])
+  const [showExport, setShowExport] = useState(false)
+  const [supervisionState, setSupervisionState] = useState<{ singlePerspectiveRisk?: boolean; attachmentLevel?: '低' | '中' | '高' } | null>(null)
+
+  const fetchRemoteSessions = useCallback(() => {
+    api.listSessions().then((list) => {
+      setRemoteSessions(
+        list.map((s) => ({
+          id: parseInt(s.id, 16) || Math.abs(s.id.split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0)),
+          backendSessionId: s.id,
+          title: s.title || '未命名会话',
+          time: s.updated_at ? new Date(s.updated_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '',
+          personaId: s.agent_type || 'neutral',
+          active: false,
+          communication_status: s.communication_status,
+        } as Session & { backendSessionId: string; communication_status?: string }))
+      )
+    }).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    fetchRemoteSessions()
+    const timer = setInterval(fetchRemoteSessions, 10000)
+    return () => clearInterval(timer)
+  }, [fetchRemoteSessions])
+
+  // §4.6 监督状态：有 backendSessionId 时轮询 supervision
+  useEffect(() => {
+    if (!backendSessionId) {
+      setSupervisionState(null)
+      return
+    }
+    const fetchSupervision = () => {
+      api.getSupervisionSession(backendSessionId!).then((res) => {
+        const last = res.supervision_state?.last_judge_analysis as Record<string, unknown> | undefined
+        if (!last) return
+        const sp = last.single_perspective_risk as { is_risk?: boolean } | undefined
+        const att = last.attachment_signal as { level?: string } | undefined
+        setSupervisionState({
+          singlePerspectiveRisk: sp?.is_risk === true,
+          attachmentLevel: (att?.level as '低' | '中' | '高') || undefined,
+        })
+      }).catch(() => {})
+    }
+    fetchSupervision()
+    const timer = setInterval(fetchSupervision, 15000)
+    return () => clearInterval(timer)
+  }, [backendSessionId])
 
   useEffect(() => {
     setCurrentPersona(initialPersona || PERSONAS[0])
@@ -96,7 +141,9 @@ export function ChatPage({
         new Map([...candidates, ...FALLBACK_CHAT_MODELS].map((m) => [modelKey(m), m])).values(),
       )
       const preferred = prefs?.chat_backend
-      const selected = unique.find((m) => m.backend === preferred) || unique[0]
+      const selected = unique.find((m) => m.backend === preferred)
+        || unique.find((m) => m.backend === 'deepseek')
+        || unique[0]
 
       setChatModels(unique)
       setSelectedModelKey(modelKey(selected))
@@ -243,13 +290,13 @@ export function ChatPage({
       active: currentSessionId === entry.sessionId,
     }))
 
-    const defaults = MOCK_SESSIONS.map((session) => ({
+    const backendSessions = remoteSessions.map((session) => ({
       ...session,
       active: currentSessionId === session.id,
     }))
 
-    return [...importedSessions, ...defaults]
-  }, [currentPersona.id, currentSessionId, sampleConversations])
+    return [...importedSessions, ...backendSessions]
+  }, [currentPersona.id, currentSessionId, sampleConversations, remoteSessions])
 
   const handleSessionSelect = useCallback((id: number) => {
     setCurrentSessionId(id)
@@ -258,9 +305,29 @@ export function ChatPage({
       void loadSampleConversation(sample)
       return
     }
+    const remoteSession = remoteSessions.find((s) => s.id === id) as (Session & { backendSessionId?: string }) | undefined
+    if (remoteSession?.backendSessionId) {
+      setIsTyping(true)
+      api.getSession(remoteSession.backendSessionId).then((detail) => {
+        const loaded: Message[] = (detail.messages || []).map((msg, idx) => {
+          const ts = msg.timestamp ? new Date(msg.timestamp) : new Date(Date.now() + idx * 1000)
+          return {
+            id: `${detail.id}-${idx}`,
+            role: msg.role,
+            content: msg.content || '',
+            timestamp: Number.isNaN(ts.getTime()) ? new Date() : ts,
+            personaId: detail.agent_type || currentPersona.id,
+          }
+        })
+        setMessages(loaded)
+        setBackendSessionId(detail.id)
+        setMode(detail.mode === 'consult' ? 'deep' : 'listen')
+      }).catch(() => {}).finally(() => setIsTyping(false))
+      return
+    }
     setMessages([])
     setBackendSessionId(null)
-  }, [loadSampleConversation, sampleConversations])
+  }, [loadSampleConversation, sampleConversations, remoteSessions, currentPersona.id])
 
   const handleSendMessage = useCallback(async (content: string) => {
     if (!content.trim()) return
@@ -304,9 +371,15 @@ export function ChatPage({
         backend: selectedModel?.backend || 'deepseek',
         session_id: backendSessionId || undefined,
         use_rag: useRag,
+        use_knowledge: useKnowledge,
       })) {
         if (token.startsWith('__SESSION_ID__')) {
-          setBackendSessionId(token.replace('__SESSION_ID__', ''))
+          const sid = token.replace('__SESSION_ID__', '')
+          setBackendSessionId(sid)
+          fetchRemoteSessions()
+          if (currentPersona.id === 'eft') {
+            api.getSession(sid).then(s => setEftStage(s.eft_stage ?? null)).catch(() => {})
+          }
           continue
         }
 
@@ -346,17 +419,25 @@ export function ChatPage({
         } catch {
           message = '模型调用失败，请稍后重试。'
         }
+      } else {
+        // Fallback for native errors like NetworkError or 500
+        message = `系统异常: ${raw === 'Load failed' || raw === 'Failed to fetch' ? '网络连接异常，请检查后端服务' : raw}`
       }
 
-      updateAssistant({ content: message })
+      updateAssistant({ content: `**[System Error]** ${message}` })
+      toast.error(message)
     } finally {
       setIsTyping(false)
+      if (currentPersona.id === 'eft' && backendSessionId) {
+        api.getSession(backendSessionId).then(s => setEftStage(s.eft_stage ?? null)).catch(() => {})
+      }
     }
-  }, [backendSessionId, currentPersona, mode, selectedModel, useRag])
+  }, [backendSessionId, currentPersona, mode, selectedModel, useRag, useKnowledge, fetchRemoteSessions])
 
   const handleClearMessages = useCallback(() => {
     setMessages([])
     setBackendSessionId(null)
+    setEftStage(null)
   }, [])
 
   const handleNewChat = () => {
@@ -435,6 +516,8 @@ export function ChatPage({
         currentSessionId={currentSessionId}
         onSessionSelect={handleSessionSelect}
         onNewChat={handleNewChat}
+        onRenameSession={async (id, title) => { await api.renameSession(id, title); fetchRemoteSessions(); }}
+        onDeleteSession={async (id) => { await api.deleteSession(id); fetchRemoteSessions(); if (backendSessionId === id) handleNewChat(); }}
       />
 
       <div className="flex-1 flex flex-col min-w-0 bg-[var(--bg-card)] relative overflow-hidden">
@@ -446,6 +529,8 @@ export function ChatPage({
           }}
         />
 
+        <SafetyDisclaimer />
+
         <ChatTopBar 
           persona={currentPersona} 
           personaOptions={PERSONAS}
@@ -453,6 +538,9 @@ export function ChatPage({
           onModeChange={setMode} 
           useRag={useRag}
           onUseRagChange={setUseRag}
+          useKnowledge={useKnowledge}
+          onUseKnowledgeChange={setUseKnowledge}
+          eftStage={currentPersona.id === 'eft' ? eftStage : null}
           models={chatModels.map((m) => ({
             key: modelKey(m),
             backend: m.backend,
@@ -464,6 +552,8 @@ export function ChatPage({
           onClearMessages={handleClearMessages}
           onBackToAdvisors={handleNewChat}
           onSwitchPersona={handleSwitchPersona}
+          onExport={() => setShowExport(true)}
+          hasMessages={messages.length > 0}
         />
 
         {messages.length === 0 ? (
@@ -519,11 +609,50 @@ export function ChatPage({
             </div>
           </div>
         ) : (
-          <ChatArea messages={messages} currentPersona={currentPersona} />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {backendSessionId && (
+              <div className="shrink-0 px-4 pt-4 grid grid-cols-1 xl:grid-cols-2 gap-3 items-start">
+                <SupervisionStatePanel
+                  singlePerspectiveRisk={supervisionState?.singlePerspectiveRisk}
+                  attachmentLevel={supervisionState?.attachmentLevel}
+                  onGoToArena={() => {
+                    const lastUser = [...messages].reverse().find((m) => m.role === 'user')
+                    if (lastUser?.content) {
+                      sessionStorage.setItem('arena-prefill', lastUser.content)
+                      sessionStorage.setItem('arena-prefill-persona', currentPersona.id)
+                    }
+                    window.history.pushState(null, '', '/arena')
+                    window.dispatchEvent(new PopStateEvent('popstate'))
+                  }}
+                />
+                <DialogueProgressAnalysis sessionId={backendSessionId} />
+              </div>
+            )}
+            <div className="flex-1 overflow-y-auto">
+              <ChatArea messages={messages} currentPersona={currentPersona}
+                onSendToArena={(content) => {
+                  sessionStorage.setItem('arena-prefill', content)
+                  sessionStorage.setItem('arena-prefill-persona', currentPersona.id)
+                  window.history.pushState(null, '', '/arena')
+                  window.dispatchEvent(new PopStateEvent('popstate'))
+                }}
+              />
+            </div>
+          </div>
         )}
 
         <BottomInput onSend={handleSendMessage} disabled={isTyping} isThinking={isTyping} />
       </div>
+
+      <ExportDialog
+        open={showExport}
+        onClose={() => setShowExport(false)}
+        title="导出对话"
+        getData={() => chatToExportData(
+          messages.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp })),
+          messages[0]?.content?.slice(0, 20),
+        )}
+      />
     </div>
   )
 }

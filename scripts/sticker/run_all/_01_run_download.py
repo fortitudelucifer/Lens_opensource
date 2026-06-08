@@ -72,7 +72,7 @@ SHA256 哈希用途：
 - 指数退避：1秒、2秒、4秒
 - 超时设置：连接10秒、读取30秒（可配置）
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-02
 """
 
@@ -125,13 +125,13 @@ def extract_url(record: dict) -> Optional[str]:
         URL 字符串，如果未找到则返回 None
     
     Example:
-        >>> record = {"text_raw": "raw/HTTPS_PLACEHOLDER/sticker.gif"}
+        >>> record = {"text_raw": "raw/https://example.com/sticker.gif"}
         >>> extract_url(record)
-        "HTTPS_PLACEHOLDER/sticker.gif"
+        "https://example.com/sticker.gif"
         
-        >>> record = {"media_path": "HTTPS_PLACEHOLDER/sticker.gif"}
+        >>> record = {"media_path": "https://example.com/sticker.gif"}
         >>> extract_url(record)
-        "HTTPS_PLACEHOLDER/sticker.gif"
+        "https://example.com/sticker.gif"
     """
     for field in ['text_raw', 'media_path']:
         value = record.get(field, '')
@@ -209,7 +209,7 @@ def download_sticker(
         >>> config = load_sticker_config()
         >>> temp_dir = Path("/data/cache/sticker/temp")
         >>> result = download_sticker(
-        ...     "HTTPS_PLACEHOLDER/sticker.gif",
+        ...     "https://example.com/sticker.gif",
         ...     "msg_123",
         ...     temp_dir,
         ...     config
@@ -316,7 +316,7 @@ def filter_sticker_messages(messages: List[dict]) -> List[dict]:
     
     筛选条件：
     - modality == "sticker"
-    - type == 47（CHAT_STICKER_MESSAGE消息类型）
+    - type == 47（微信表情包消息类型）
     - 必须包含有效的 URL
     
     Args:

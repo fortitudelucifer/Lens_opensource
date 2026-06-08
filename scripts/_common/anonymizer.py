@@ -9,14 +9,14 @@
 
 核心功能：
 1. 说话人前缀匿名化：anonymize_speaker_prefix()
-   - "USER_B：是考在职吗" → "OTHER: 是考在职吗"
-   - "USER_A：并不是" → "ME: 并不是"
+   - "UserB：是考在职吗" → "OTHER: 是考在职吗"
+   - "UserA：并不是" → "ME: 并不是"
 
 2. 文本匿名化：anonymize_text()
    - 替换文本中所有出现的真实姓名为 ME/OTHER
 
 3. 撤回消息匿名化：anonymize_recalled_message()
-   - '"USER_B UNIVERSITY_NAME" recalled a message' → 'OTHER recalled a message'
+   - '"UserB 南开大学" recalled a message' → 'OTHER recalled a message'
 
 4. 统一入口：anonymize_message_text()
    - 根据消息类型自动选择合适的匿名化策略
@@ -25,11 +25,11 @@
 - configs/anonymization.yaml:
   ```yaml
   me_names:
-    - "USER_A"
+    - "UserA"
     - "usera"
   other_names:
-    - USER_B
-    - CONTACT_NAME
+    - UserB
+    - 张三
   ```
 
 使用示例：
@@ -56,8 +56,8 @@
     # - yaml: 配置文件解析
     # - re: 正则表达式
     
-    # 作者：forcifer
-    # 项目：CHAT_APP_DHA - CHAT_APP聊天记录多模态处理流水线
+    # 作者：[Author]
+    # 项目：wechatDHA - 微信聊天记录多模态处理流水线
     # 更新于：2026-02-02
 """
 import re
@@ -85,7 +85,7 @@ def load_config(config_path: Optional[Path] = None) -> dict:
     Example:
         >>> config = load_config()
         >>> print(config['me_names'])
-        ['USER_A', 'usera']
+        ['UserA', 'usera']
     """
     global _config
     if _config is not None and config_path is None:
@@ -105,7 +105,7 @@ def get_me_names() -> List[str]:
     获取 ME 姓名列表
     
     Returns:
-        List[str]: ME 的所有姓名变体（例如：['USER_A', 'usera']）
+        List[str]: ME 的所有姓名变体（例如：['UserA', 'usera']）
     """
     config = load_config()
     return config.get("me_names", [])
@@ -115,7 +115,7 @@ def get_other_names() -> List[str]:
     获取 OTHER 姓名列表
     
     Returns:
-        List[str]: OTHER 的所有姓名（例如：['USER_B', 'CONTACT_NAME']）
+        List[str]: OTHER 的所有姓名（例如：['UserB', '张三']）
     """
     config = load_config()
     return config.get("other_names", [])
@@ -129,17 +129,17 @@ def anonymize_speaker_prefix(text: str) -> str:
     处理引用消息中的"姓名："或"姓名:"前缀，替换为 ME/OTHER。
     
     Args:
-        text: 输入文本（例如："USER_B：是考在职吗"）
+        text: 输入文本（例如："UserB：是考在职吗"）
     
     Returns:
         str: 匿名化后的文本（例如："OTHER: 是考在职吗"）
     
     Example:
-        >>> text = "USER_B：是考在职吗"
+        >>> text = "UserB：是考在职吗"
         >>> print(anonymize_speaker_prefix(text))
         OTHER: 是考在职吗
         
-        >>> text = "USER_A：并不是"
+        >>> text = "UserA：并不是"
         >>> print(anonymize_speaker_prefix(text))
         ME: 并不是
         
@@ -181,7 +181,7 @@ def anonymize_text(text: str) -> str:
     """
     替换文本中所有出现的真实姓名为 ME/OTHER
     
-    用于通用文本匿名化（例如："USER_B recalled a message"）。
+    用于通用文本匿名化（例如："UserB recalled a message"）。
     优先替换 OTHER 姓名（通常更长、更具体），然后替换 ME 姓名。
     
     Args:
@@ -191,16 +191,16 @@ def anonymize_text(text: str) -> str:
         str: 匿名化后的文本
     
     Example:
-        >>> text = "USER_B recalled a message"
+        >>> text = "UserB recalled a message"
         >>> print(anonymize_text(text))
         OTHER recalled a message
         
-        >>> text = "USER_A 发送了一条消息"
+        >>> text = "UserA 发送了一条消息"
         >>> print(anonymize_text(text))
         ME 发送了一条消息
         
         >>> # 多次出现
-        >>> text = "USER_B给USER_B发消息"
+        >>> text = "UserB给UserB发消息"
         >>> print(anonymize_text(text))
         OTHER给OTHER发消息
     """
@@ -213,7 +213,7 @@ def anonymize_text(text: str) -> str:
     other_names = get_other_names()
     for name in sorted(other_names, key=len, reverse=True):
         # Use word boundary-like matching for Chinese
-        # For names like "CONTACT_NAME", replace directly
+        # For names like "张三", replace directly
         result = result.replace(name, "OTHER")
     
     # Replace ME names
@@ -233,17 +233,17 @@ def anonymize_recalled_message(text: str) -> str:
     处理 'XXX recalled a message' 模式，提取姓名并替换为 ME/OTHER。
     
     Args:
-        text: 输入文本（例如：'"USER_B UNIVERSITY_NAME" recalled a message'）
+        text: 输入文本（例如：'"UserB 某大学" recalled a message'）
     
     Returns:
         str: 匿名化后的文本（例如：'OTHER recalled a message'）
     
     Example:
-        >>> text = '"USER_B UNIVERSITY_NAME UNIVERSITY_TYPE" recalled a message'
+        >>> text = '"UserB 某大学 本科某高校" recalled a message'
         >>> print(anonymize_recalled_message(text))
         OTHER recalled a message
         
-        >>> text = '"USER_A" recalled a message'
+        >>> text = '"UserA" recalled a message'
         >>> print(anonymize_recalled_message(text))
         ME recalled a message
         
@@ -296,12 +296,12 @@ def anonymize_message_text(text: str, modality: str = None, msg_type: int = None
     
     Example:
         >>> # 系统消息（撤回）
-        >>> text = '"USER_B" recalled a message'
+        >>> text = '"UserB" recalled a message'
         >>> print(anonymize_message_text(text, msg_type=0))
         OTHER recalled a message
         
         >>> # 普通文本消息
-        >>> text = "USER_B说：你好"
+        >>> text = "UserB说：你好"
         >>> print(anonymize_message_text(text, msg_type=1))
         OTHER说：你好
     """

@@ -41,7 +41,7 @@
 - 审核完成后运行 _04_import_reviewed.py 导入结果
 - 建议先运行 _03b_ai_review.py 进行 AI 预审核，减少人工工作量
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 

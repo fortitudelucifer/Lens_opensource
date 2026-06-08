@@ -5,6 +5,8 @@ interface MarkdownContentProps {
   isUser?: boolean
 }
 
+const MD_LINE_RE = /^(\s*[-*+]\s|#{1,6}\s|\d+\.\s|>\s|```|\|)/
+
 function normalizeMarkdownContent(raw: string): string {
   const normalized = raw
     .replace(/\r\n?/g, '\n')
@@ -14,8 +16,19 @@ function normalizeMarkdownContent(raw: string): string {
   const lines = normalized.split('\n').map((line) => line.replace(/\s+$/g, ''))
   const rebuilt: string[] = []
 
-  for (const line of lines) {
-    // 修复同一行混入多个 markdown 标记导致的“半渲染”问题
+  for (let li = 0; li < lines.length; li++) {
+    const line = lines[li]
+    const prev = rebuilt.length > 0 ? rebuilt[rebuilt.length - 1] : ''
+
+    if (
+      li > 0 && prev.trim() && line.trim() &&
+      !MD_LINE_RE.test(line) && !MD_LINE_RE.test(prev) &&
+      !/[。！？：；.!?:;]$/.test(prev) && !/\s{2}$/.test(prev)
+    ) {
+      rebuilt[rebuilt.length - 1] += line
+      continue
+    }
+
     const splitLine = line
       .replace(/\s{3,}(?=(?:>\s*|[*+-]\s+|\d+\.\s+))/g, '\n')
       .replace(/^(\s*>\s*)\*\s*"?/g, '$1* "')

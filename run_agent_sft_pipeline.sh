@@ -66,7 +66,7 @@ fi
 # Step 1: 时间轴后处理
 if [ "$SKIP_POSTPROCESS" = false ]; then
     echo -e "${YELLOW}[1/6] 时间轴后处理...${NC}"
-    conda run -n CHAT_APP_DHA python scripts/timeline/postprocess_timeline.py \
+    conda run -n wechatDHA python scripts/timeline/postprocess_timeline.py \
         --input "${TIMELINE_DIR}/enriched_full.jsonl" \
         --output "${TIMELINE_DIR}/enriched_full_processed.jsonl"
     echo ""
@@ -83,14 +83,14 @@ fi
 if [ -z "$ONLY" ] || [ "$ONLY" = "l1" ]; then
     # Step 2: L1 字段精简
     echo -e "${YELLOW}[2/6] L1 字段精简...${NC}"
-    conda run -n CHAT_APP_DHA python scripts/compression/sft_trimmer.py --l1 \
+    conda run -n wechatDHA python scripts/compression/sft_trimmer.py --l1 \
         --input-dir "${TIMELINE_DIR}" \
         --output-dir "${TIMELINE_DIR}"
     echo ""
 
     # Step 3: L1 SFT 优化
     echo -e "${YELLOW}[3/6] L1 SFT 优化...${NC}"
-    conda run -n CHAT_APP_DHA python scripts/compression/sft_optimizer.py \
+    conda run -n wechatDHA python scripts/compression/sft_optimizer.py \
         --input "${TIMELINE_DIR}/enriched_full_anonymized_l1_sft.jsonl" \
         --output "${TIMELINE_DIR}/agent_sft_l1.jsonl" \
         --level l1 \
@@ -106,7 +106,7 @@ fi
 if [ -z "$ONLY" ] || [ "$ONLY" = "l2" ]; then
     # Step 4: L2 匿名化
     echo -e "${YELLOW}[4/6] L2 匿名化（使用两阶段 PII）...${NC}"
-    conda run -n CHAT_APP_DHA python scripts/timeline/run_anonymization.py \
+    conda run -n wechatDHA python scripts/timeline/run_anonymization.py \
         --level l2 \
         --input "${TIMELINE_DIR}/enriched_full_processed.jsonl" \
         --output-dir "${TIMELINE_DIR}" \
@@ -115,14 +115,14 @@ if [ -z "$ONLY" ] || [ "$ONLY" = "l2" ]; then
 
     # Step 5: L2 字段精简
     echo -e "${YELLOW}[5/6] L2 字段精简...${NC}"
-    conda run -n CHAT_APP_DHA python scripts/compression/sft_trimmer.py --l2 \
+    conda run -n wechatDHA python scripts/compression/sft_trimmer.py --l2 \
         --input-dir "${TIMELINE_DIR}" \
         --output-dir "${TIMELINE_DIR}"
     echo ""
 
     # Step 6: L2 SFT 优化
     echo -e "${YELLOW}[6/6] L2 SFT 优化...${NC}"
-    conda run -n CHAT_APP_DHA python scripts/compression/sft_optimizer.py \
+    conda run -n wechatDHA python scripts/compression/sft_optimizer.py \
         --input "${TIMELINE_DIR}/enriched_full_anonymized_l2_sft.jsonl" \
         --output "${TIMELINE_DIR}/agent_sft_l2.jsonl" \
         --level l2 \
@@ -144,7 +144,7 @@ elif [ "$ONLY" = "l2" ]; then
     VALIDATE_LEVEL="l2"
 fi
 
-conda run -n CHAT_APP_DHA python scripts/compression/validate_sft_quality.py \
+conda run -n wechatDHA python scripts/compression/validate_sft_quality.py \
     --level "$VALIDATE_LEVEL" \
     --input-dir "${TIMELINE_DIR}" \
     --config configs/anonymization.yaml

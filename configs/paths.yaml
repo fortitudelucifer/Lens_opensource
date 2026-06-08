@@ -1,0 +1,62 @@
+# ============================================================
+# 路径配置 - 工作空间级别
+# ============================================================
+# 修改 workspace_name 即可切换到不同的聊天对象工作空间
+# 模型路径 (/data/models) 和缓存路径 (/data/cache) 保持不变
+
+# 工作空间名称 - 修改此值切换工作空间
+workspace_name: demo
+
+# 基础路径 (自动拼接)
+base_dir: <WORKSPACES_DIR>
+# root 路径会在运行时自动计算为: {base_dir}/{workspace_name}
+
+dirs:
+  raw: ${root}/raw
+  image: ${root}/raw/image
+  video: ${root}/raw/video
+  voice: ${root}/raw/voice
+  sticker: ${root}/raw/sticker
+  file: ${root}/raw/file
+  export: ${root}/raw/export
+  logs: ${root}/logs
+
+raw:
+  messages: ${root}/raw/P1_messages_raw.jsonl
+  voice_dir: ${root}/raw/voice
+
+artifacts:
+  before_merge: ${root}/artifacts/before_merge
+  after_merge: ${root}/artifacts/after_merge
+  # 图片模态
+  image_before: ${root}/artifacts/before_merge/image
+  image_after: ${root}/artifacts/after_merge/image
+  # 语音模态
+  voice_before: ${root}/artifacts/before_merge/voice
+  voice_after: ${root}/artifacts/after_merge/voice
+  # 视频模态
+  video_before: ${root}/artifacts/before_merge/video
+  video_after: ${root}/artifacts/after_merge/video
+  # 表情包模态
+  sticker_before: ${root}/artifacts/before_merge/sticker
+  sticker_after: ${root}/artifacts/after_merge/sticker
+  sticker_thumbs: ${root}/artifacts/before_merge/sticker/thumbs
+  sticker_frames: ${root}/artifacts/before_merge/sticker/frames
+  # 链接与文件模态
+  linkfile_before: ${root}/artifacts/before_merge/linkfile
+  linkfile_after: ${root}/artifacts/after_merge/linkfile
+
+# 缓存目录 (全局共享，不随工作空间变化)
+cache:
+  video_keyframes: ./data/cache/video_keyframes
+  video_audio: ./data/cache/video_audio
+  video_normalized: ./data/cache/video_normalized
+  sticker_temp: ./data/cache/sticker/temp
+
+timeline_out: ${root}/timeline_out
+picks: ${root}/picks
+
+# 测试目录
+test:
+  manual_videos: ${root}/tests/manual_videos
+  manual_images: ${root}/tests/manual_images

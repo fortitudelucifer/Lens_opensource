@@ -2,13 +2,13 @@
 """
 工作空间初始化脚本
 
-将CHAT_APP导出的原始材料库转换为符合 CHAT_APP_DHA 项目结构的工作空间。
+将微信导出的原始材料库转换为符合 wechatDHA 项目结构的工作空间。
 
 使用方法:
     python scripts/workspace/init_workspace.py              # 执行初始化
     python scripts/workspace/init_workspace.py --dry-run    # 仅预览，不执行
     python scripts/workspace/init_workspace.py --template lwy  # 指定模板工作空间
-    python scripts/workspace/init_workspace.py --contact-name "CONTACT_NAME"  # 指定联系人名
+    python scripts/workspace/init_workspace.py --contact-name "张三"  # 指定联系人名
 
 功能:
     1. 创建标准目录结构
@@ -73,8 +73,6 @@ def create_directory_structure(root: Path, dry_run: bool = False) -> None:
         "logs",
         "tests/manual_images",
         "tests/manual_videos",
-        ".kiro/specs",
-        ".kiro/steering",
     ]
     
     print("=" * 60)
@@ -218,26 +216,7 @@ def copy_scripts_and_configs(root: Path, template_workspace: str, dry_run: bool 
     
     if not dry_run and copied_configs > 0:
         print(f"  复制: {copied_configs} 个通用配置文件（真实文件）")
-    
-    # 复制 steering 文件（真实文件，非软链接）
-    steering_files = ["behavior.md", "product.md", "structure.md", "tech.md"]
-    
-    copied_steering = 0
-    for steering_file in steering_files:
-        src = template_root / ".kiro" / "steering" / steering_file
-        dest = root / ".kiro" / "steering" / steering_file
         
-        if src.exists() and not dest.exists():
-            if dry_run:
-                print(f"  [预览] 复制 .kiro/steering/{steering_file}")
-            else:
-                # 确保复制真实文件内容
-                shutil.copy2(src, dest, follow_symlinks=True)
-                copied_steering += 1
-    
-    if not dry_run and copied_steering > 0:
-        print(f"  复制: {copied_steering} 个 steering 文件（真实文件）")
-    
     # 复制 docs 目录（如果存在）
     src_docs = template_root / "docs"
     dest_docs = root / "docs"
@@ -266,7 +245,7 @@ def create_workspace_configs(root: Path, workspace_name: str, contact_name: str,
 # 路径配置 - 工作空间级别
 # ============================================================
 workspace_name: {workspace_name}
-base_dir: /path/to/data/root
+base_dir: <WORKSPACES_DIR>
 
 dirs:
   raw: ${{root}}/raw
@@ -514,12 +493,12 @@ def run_ingestion_step(root: Path, args) -> None:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="初始化 CHAT_APP_DHA 工作空间")
+    parser = argparse.ArgumentParser(description="初始化 wechatDHA 工作空间")
     parser.add_argument("--dry-run", action="store_true", help="仅预览，不执行实际操作")
     parser.add_argument("--template", default="lwy", help="模板工作空间名称 (默认: lwy)")
     parser.add_argument("--contact-name", help="联系人名称 (默认: 从 HTML 文件名检测)")
     parser.add_argument("--skip-cleanup", action="store_true", help="跳过清理旧目录")
-    parser.add_argument("--source-type", help="输入数据来源类型 (chat_app_html|telegram_json|whatsapp_txt|generic_csv|generic_jsonl)")
+    parser.add_argument("--source-type", help="输入数据来源类型 (wechat_html|telegram_json|whatsapp_txt|generic_csv|generic_jsonl)")
     parser.add_argument("--skip-ingest", action="store_true", help="跳过归一化导入步骤")
     parser.add_argument("--ingest-dry-run", action="store_true", help="仅预检归一化，不执行实际转换")
     args = parser.parse_args()
@@ -531,7 +510,7 @@ def main():
     contact_name = args.contact_name or detect_contact_name(root) or "联系人"
     
     print(f"\n{'='*60}")
-    print(f"CHAT_APP_DHA 工作空间初始化")
+    print(f"wechatDHA 工作空间初始化")
     print(f"{'='*60}")
     print(f"  工作空间: {workspace_name}")
     print(f"  联系人: {contact_name}")

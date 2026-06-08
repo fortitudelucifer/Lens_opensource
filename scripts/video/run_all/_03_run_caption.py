@@ -108,7 +108,7 @@ Triage 跳过策略：
 - LLaVA Fallback 需要 PyAV 库（pip install av）
 - Fallback 触发条件可在 configs/video.yaml 中配置
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-02
 """
 import os

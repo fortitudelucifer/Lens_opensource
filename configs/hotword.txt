@@ -1,0 +1,5 @@
+# ASR Hotword List
+# One word per line. Used to improve speech recognition accuracy for specific terms.
+# Example:
+# OpenAI
+# ChatGPT

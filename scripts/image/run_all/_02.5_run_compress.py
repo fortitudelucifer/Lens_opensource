@@ -69,7 +69,7 @@
 - TEXT_PRIMARY 图片即使无 caption 也会被处理
 - 压缩不会丢失关键信息，只是更简洁
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-02
 """
 

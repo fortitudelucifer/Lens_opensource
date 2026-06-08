@@ -1,5 +1,52 @@
+# ══════════════════════════════════════════════════════════════
+# Privacy & sensitive data — never commit user/private content
+# ══════════════════════════════════════════════════════════════
+raw/**
+!raw/
+!raw/**/
+!raw/**/.gitkeep
+
+timeline_out/**
+!timeline_out/
+!timeline_out/**/
+!timeline_out/**/.gitkeep
+
+artifacts/**
+!artifacts/
+!artifacts/**/
+!artifacts/**/.gitkeep
+
+advisor_out/**
+!advisor_out/
+!advisor_out/**/
+!advisor_out/**/.gitkeep
+
+local_secrets/**
+!local_secrets/
+!local_secrets/.gitkeep
+!local_secrets/.env.advisor.example
+
+configs/anonymization.yaml
+configs/confirmed_names.yaml
+source_manifest.yaml
+picks/
+research/
+data/
+datasets/
+logs/
+cache/
+.trash/
+
+# Known private/key-test scripts
+scripts/advisor/test_all_platforms.py
+scripts/advisor/test_full_platforms.py
+scripts/advisor/test_backends.py
+
+# ══════════════════════════════════════════════════════════════
 # Python
+# ══════════════════════════════════════════════════════════════
 __pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 *.so
@@ -23,23 +70,79 @@ MANIFEST
 
 # Virtual environments
 .env
-.venv
+.env.*
+!.env.example
+!local_secrets/.env.advisor.example
+.venv/
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
 
-# IDE
+# ══════════════════════════════════════════════════════════════
+# Model weights & large binary artifacts
+# ══════════════════════════════════════════════════════════════
+*.safetensors
+*.bin
+*.gguf
+*.ggml
+*.pt
+*.pth
+*.onnx
+models/
+checkpoints/
+
+# ══════════════════════════════════════════════════════════════
+# Frontend / Electron build outputs
+# ══════════════════════════════════════════════════════════════
+frontend/node_modules/
+frontend/dist/
+frontend/playwright-report/
+frontend/test-results/
+frontend/frontend_log.txt
+
+electron/dist/
+electron/out/
+electron/build/
+*.dmg
+*.exe
+*.AppImage
+*.deb
+*.snap
+
+# ══════════════════════════════════════════════════════════════
+# Generated data files and temporary outputs
+# ══════════════════════════════════════════════════════════════
+*.jsonl
+*.csv
+*.html
+*.tmp
+*.temp
+*.cache
+*.log
+output/
+outputs/
+results/
+temp/
+tmp/
+!package-lock.json
+!frontend/package-lock.json
+!frontend/public/chat-samples/*.json
+!frontend/public/chat-samples/manifest.json
+
+# ══════════════════════════════════════════════════════════════
+# IDE / OS / local tooling
+# ══════════════════════════════════════════════════════════════
 .vscode/
 .idea/
+.windsurf/
+.devin/
+.cursor/debug*.log
+.obsidian/
 *.swp
 *.swo
 *~
-.windsurf/
-frontend/node_modules/
-
-# OS
 .DS_Store
 .DS_Store?
 ._*
@@ -47,73 +150,18 @@ frontend/node_modules/
 .Trashes
 ehthumbs.db
 Thumbs.db
-
-# Project specific
-raw/
-artifacts/
-timeline_out/
-logs/
-cache/
-*.cache
-*.log
-*.tmp
-
-# Model files (too large for GitHub)
-*.bin
-*.safetensors
-*.gguf
-*.pth
-*.pt
-models/
-checkpoints/
-advisor_out/
-
-# Data files
-*.jsonl
-*.json
-*.csv
-*.html
-*.txt
-!requirements.txt
-data/
-datasets/
-frontend/public/chat-samples/*
-
-# Cache directories
+.pytest_cache/
+.hypothesis/
 .cache/
 .cache_huggingface/
 .faiss/
-__pycache__/
-
-# Output files
-output/
-results/
-outputs/
-
-# Configuration files with sensitive data
-configs/anonymization.yaml
-configs/paths.yaml
-configs/hotword.txt
-source_manifest.yaml
-
-# Temporary files
-temp/
-tmp/
-*.temp
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# pytest
-.pytest_cache/
+.ipynb_checkpoints/
 .coverage
 htmlcov/
-
-# mypy
 .mypy_cache/
 .dmypy.json
 dmypy.json
 
-# WeChat article files (not to be uploaded)
+# WeChat article drafts / release marketing drafts
 wechat_article.md
 Lens_opensource_wechat_article_v2.md

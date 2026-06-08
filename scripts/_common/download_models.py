@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHAT_APP_DHA 模型下载器 - 统一下载所有流水线所需模型
+wechatDHA 模型下载器 - 统一下载所有流水线所需模型
 
 支持的模型:
 1. MiniCPM-V 4.5 Abliterated int8 - NSFW专家 (~10GB, VRAM ~9GB)
@@ -37,7 +37,7 @@ except ImportError:
 # ============================================================
 # 配置
 # ============================================================
-MODELS_DIR = "/path/to/models"
+MODELS_DIR = "/data/models"
 HF_ENDPOINT = os.environ.get("HF_ENDPOINT", "https://huggingface.co")
 
 # ============================================================
@@ -229,7 +229,7 @@ def download_hf_model(key: str) -> bool:
 # 主函数
 # ============================================================
 def main():
-    parser = argparse.ArgumentParser(description="CHAT_APP_DHA 模型下载器")
+    parser = argparse.ArgumentParser(description="wechatDHA 模型下载器")
     parser.add_argument("--nsfw", action="store_true", help="仅下载NSFW相关模型")
     parser.add_argument("--doc", action="store_true", help="仅下载文档专家模型")
     parser.add_argument("--triage", action="store_true", help="仅下载分类器模型")
@@ -240,7 +240,7 @@ def main():
     # 如果没有指定任何选项，默认下载全部
     download_all = not any([args.nsfw, args.doc, args.triage, args.gore])
     
-    print("🚀 CHAT_APP_DHA 模型下载器")
+    print("🚀 wechatDHA 模型下载器")
     print(f"   目标目录: {MODELS_DIR}")
     print(f"   HF终点: {HF_ENDPOINT}")
     

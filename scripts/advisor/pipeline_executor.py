@@ -4,28 +4,28 @@ CPU 流水线式并行执行器模块
 
 功能：
 - 四级异步流水线并行执行 MoA（Mixture of Analysts）分析
-- S1 多模型并行分析（DeepSeek + GLM + Kimi 同时调用）
-- S2-S4 使用 Qwen API 进行融合、审核和修复
+- S1 多模型并行分析（Claude + GPT + Gemini 同时调用）
+- S2-S4 使用 Grok API 进行融合、审核和修复
 - Rich 终端实时可视化（显示每个 chunk 在流水线中的位置和状态）
-- 自动降级策略（DeepSeek 失败 → GLM+Kimi 双分析）
+- 自动降级策略（Claude 失败 → GPT+Gemini 双分析）
 
 四级流水线：
-  S1 Analysis (DeepSeek+GLM+Kimi 并行) → S2 MoA Fusion (Qwen)
-  → S3 Review (Qwen) → S4 Remediation (Qwen)
+  S1 Analysis (Claude+GPT+Gemini 并行) → S2 MoA Fusion (Grok)
+  → S3 Review (Grok) → S4 Remediation (Grok)
 
 并行策略：
-- S1 使用 DeepSeek/GLM/Kimi API，S2-S4 使用 Qwen API — 天然不竞争
+- S1 使用 Claude/GPT/Gemini API，S2-S4 使用 Grok API — 天然不竞争
 - 当 chunk[i] 进入 S2 时，chunk[i+1] 可立即开始 S1
 
 降级策略：
-- DeepSeek 失败 → GLM+Kimi 双分析（非 GLM-only）
-- Qwen MoA 失败 → Kimi 备用 → v1 程序合并
+- Claude 失败 → GPT+Gemini 双分析（非 GPT-only）
+- Grok MoA 失败 → Kimi 备用 → v1 程序合并
 
 处理流程：
 1. 将所有 chunks 放入 S1 队列
 2. S1: 并行调用 3 个云端模型生成初始分析
-3. S2: Qwen 融合 3 个分析结果（MoA 策略）
-4. S3: Qwen 审核融合结果的质量和一致性
+3. S2: Grok 融合 3 个分析结果（MoA 策略）
+4. S3: Grok 审核融合结果的质量和一致性
 5. S4: 对审核不通过的结果进行修复
 6. 输出最终分析结果
 
@@ -50,11 +50,11 @@ CPU 流水线式并行执行器模块
 - 相比串行执行提速约 2-3x
 
 注意事项：
-- 需要配置 DeepSeek、GLM、Kimi、Qwen 四个后端的 API Key
+- 需要配置 Claude、GPT、Gemini、Grok 四个后端的 API Key
 - Rich 可视化需要终端支持 ANSI 颜色
 - 异步执行，需要在 asyncio 事件循环中运行
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -262,7 +262,7 @@ class PipelineExecutor:
     """
     CPU 指令流水线式并行执行器。
 
-    S1 (Analysis) 和 S2-S4 (Qwen) 使用不同的 API provider，
+    S1 (Analysis) 和 S2-S4 (Grok) 使用不同的 API provider，
     天然不竞争，因此 chunk[i] 的 S2 和 chunk[i+1] 的 S1 可并行。
     """
 
@@ -270,35 +270,35 @@ class PipelineExecutor:
         self,
         generators: dict,
         agent_type: str = "neutral",
-        DeepSeek_backup: object = None,
+        claude_backup: object = None,
         moa_backup: object = None,
-        Qwen_backup_gen: object = None,
+        grok_backup_gen: object = None,
         skip_review: bool = False,
-        skip_Kimi_non_multimodal: bool = True,
+        skip_gemini_non_multimodal: bool = True,
         max_concurrent_s1: int = 2,
-        max_concurrent_Qwen: int = 3,
+        max_concurrent_grok: int = 3,
         use_rich: bool = True,
-        # 降级策略: DeepSeek Opus 失败 → Sonnet 4.5 Think → GLM+Kimi 双分析
-        DeepSeek_degradation_to_dual: bool = True,
-        # DeepSeek 降级 generator (sonnet-4.5-think)
-        DeepSeek_degraded_gen: object = None,
+        # 降级策略: Claude Opus 失败 → Sonnet 4.5 Think → GPT+Gemini 双分析
+        claude_degradation_to_dual: bool = True,
+        # Claude 降级 generator (sonnet-4.5-think)
+        claude_degraded_gen: object = None,
     ):
         self.generators = generators
         self.agent_type = agent_type
-        self.DeepSeek_backup = DeepSeek_backup
+        self.claude_backup = claude_backup
         self.moa_backup = moa_backup
-        self.Qwen_backup_gen = Qwen_backup_gen
+        self.grok_backup_gen = grok_backup_gen
         self.skip_review = skip_review
-        self.skip_Kimi_non_multimodal = skip_Kimi_non_multimodal
-        self.DeepSeek_degradation_to_dual = DeepSeek_degradation_to_dual
-        self.DeepSeek_degraded_gen = DeepSeek_degraded_gen
+        self.skip_gemini_non_multimodal = skip_gemini_non_multimodal
+        self.claude_degradation_to_dual = claude_degradation_to_dual
+        self.claude_degraded_gen = claude_degraded_gen
 
         # Semaphores: 控制每个阶段的并发度
         self._s1_sem = asyncio.Semaphore(max_concurrent_s1)
-        self._Qwen_sem = asyncio.Semaphore(max_concurrent_Qwen)
+        self._grok_sem = asyncio.Semaphore(max_concurrent_grok)
 
         # Thread pool for running sync API calls in async context
-        self._thread_pool = ThreadPoolExecutor(max_workers=max_concurrent_s1 + max_concurrent_Qwen + 2)
+        self._thread_pool = ThreadPoolExecutor(max_workers=max_concurrent_s1 + max_concurrent_grok + 2)
 
         self.use_rich = use_rich
         self.viz: Optional[PipelineVisualizer] = None
@@ -307,8 +307,8 @@ class PipelineExecutor:
         self.stats = {
             "success": 0, "failed": 0,
             "moa_full": 0, "moa_fallback": 0,
-            "DeepSeek_degraded_to_sonnet": 0,
-            "DeepSeek_degraded_to_dual": 0,
+            "claude_degraded_to_sonnet": 0,
+            "claude_degraded_to_dual": 0,
             "remediation_triggered": 0,
             "total_time": 0,
         }
@@ -324,7 +324,7 @@ class PipelineExecutor:
         # Lazy imports to avoid circular dependency
         from scripts.advisor.run_all._02c_fusion_pipeline import (
             _run_step_analysis, moa_merge_analyses, merge_analyses,
-            run_Qwen_review, run_Qwen_remediation, _summarize_step,
+            run_grok_review, run_grok_remediation, _summarize_step,
             _is_multimodal, REMEDIATION_THRESHOLD,
         )
 
@@ -344,7 +344,7 @@ class PipelineExecutor:
             self.viz.add_chunk(cs)
             cs.start_time = time.time()
 
-            # ── S1: Analysis (DeepSeek + GLM + Kimi 并行) ──
+            # ── S1: Analysis (Claude + GPT + Gemini 并行) ──
             async with self._s1_sem:
                 cs.set_stage("s1_analysis", StageStatus.RUNNING)
                 self.viz.update()
@@ -353,61 +353,61 @@ class PipelineExecutor:
                 s1_start = time.time()
                 loop = asyncio.get_event_loop()
 
-                # Run DeepSeek, GLM, (Kimi) concurrently in thread pool
-                DeepSeek_fut = loop.run_in_executor(
+                # Run Claude, GPT, (Gemini) concurrently in thread pool
+                claude_fut = loop.run_in_executor(
                     self._thread_pool,
-                    _run_step_analysis, self.generators["DeepSeek"], conversation, self.agent_type, "DeepSeek"
+                    _run_step_analysis, self.generators["claude"], conversation, self.agent_type, "claude"
                 )
-                GLM_fut = loop.run_in_executor(
+                gpt_fut = loop.run_in_executor(
                     self._thread_pool,
-                    _run_step_analysis, self.generators["GLM"], conversation, self.agent_type, "GLM"
+                    _run_step_analysis, self.generators["gpt"], conversation, self.agent_type, "gpt"
                 )
 
-                Kimi_fut = None
-                run_Kimi = (self.generators.get("Kimi") and
-                              (is_mm or not self.skip_Kimi_non_multimodal))
-                if run_Kimi:
-                    Kimi_fut = loop.run_in_executor(
+                gemini_fut = None
+                run_gemini = (self.generators.get("gemini") and
+                              (is_mm or not self.skip_gemini_non_multimodal))
+                if run_gemini:
+                    gemini_fut = loop.run_in_executor(
                         self._thread_pool,
-                        _run_step_analysis, self.generators["Kimi"], conversation, self.agent_type, "Kimi"
+                        _run_step_analysis, self.generators["gemini"], conversation, self.agent_type, "gemini"
                     )
 
                 # Await all S1 results
-                DeepSeek_result, GLM_result = await asyncio.gather(DeepSeek_fut, GLM_fut)
-                Kimi_result = await Kimi_fut if Kimi_fut else None
+                claude_result, gpt_result = await asyncio.gather(claude_fut, gpt_fut)
+                gemini_result = await gemini_fut if gemini_fut else None
 
-                # DeepSeek Opus 失败 → 降级 Sonnet 4.5 Think
-                if not DeepSeek_result or not DeepSeek_result.get("success"):
-                    if self.DeepSeek_degraded_gen:
-                        logger.info(f"[{chunk_id}] DeepSeek Opus 失败，降级到 {self.DeepSeek_degraded_gen.model}...")
-                        DeepSeek_result = await loop.run_in_executor(
+                # Claude Opus 失败 → 降级 Sonnet 4.5 Think
+                if not claude_result or not claude_result.get("success"):
+                    if self.claude_degraded_gen:
+                        logger.info(f"[{chunk_id}] Claude Opus 失败，降级到 {self.claude_degraded_gen.model}...")
+                        claude_result = await loop.run_in_executor(
                             self._thread_pool,
-                            _run_step_analysis, self.DeepSeek_degraded_gen, conversation, self.agent_type, "DeepSeek_degraded"
+                            _run_step_analysis, self.claude_degraded_gen, conversation, self.agent_type, "claude_degraded"
                         )
-                        if DeepSeek_result and DeepSeek_result.get("success"):
-                            DeepSeek_result["step"] = "DeepSeek"
-                            DeepSeek_result["model"] = f"{self.DeepSeek_degraded_gen.model} (degraded)"
+                        if claude_result and claude_result.get("success"):
+                            claude_result["step"] = "claude"
+                            claude_result["model"] = f"{self.claude_degraded_gen.model} (degraded)"
                             with self._stats_lock:
-                                self.stats["DeepSeek_degraded_to_sonnet"] += 1
+                                self.stats["claude_degraded_to_sonnet"] += 1
 
-                # DeepSeek 仍然失败 → 降级: GLM+Kimi 双分析
-                if (not DeepSeek_result or not DeepSeek_result.get("success")) and self.DeepSeek_degradation_to_dual:
-                    # 强制跑 Kimi (即使非多模态)
-                    if not Kimi_result and self.generators.get("Kimi"):
-                        logger.info(f"[{chunk_id}] DeepSeek 降级 → GLM+Kimi 双分析")
-                        Kimi_result = await loop.run_in_executor(
+                # Claude 仍然失败 → 降级: GPT+Gemini 双分析
+                if (not claude_result or not claude_result.get("success")) and self.claude_degradation_to_dual:
+                    # 强制跑 Gemini (即使非多模态)
+                    if not gemini_result and self.generators.get("gemini"):
+                        logger.info(f"[{chunk_id}] Claude 降级 → GPT+Gemini 双分析")
+                        gemini_result = await loop.run_in_executor(
                             self._thread_pool,
-                            _run_step_analysis, self.generators["Kimi"], conversation, self.agent_type, "Kimi_degraded"
+                            _run_step_analysis, self.generators["gemini"], conversation, self.agent_type, "gemini_degraded"
                         )
                     with self._stats_lock:
-                        self.stats["DeepSeek_degraded_to_dual"] += 1
+                        self.stats["claude_degraded_to_dual"] += 1
 
                 s1_elapsed = time.time() - s1_start
 
                 # S1 details
-                c_ok = DeepSeek_result and DeepSeek_result.get("success")
-                g_ok = GLM_result and GLM_result.get("success")
-                gem_ok = Kimi_result and Kimi_result.get("success") if Kimi_result else False
+                c_ok = claude_result and claude_result.get("success")
+                g_ok = gpt_result and gpt_result.get("success")
+                gem_ok = gemini_result and gemini_result.get("success") if gemini_result else False
                 detail = f"C:{'✓' if c_ok else '✗'} G:{'✓' if g_ok else '✗'} Gem:{'✓' if gem_ok else '⏭'}"
                 cs.set_stage("s1_analysis", StageStatus.SUCCESS if (c_ok or g_ok) else StageStatus.FAILED,
                              s1_elapsed, detail)
@@ -418,8 +418,8 @@ class PipelineExecutor:
 
             # S1 semaphore released — next chunk's S1 can start now!
 
-            # ── S2: MoA Fusion (Qwen) ──
-            async with self._Qwen_sem:
+            # ── S2: MoA Fusion (Grok) ──
+            async with self._grok_sem:
                 cs.set_stage("s2_moa", StageStatus.RUNNING)
                 self.viz.update()
                 self.viz.print_stage_change(chunk_id, "s2_moa", StageStatus.RUNNING)
@@ -428,8 +428,8 @@ class PipelineExecutor:
                 merged = await loop.run_in_executor(
                     self._thread_pool,
                     lambda: moa_merge_analyses(
-                        self.generators["Qwen"], DeepSeek_result, GLM_result, Kimi_result,
-                        conversation, backup_gen=self.moa_backup, Qwen_backup_gen=self.Qwen_backup_gen,
+                        self.generators["grok"], claude_result, gpt_result, gemini_result,
+                        conversation, backup_gen=self.moa_backup, grok_backup_gen=self.grok_backup_gen,
                     ),
                 )
                 s2_elapsed = time.time() - s2_start
@@ -443,9 +443,9 @@ class PipelineExecutor:
                                            StageStatus.SUCCESS if mq != "failed" else StageStatus.FAILED,
                                            f"{mq} ({s2_elapsed:.0f}s)")
 
-            # ── S3: Review (Qwen) ──
+            # ── S3: Review (Grok) ──
             review = None
-            async with self._Qwen_sem:
+            async with self._grok_sem:
                 if self.skip_review or mq == "failed":
                     cs.set_stage("s3_review", StageStatus.SKIPPED, detail="skip")
                     self.viz.update()
@@ -459,9 +459,9 @@ class PipelineExecutor:
                     analysis_text = json.dumps(merged["merged_features"], ensure_ascii=False)
                     review = await loop.run_in_executor(
                         self._thread_pool,
-                        lambda conv=conversation, atxt=analysis_text: run_Qwen_review(
-                            self.generators["Qwen"], conv, atxt,
-                            backup_gen=self.Qwen_backup_gen,
+                        lambda conv=conversation, atxt=analysis_text: run_grok_review(
+                            self.generators["grok"], conv, atxt,
+                            backup_gen=self.grok_backup_gen,
                             kimi_gen=self.moa_backup,
                         ),
                     )
@@ -472,9 +472,9 @@ class PipelineExecutor:
                     self.viz.print_stage_change(chunk_id, "s3_review", StageStatus.SUCCESS,
                                                f"{verdict} ({s3_elapsed:.0f}s)")
 
-            # ── S4: Remediation (Qwen) ──
+            # ── S4: Remediation (Grok) ──
             remediation_rounds = 0
-            async with self._Qwen_sem:
+            async with self._grok_sem:
                 if (not review or not review.get("scores") or mq == "failed"
                         or self.skip_review):
                     cs.set_stage("s4_remediation", StageStatus.SKIPPED, detail="n/a")
@@ -499,10 +499,10 @@ class PipelineExecutor:
                         _rs = review["scores"]
                         new_features, remediation_rounds = await loop.run_in_executor(
                             self._thread_pool,
-                            lambda: run_Qwen_remediation(
-                                self.generators["Qwen"], _mf, _rs, conversation,
-                                backup_gen=self.Qwen_backup_gen,
-                                Kimi_gen=self.generators.get("Kimi"),
+                            lambda: run_grok_remediation(
+                                self.generators["grok"], _mf, _rs, conversation,
+                                backup_gen=self.grok_backup_gen,
+                                gemini_gen=self.generators.get("gemini"),
                                 kimi_gen=self.moa_backup,
                             ),
                         )
@@ -512,9 +512,9 @@ class PipelineExecutor:
                             _nf_json = json.dumps(new_features, ensure_ascii=False)
                             re_review = await loop.run_in_executor(
                                 self._thread_pool,
-                                lambda: run_Qwen_review(
-                                    self.generators["Qwen"], conversation, _nf_json,
-                                    backup_gen=self.Qwen_backup_gen,
+                                lambda: run_grok_review(
+                                    self.generators["grok"], conversation, _nf_json,
+                                    backup_gen=self.grok_backup_gen,
                                     kimi_gen=self.moa_backup,
                                 ),
                             )
@@ -541,9 +541,9 @@ class PipelineExecutor:
                 "merge_source": merged.get("source", ""),
                 "merge_quality": merged.get("merge_quality", "failed"),
                 "step_details": {
-                    "DeepSeek": _summarize_step(DeepSeek_result),
-                    "GLM": _summarize_step(GLM_result),
-                    "Kimi": _summarize_step(Kimi_result) if Kimi_result else {"skipped": True},
+                    "claude": _summarize_step(claude_result),
+                    "gpt": _summarize_step(gpt_result),
+                    "gemini": _summarize_step(gemini_result) if gemini_result else {"skipped": True},
                     "review": review if review else {"skipped": True},
                 },
                 "timestamp": datetime.now().isoformat(),
@@ -552,10 +552,10 @@ class PipelineExecutor:
             }
 
             # MoA extras
-            if DeepSeek_result and DeepSeek_result.get("success"):
-                result["DeepSeek_raw"] = DeepSeek_result["features"]
-            if GLM_result and GLM_result.get("success"):
-                result["GLM_raw"] = GLM_result["features"]
+            if claude_result and claude_result.get("success"):
+                result["claude_raw"] = claude_result["features"]
+            if gpt_result and gpt_result.get("success"):
+                result["gpt_raw"] = gpt_result["features"]
             result["moa_elapsed"] = merged.get("moa_elapsed", 0)
             result["remediation_rounds"] = remediation_rounds
             if merged.get("moa_fallback"):
@@ -623,8 +623,8 @@ class PipelineExecutor:
                 "moa_full": s["moa_full"],
                 "moa_fallback": s["moa_fallback"],
                 "remediation_triggered": s["remediation_triggered"],
-                "DeepSeek_degraded_to_sonnet": s["DeepSeek_degraded_to_sonnet"],
-                "DeepSeek_degraded_to_dual": s["DeepSeek_degraded_to_dual"],
+                "claude_degraded_to_sonnet": s["claude_degraded_to_sonnet"],
+                "claude_degraded_to_dual": s["claude_degraded_to_dual"],
                 "elapsed_s": round(elapsed, 1),
                 "avg_per_chunk_s": round(elapsed / done, 1) if done > 0 else 0,
                 "throughput_per_min": round(done / elapsed * 60, 1) if elapsed > 0 else 0,
@@ -644,7 +644,7 @@ class PipelineExecutor:
         print(f"  总处理: {s['success'] + s['failed']} / {total}")
         print(f"  成功: {s['success']}  失败: {s['failed']}")
         print(f"  MoA融合: {s['moa_full']}  MoA回退: {s['moa_fallback']}")
-        print(f"  DeepSeek降级→Sonnet: {s['DeepSeek_degraded_to_sonnet']}  DeepSeek降级→GLM+Kimi: {s['DeepSeek_degraded_to_dual']}")
+        print(f"  Claude降级→Sonnet: {s['claude_degraded_to_sonnet']}  Claude降级→GPT+Gemini: {s['claude_degraded_to_dual']}")
         print(f"  补齐触发: {s['remediation_triggered']}")
         print(f"  总耗时: {s['total_time']:.0f}s ({s['total_time']/60:.1f}min)")
         if s['success'] + s['failed'] > 0:

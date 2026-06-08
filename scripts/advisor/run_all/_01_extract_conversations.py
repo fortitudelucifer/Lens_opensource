@@ -55,7 +55,7 @@
 - 提取的片段将作为后续 LLM 分析（_02_generate_analysis.py）的输入
 - 建议先检查输入数据质量，确保 SFT 数据格式正确
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 

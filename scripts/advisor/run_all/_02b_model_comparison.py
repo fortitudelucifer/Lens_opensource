@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-多模型对比评测脚本 — 5 chunks × 6 backends 并排对比
+多模型对比评测脚本 — 5 chunks × 8 backends 并排对比
 
 功能：
 - 从对话片段中选取 5 个代表性样本（冲突/冷暴力/甜蜜/多模态/长文本）
-- 使用 6 个云端 LLM 后端分别生成关系分析
+- 使用 8 个云端 LLM 后端分别生成关系分析
 - 输出并排对比 Markdown 报告，含人工评分表
 - 支持断点续跑，跳过已成功的 chunk+backend 组合
 
@@ -16,16 +16,18 @@
    d. 多模态丰富对话（含语音/图片/表情标记最多的）
    e. 长文本深度对话（按文本长度排序取最长）
 2. 对每个 chunk，逐后端调用 LLM API 生成分析
-3. 生成每个 chunk 的详情 Markdown（含 6 个后端结果并排展示）
+3. 生成每个 chunk 的详情 Markdown（含 8 个后端结果并排展示）
 4. 生成汇总对比报告（成功率、耗时、人工评分表）
 
-6 个对比后端：
-- GLM-4.7 (第三方代理)
-- DeepSeek V3.2 (第三方代理-key1)
-- Qwen3 (第三方代理-key2)
-- DeepSeek V3.2 (第三方代理-key2)
-- Kimi K2.5 (第三方代理-key2)
-- Qwen3-235B (第三方代理-key2)
+8 个对比后端：
+- GPT-5.2-high (backup provider-codex)
+- Claude Opus 4.6 Thinking (proxy-key)
+- Grok 4.1 Thinking (proxy-key)
+- DeepSeek V3.2 (proxy-key)
+- Gemini 3 Pro (proxy-key)
+- Qwen3-235B Thinking (proxy-key)
+- GLM 4.7 (backup provider-glm)
+- Kimi K2.5 (proxy-key)
 
 输入：
 - advisor_out/chunks/conversation_chunks.jsonl: 对话片段
@@ -33,7 +35,7 @@
 
 输出：
 - advisor_out/comparison/comparison_report.md: 汇总对比报告 + 人工评分表
-- advisor_out/comparison/chunk_01_conflict.md: 各 chunk 的 6 后端结果详情
+- advisor_out/comparison/chunk_01_conflict.md: 各 chunk 的 8 后端结果详情
 - advisor_out/comparison/chunk_*.json: 原始 JSON 数据
 
 依赖：
@@ -48,14 +50,14 @@
 
     # 指定后端和 chunk 数量
     python scripts/advisor/run_all/_02b_model_comparison.py \\
-        --backends GLM-4.7 DeepSeek-V3.2 --chunk-count 3
+        --backends gpt-5.2-high claude-opus-4.6-think --chunk-count 3
 
     # 从第 3 个 chunk 开始（跳过前 2 个）
     python scripts/advisor/run_all/_02b_model_comparison.py --start-chunk 3
 
 性能参考：
-- 单个 chunk × 6 后端：约 3-5 分钟（取决于最慢的后端）
-- 完整 5 chunks × 6 backends：约 15-25 分钟
+- 单个 chunk × 8 后端：约 3-5 分钟（取决于最慢的后端）
+- 完整 5 chunks × 8 backends：约 15-25 分钟
 - 每个后端调用间隔 1 秒，避免触发速率限制
 
 注意事项：
@@ -64,7 +66,7 @@
 - 人工评分表需要在生成的 Markdown 文件中手动填写
 - 评分维度：分析准确性、洞察深度、多模态理解、结构完整性、中文质量
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -90,7 +92,7 @@ def load_platform_key(platform_name: str) -> tuple[str, str]:
     从 platforms.yaml 读取指定平台的 API 配置
     
     Args:
-        platform_name (str): 平台名称（如 '第三方代理-key1', '第三方代理')）
+        platform_name (str): 平台名称（如 'proxy-key', 'backup provider-codex'）
     
     Returns:
         tuple[str, str]: (base_url, api_key) 元组
@@ -100,7 +102,7 @@ def load_platform_key(platform_name: str) -> tuple[str, str]:
         KeyError: 指定平台未在配置中定义
     
     Example:
-        >>> url, key = load_platform_key('第三方代理-key1')
+        >>> url, key = load_platform_key('proxy-key')
         >>> print(f"API URL: {url}")
     """
     if not PLATFORMS_YAML.exists():
@@ -117,69 +119,69 @@ def load_platform_key(platform_name: str) -> tuple[str, str]:
 # 每个后端: (backend_key, model_name, display_name, platform)
 # backend_key 决定从 .env.advisor 读哪组 API_KEY/BASE_URL
 COMPARISON_BACKENDS = [
-    # 1. GLM-4.7 (第三方代理)
+    # 1. GPT-5.2-high (backup provider-codex)
     {
-        "id": "GLM-4.7",
+        "id": "gpt-5.2-high",
         "backend": "openai",
-        "model": "GLM-4.7",
-        "display": "GLM-4.7",
-        "platform": "第三方代理",
+        "model": "gpt-5.2-high",
+        "display": "GPT-5.2-high",
+        "platform": "backup provider-codex",
     },
-    # 2. DeepSeek V3.2 (第三方代理 DeepSeek 专用 key)
+    # 2. Claude Opus 4.6 Thinking (OpenAI-compatible proxy Claude 专用 key)
     {
-        "id": "DeepSeek-V3.2",
-        "backend": "DeepSeek",
-        "model": "DeepSeek-V3.2",
-        "display": "DeepSeek V3.2",
-        "platform": "第三方代理-key1",
+        "id": "claude-opus-4.6-think",
+        "backend": "claude",
+        "model": "claude-opus-4.6-think",
+        "display": "Claude Opus 4.6 Thinking",
+        "platform": "proxy-key",
     },
-    # 3. Qwen3 (第三方代理)
+    # 3. Grok 4.1 Thinking (OpenAI-compatible proxy)
     {
-        "id": "Qwen3",
-        "backend": "Qwen",
-        "model": "Qwen3",
-        "display": "Qwen3",
-        "platform": "第三方代理-key2",
+        "id": "grok-4.1-thinking",
+        "backend": "grok",
+        "model": "grok-4.1-thinking",
+        "display": "Grok 4.1 Thinking",
+        "platform": "proxy-key",
     },
-    # 4. DeepSeek V3.2 (第三方代理)
+    # 4. DeepSeek V3.2 (OpenAI-compatible proxy)
     {
         "id": "deepseek-v3.2",
         "backend": "deepseek",
         "model": "deepseek-ai/DeepSeek-V3.2",
         "display": "DeepSeek V3.2",
-        "platform": "第三方代理-key2",
+        "platform": "proxy-key",
     },
-    # 5. Kimi K2.5 (第三方代理)
+    # 5. Gemini 3 Pro (OpenAI-compatible proxy)
     {
-        "id": "Kimi-K2.5",
-        "backend": "Kimi",
-        "model": "Kimi-K2.5",
-        "display": "Kimi K2.5",
-        "platform": "第三方代理-key2",
+        "id": "gemini-3-pro",
+        "backend": "gemini",
+        "model": "gemini-3-pro-preview",
+        "display": "Gemini 3 Pro",
+        "platform": "proxy-key",
     },
-    # 6. Qwen3-235B (第三方代理)
+    # 6. Qwen3-235B Thinking (OpenAI-compatible proxy)
     {
         "id": "qwen3-235b-thinking",
         "backend": "qwen_cloud",
         "model": "Qwen/Qwen3-235B-A22B-Thinking-2507",
-        "display": "Qwen3-235B",
-        "platform": "第三方代理-key2",
+        "display": "Qwen3-235B Thinking",
+        "platform": "proxy-key",
     },
-    # 7. GLM 4.7 (hotaru)
+    # 7. GLM 4.7 (backup provider)
     {
         "id": "glm-4.7",
         "backend": "glm",
         "model": "zai-glm-4.7",
         "display": "GLM 4.7",
-        "platform": "第三方代理",
+        "platform": "backup provider-glm",
     },
-    # 8. Kimi K2.5 (第三方代理)
+    # 8. Kimi K2.5 (OpenAI-compatible proxy)
     {
         "id": "kimi-k2.5",
         "backend": "kimi",
         "model": "moonshotai/kimi-k2.5",
         "display": "Kimi K2.5",
-        "platform": "第三方代理-key2",
+        "platform": "proxy-key",
     },
 ]
 
@@ -328,7 +330,7 @@ def create_generator(backend_cfg: dict) -> AnalysisGenerator:
         AnalysisGenerator: 配置好的分析生成器实例
     
     Example:
-        >>> cfg = {"id": "GLM-4.7", "backend": "openai", "model": "GLM-4.7", "platform": "第三方代理"}
+        >>> cfg = {"id": "gpt-5.2-high", "backend": "openai", "model": "gpt-5.2-high", "platform": "backup provider-codex"}
         >>> gen = create_generator(cfg)
     """
     # 读取 API 配置

@@ -67,7 +67,7 @@
 - Qwen2-Audio 分析较慢，建议使用 --qwen-limit 限制数量
 - Markdown 文件用于人工审核和标注
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-02
 """
 

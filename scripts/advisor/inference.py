@@ -47,7 +47,7 @@
 - auto_unload=True 时推理完成后自动卸载，适合单次推理场景
 - 批量推理建议设置 auto_unload=False，手动调用 unload()
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -65,7 +65,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 # Agent 类型的系统提示词
 SYSTEM_PROMPTS = {
     'neutral': """你是一位专业的关系顾问，擅长分析情侣/伴侣之间的对话，提供客观、专业的评价和建议。
-你的分析应该保持中立，不偏袒任何一方，对双方的问题都要指出。""",
+对话中 ME 表示用户一方，OTHER 表示对方。你的分析应该保持中立，不偏袒任何一方，对双方的问题都要指出。""",
 
     'supportive': """你是一位支持性的关系顾问，你的首要任务是理解和支持用户（ME）的感受。
 你会首先验证用户的情感体验，从用户的角度理解问题，同时保持基本的客观性。
@@ -109,6 +109,9 @@ SYSTEM_PROMPTS = {
 - 需要觉察的无意识模式：...
 - 可能的成长方向：..."""
 }
+
+
+USER_PROMPT_TEMPLATE = '请分析以下对话：\n\n{conversation}'
 
 
 class AdvisorInference:
@@ -157,6 +160,15 @@ class AdvisorInference:
         self.model = None
         self.tokenizer = None
         self._loaded = False
+
+    def _build_messages(self, conversation: str, thinking: bool = False) -> list[dict]:
+        system_prompt = self.system_prompt
+        if thinking:
+            system_prompt = f"{system_prompt}\n\n请先进行必要的关系动态推理，再给出结构化分析。"
+        return [
+            {'role': 'system', 'content': system_prompt},
+            {'role': 'user', 'content': USER_PROMPT_TEMPLATE.format(conversation=conversation)},
+        ]
     
     def load_model(self):
         """加载模型"""
@@ -252,11 +264,7 @@ class AdvisorInference:
         if not self._loaded:
             self.load_model()
         
-        # 构建消息
-        messages = [
-            {'role': 'system', 'content': self.system_prompt},
-            {'role': 'user', 'content': f"请分析以下对话：\n\n{conversation}"},
-        ]
+        messages = self._build_messages(conversation)
         
         # 应用 chat template
         text = self.tokenizer.apply_chat_template(

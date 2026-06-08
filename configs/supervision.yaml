@@ -1,0 +1,33 @@
+# 监督 Agent 配置（§4.6 综合执行计划）
+# Judge 模型优先级：Claude → GPT → Kimi
+# 打分尺度：1-10 分
+#
+# 注意：api_key 和 base_url 由 .env.advisor 环境变量统一管理，
+# 此处不配置。AnalysisGenerator 自动从 env 读取。
+
+judge:
+  # 优先级链：按序尝试，失败则降级
+  priority: [claude, openai, kimi]
+
+  # 各后端 Judge 专用模型配置（仅 model/max_tokens/temperature）
+  backends:
+    claude:
+      model: claude-opus-4.5
+      max_tokens: 4096
+      temperature: 0.3
+
+    openai:
+      model: gpt-5.2-high
+      max_tokens: 4096
+      temperature: 0.3
+
+    kimi:
+      model: moonshotai/Kimi-K2-Instruct
+      max_tokens: 4096
+      temperature: 0.3
+
+  # 评估频率：每轮对话结束后触发（每轮=1，每2轮=2）
+  eval_every_n_rounds: 1
+
+  # 打分尺度
+  score_scale: [1, 10]

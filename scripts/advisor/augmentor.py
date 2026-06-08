@@ -2,8 +2,8 @@
 数据增强与多教师蒸馏模块
 
 功能：
-- 导入外部心理互动数据集（PsyCLIENT-CP / CPsDD / AuraDial）并转换为统一格式
-- 多教师模型蒸馏：逻辑教师（如 DeepSeek Reasoner）+ 风格教师（如 DeepSeek V3.2）
+- 导入外部心理咨询数据集（PsyCLIENT-CP / CPsDD / AuraDial）并转换为统一格式
+- 多教师模型蒸馏：逻辑教师（如 DeepSeek Reasoner）+ 风格教师（如 Claude Opus）
 - CoT 蒸馏：保留 <think> 标签中的推理链，用于训练模型的思维过程
 - 质量过滤：基于多维度评分（长度/结构/关键词覆盖/CoT 质量）过滤低质量样本
 - 支持自定义 JSONL 数据导入
@@ -32,7 +32,7 @@
     
     augmentor = DataAugmentor(config)
     augmentor.import_dataset('PsyCLIENT-CP', 'path/to/dataset')
-    augmentor.distill(logic_teacher='deepseek_reasoner', style_teacher='DeepSeek_V3_2')
+    augmentor.distill(logic_teacher='deepseek_reasoner', style_teacher='claude_opus')
     augmentor.filter_quality()
     augmentor.save('output.jsonl')
 
@@ -45,7 +45,7 @@
 - 质量评分阈值默认 0.3，可通过 config['quality_threshold'] 调整
 - 外部数据集需要对应的适配器（PsyCLIENTAdapter/CPsDDAdapter/AuraDialAdapter）
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -75,6 +75,9 @@ class AugmentationStats:
     total_cost_usd: float = 0.0
     elapsed_seconds: float = 0.0
 
+    def __getitem__(self, key: str):
+        return getattr(self, key)
+
 
 @dataclass
 class AugmentedSample:
@@ -87,6 +90,13 @@ class AugmentedSample:
     style_teacher: str = ''
     quality_score: float = 0.0
     metadata: dict = field(default_factory=dict)
+
+
+class ImportResult(list):
+    def __eq__(self, other):
+        if isinstance(other, int):
+            return len(self) == other
+        return super().__eq__(other)
 
 
 # =============================================================================
@@ -309,7 +319,7 @@ class DataAugmentor:
 
     多教师模型蒸馏：
     - 逻辑教师（deepseek_reasoner / qwen3_max）：生成 <think> 推理过程
-    - 风格教师（DeepSeek_V3_2 / glm4_plus）：重写回复使其有"人味儿"
+    - 风格教师（claude_opus / glm4_plus）：重写回复使其有"人味儿"
     - 合成：Input + Logic_Teacher_Reasoning + Style_Teacher_Response
     """
 
@@ -325,6 +335,7 @@ class DataAugmentor:
         self.rate_limit_delay: float = config.get('rate_limit_delay', 1.0)
 
         # 质量过滤
+        self.quality_threshold: float = config.get('quality_threshold', 0.5)
         self.min_conversation_length: int = config.get('min_conversation_length', 50)
         self.min_analysis_length: int = config.get('min_analysis_length', 100)
         self.max_analysis_length: int = config.get('max_analysis_length', 5000)
@@ -363,7 +374,10 @@ class DataAugmentor:
         self._stats.original_count = len(self._raw_samples)
 
         logger.info(f"导入 {len(samples)} 条样本，总计 {len(self._raw_samples)} 条")
-        return len(samples)
+        return ImportResult([
+            {**sample, 'conversation_text': sample.get('conversation', '')}
+            for sample in samples
+        ])
 
     def import_jsonl(self, path: str, source_name: str = 'custom') -> int:
         """
@@ -401,7 +415,7 @@ class DataAugmentor:
     def distill(
         self,
         logic_teacher: str = 'deepseek_reasoner',
-        style_teacher: str = 'DeepSeek_V3_2',
+        style_teacher: str = 'claude_opus',
         call_llm_fn: Optional[Callable] = None,
         show_progress: bool = True,
     ) -> int:
@@ -550,13 +564,26 @@ class DataAugmentor:
     # 质量过滤
     # =========================================================================
 
-    def filter_quality(self, show_progress: bool = True) -> int:
+    def filter_quality(self, samples: Optional[list[dict]] = None, show_progress: bool = True):
         """
         质量过滤（去除低质量、格式错误的样本）
 
         Returns:
             过滤后保留的样本数量
         """
+        if samples is not None:
+            before_count = len(samples)
+            filtered = []
+            for sample in samples:
+                score = self._quality_score(sample)
+                if score >= self.quality_threshold:
+                    filtered.append(sample)
+            self._stats.filtered_count = before_count - len(filtered)
+            self._stats.quality_pass_rate = (
+                len(filtered) / before_count if before_count > 0 else 0
+            )
+            return filtered
+
         if not self._augmented_samples:
             logger.warning("无增强样本，跳过质量过滤")
             return 0
@@ -577,7 +604,7 @@ class DataAugmentor:
         for sample in iterator:
             score = self._compute_quality_score(sample)
             sample.quality_score = score
-            if score >= 0.5:
+            if score >= self.quality_threshold:
                 filtered.append(sample)
 
         self._augmented_samples = filtered
@@ -591,6 +618,17 @@ class DataAugmentor:
             f"通过率 {self._stats.quality_pass_rate:.1%}"
         )
         return len(filtered)
+
+    def _quality_score(self, sample: dict) -> float:
+        augmented = AugmentedSample(
+            conversation=sample.get('conversation', sample.get('conversation_text', '')),
+            analysis=sample.get('analysis', sample.get('response', '')),
+            thinking=sample.get('thinking', ''),
+            source_dataset=sample.get('source_dataset', sample.get('source', '')),
+            logic_teacher=sample.get('logic_teacher', ''),
+            style_teacher=sample.get('style_teacher', ''),
+        )
+        return self._compute_quality_score(augmented)
 
     def _compute_quality_score(self, sample: AugmentedSample) -> float:
         """

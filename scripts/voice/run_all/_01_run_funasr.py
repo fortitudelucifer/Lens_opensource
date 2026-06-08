@@ -53,7 +53,7 @@
 - 标点模型（ct-punc）已集成在 FunASR 中
 - 如果文件不存在或转写失败，会记录错误信息
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-02
 """
 import os

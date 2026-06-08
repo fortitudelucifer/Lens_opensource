@@ -19,8 +19,8 @@ link_type_rules:
     description: "高德地图位置"
   
   - pattern: "mp.weixin.qq.com"
-    type: "chat_app_article"
-    description: "CHAT_APP公众号文章"
+    type: "wechat_article"
+    description: "微信公众号文章"
   
   - pattern: "meishi.meituan.com"
     type: "meituan_poi"

@@ -23,8 +23,8 @@ JSONL 工具模块 (JSONL Utilities)
 依赖：
 - 标准库：json, os, shutil, logging
 
-作者：forcifer
-项目：CHAT_APP_DHA - CHAT_APP聊天记录多模态处理流水线
+作者：[Author]
+项目：wechatDHA - 微信聊天记录多模态处理流水线
 更新于：2026-02-02
 """
 

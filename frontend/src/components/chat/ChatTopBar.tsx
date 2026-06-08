@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { MoreHorizontal, Trash2, ArrowLeft, Sparkles } from 'lucide-react'
+import { MoreHorizontal, Trash2, ArrowLeft, Sparkles, Download } from 'lucide-react'
 import type { Persona, ChatMode } from '../../types'
 
 interface ChatModelOption {
@@ -17,12 +17,17 @@ interface ChatTopBarProps {
   onModeChange: (mode: ChatMode) => void
   useRag: boolean
   onUseRagChange: (enabled: boolean) => void
+  useKnowledge: boolean
+  onUseKnowledgeChange: (enabled: boolean) => void
   models: ChatModelOption[]
   selectedModelKey: string
   onModelChange: (modelKey: string) => void
   onClearMessages: () => void
   onBackToAdvisors: () => void
   onSwitchPersona: (personaId: Persona['id']) => void
+  onExport?: () => void
+  hasMessages?: boolean
+  eftStage?: string | null
 }
 
 export function ChatTopBar({
@@ -32,14 +37,24 @@ export function ChatTopBar({
   onModeChange,
   useRag,
   onUseRagChange,
+  useKnowledge,
+  onUseKnowledgeChange,
   models,
   selectedModelKey,
   onModelChange,
   onClearMessages,
   onBackToAdvisors,
   onSwitchPersona,
+  onExport,
+  hasMessages,
+  eftStage,
 }: ChatTopBarProps) {
   const Icon = persona.icon
+  const EFT_STAGE_LABELS: Record<string, string> = {
+    exploration: '探索阶段',
+    comforting: '安抚阶段',
+    action: '行动阶段',
+  }
   const selectedModel = models.find((m) => m.key === selectedModelKey)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -77,6 +92,11 @@ export function ChatTopBar({
         <div>
           <h2 className="font-bold text-[var(--text-primary)] leading-tight flex items-center gap-2">
             {persona.name}
+            {eftStage && EFT_STAGE_LABELS[eftStage] && (
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-pink-500/15 text-pink-600 dark:text-pink-400 border border-pink-500/20">
+                {EFT_STAGE_LABELS[eftStage]}
+              </span>
+            )}
             <span className="flex h-2 w-2 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -136,7 +156,7 @@ export function ChatTopBar({
 
         <div className="hidden md:flex items-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-1.5">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-            是否注入聊天记录
+            聊天记录
           </span>
           <button
             type="button"
@@ -150,6 +170,26 @@ export function ChatTopBar({
             <span
               className={`h-4 w-4 rounded-full bg-white shadow transition-transform ${
                 useRag ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+        <div className="hidden md:flex items-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-1.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+            专业知识
+          </span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={useKnowledge}
+            onClick={() => onUseKnowledgeChange(!useKnowledge)}
+            className={`inline-flex h-6 w-11 items-center rounded-full border p-0.5 transition-all ${
+              useKnowledge ? 'border-violet-500/40 bg-violet-500/70' : 'border-[var(--border-color)] bg-[var(--bg-card)]'
+            }`}
+          >
+            <span
+              className={`h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                useKnowledge ? 'translate-x-5' : 'translate-x-0'
               }`}
             />
           </button>
@@ -220,6 +260,15 @@ export function ChatTopBar({
                 <ArrowLeft className="h-3.5 w-3.5" />
                 返回顾问选择
               </button>
+              {hasMessages && onExport && (
+                <button
+                  onClick={() => { onExport(); setMenuOpen(false) }}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)]"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  导出对话
+                </button>
+              )}
               <div className="my-1 h-px bg-[var(--border-color)]" />
               <p className="px-3 py-1 text-[10px] uppercase tracking-wider text-[var(--text-muted)]">切换顾问类型</p>
               {personaOptions.map((p) => {

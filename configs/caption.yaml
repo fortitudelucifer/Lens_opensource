@@ -1,7 +1,7 @@
 # Config for L3 Caption Expert (Qwen2.5-VL-7B)
 model:
   # Path found after modelscope download
-  path: "/path/to/models/qwen2.5-vl-7b/Qwen/Qwen2___5-VL-7B-Instruct" 
+  path: "/data/models/qwen2.5-vl-7b/Qwen/Qwen2___5-VL-7B-Instruct"
   device: "cuda"
   torch_dtype: "bfloat16" # Recommended for Qwen2.5-VL
 
@@ -14,7 +14,7 @@ preprocessing:
   #   - 1920000 (1600×1200): 适中，需要 FlashAttention-2
   #   - 2073600 (1920×1080): 激进，需要 vLLM + FlashAttention-2
   max_pixels: 1920000  # 1600×1200
-  
+
 generation:
   max_new_tokens: 512
   temperature: 0.7
@@ -26,7 +26,7 @@ prompt:
 # Fallback configuration for Refusal/NSFW cases
 fallback:
   enabled: true
-  model_path: "/path/to/models/qwen2.5-vl-7b-nsfw-caption-v3"
+  model_path: "/data/models/qwen2.5-vl-7b-nsfw-caption-v3"
   trigger_keywords: ["无法描述", "抱歉", "I cannot", "sensitive content", "safety policy", "内容敏感", "亲密行为", "内容违规", "不适宜", "尺度较大", "性行为", "亲密", "生殖器", "阴茎", "精液", "性爱", "性暗示", "敏感内容"]
   generation:
     max_new_tokens: 512
@@ -38,7 +38,7 @@ fallback:
 # ========== NEW: Triage Configuration ==========
 triage:
   enabled: true
-  model_path: "/path/to/models/nsfw-classifier"
+  model_path: "/data/models/nsfw-classifier"
   thresholds:
     nsfw: 0.5           # Above this = TYPE_A_NSFW
     text_heavy: 0.15    # text_area_ratio above this = TYPE_D_DOC
@@ -47,31 +47,31 @@ triage:
 experts:
   gore:
     enabled: true
-    model_path: "/path/to/models/qwen2.5-vl-abliterated"
+    model_path: "/data/models/qwen2.5-vl-abliterated"
     quantize_4bit: true
     lang: "zh"
     generation:
       max_new_tokens: 512
       temperature: 0.6
       top_p: 0.9
-    
+
   nsfw:
     enabled: true
     ensemble_mode: "serial"  # serial, parallel, dynamic
     prefer_minicpm: true
     # 使用 wavespeed 的 int8 量化版本 (已修复 resampler dtype 问题)
-    minicpm_path: "/path/to/models/minicpm-v-4.5-abliterated-int8"
-    nsfw_v3_path: "/path/to/models/qwen2.5-vl-7b-nsfw-caption-v3"
+    minicpm_path: "/data/models/minicpm-v-4.5-abliterated-int8"
+    nsfw_v3_path: "/data/models/qwen2.5-vl-7b-nsfw-caption-v3"
     generation:
       max_new_tokens: 512
       temperature: 0.6
       top_p: 0.9
-    
+
   doc:
     enabled: true
     # Pixtral 12B GGUF (Q5_K_M 量化, ~8.7GB)
     # 5070 Ti 使用 compute_89 (Ada Lovelace) 兼容编译
-    model_dir: "/path/to/models/pixtral-12b-gguf"
+    model_dir: "/data/models/pixtral-12b-gguf"
     model_file: "Pixtral-12B-2409-Q5_K_M.gguf"
     mmproj_file: "mmproj-Pixtral-12B-2409-Q8_0.gguf"
     n_gpu_layers: -1  # 全部层加载到 GPU

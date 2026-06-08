@@ -63,10 +63,10 @@
 注意事项：
 - identity_map.json 为敏感文件，存放在 local_secrets/ 目录
 - DAY1 基准日为 2025-06-07（第1天 = 2025-06-07）
-- 地名映射存在双向对（如CITY_A↔CITY_B），按匿名化执行顺序优先匹配
+- 地名映射存在双向对（如上海↔杭州），按匿名化执行顺序优先匹配
 - 反匿名化后的数据用于 Strategy B 全量训练
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -108,17 +108,17 @@ def day_to_date(day_num: int) -> str:
 def convert_day_references(text: str) -> tuple[str, int]:
     """
     将文本中所有 '第X天' 引用转换为真实日期
-    
+
     处理场景:
     1. 时间标记: [第108天 13:03] → [2025-09-22 13:03]
     2. 分析引用: 第108天到第110天 → 2025-09-22到2025-09-24
     3. 独立引用: 第108天 → 2025-09-22
-    
+
     Returns:
         (converted_text, replacement_count)
     """
     count = 0
-    
+
     # Pattern 0: [第X天 YYYY-MM-DD HH:MM] — day ref + embedded real date
     # Strip 第X天, keep the real date: [第38天 2025-07-14 22:29] → [2025-07-14 22:29]
     def replace_day_with_date(m):
@@ -128,7 +128,7 @@ def convert_day_references(text: str) -> tuple[str, int]:
         time_str = m.group(3)
         return f'[{real_date} {time_str}]'
     text = re.sub(r'\[第(\d+)天\s+(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})\]', replace_day_with_date, text)
-    
+
     # Pattern 1: [第X天 HH:MM] 时间标记 (bracketed, no embedded date)
     def replace_time_marker(m):
         nonlocal count
@@ -137,7 +137,7 @@ def convert_day_references(text: str) -> tuple[str, int]:
         time_str = m.group(2)
         return f'[{day_to_date(day_num)} {time_str}]'
     text = re.sub(r'\[第(\d+)天\s+(\d{2}:\d{2})\]', replace_time_marker, text)
-    
+
     # Pattern 1b: 第X天HH:MM (no space, no brackets — common in analysis text)
     # e.g. "第109天22:14" → "2025-09-23 22:14"
     def replace_day_time_nospace(m):
@@ -147,7 +147,7 @@ def convert_day_references(text: str) -> tuple[str, int]:
         time_str = m.group(2)
         return f'{day_to_date(day_num)} {time_str}'
     text = re.sub(r'第(\d+)天(\d{2}:\d{2})', replace_day_time_nospace, text)
-    
+
     # Pattern 2: 第X天 (standalone reference in analysis text)
     def replace_day_ref(m):
         nonlocal count
@@ -155,7 +155,7 @@ def convert_day_references(text: str) -> tuple[str, int]:
         day_num = int(m.group(1))
         return day_to_date(day_num)
     text = re.sub(r'第(\d+)天', replace_day_ref, text)
-    
+
     return text, count
 
 
@@ -183,7 +183,7 @@ def load_anon_config(path: Path) -> dict:
 def build_reverse_mapping(identity_reverse: dict, anon_config: dict) -> dict[str, str]:
     """
     构建完整的反向映射表
-    
+
     返回: {匿名标记: 真实文本} 的有序映射 (长匹配优先)
     """
     mapping = {}
@@ -206,8 +206,8 @@ def build_reverse_mapping(identity_reverse: dict, anon_config: dict) -> dict[str
     # 3. 地名反向映射 (如有)
     # location_mapping: {真实地名: 匿名后地名}
     # 反向: {匿名后地名: 真实地名}
-    # 注意: 双向对如 {CITY_A:CITY_B, CITY_B:CITY_C} 中，CITY_B既是匿名结果又是真实名
-    # 数据中出现的"CITY_B"实际是"CITY_A"被匿名后的结果，所以反向应为 {CITY_B:CITY_A}
+    # 注意: 双向对如 {上海:杭州, 杭州:宁波} 中，杭州既是匿名结果又是真实名
+    # 数据中出现的"杭州"实际是"上海"被匿名后的结果，所以反向应为 {杭州:上海}
     # 规则: 第一个注册的 anon→real 优先（匹配实际匿名化执行顺序）
     location_mapping = anon_config.get("location_mapping", {})
     location_reverse = {}
@@ -222,7 +222,7 @@ def build_reverse_mapping(identity_reverse: dict, anon_config: dict) -> dict[str
 def extract_time_range(conversation_text: str) -> tuple[str, str]:
     """
     从 conversation_text 提取时间范围
-    
+
     Returns:
         (start_time, end_time) — 格式: "第N天 HH:MM"
     """
@@ -245,7 +245,7 @@ def extract_time_range(conversation_text: str) -> tuple[str, str]:
 def fix_chunk_times(chunks: list[dict]) -> tuple[list[dict], int]:
     """
     修复 chunks 的 start_time/end_time
-    
+
     Returns:
         (fixed_chunks, fix_count)
     """
@@ -268,13 +268,13 @@ def fix_chunk_times(chunks: list[dict]) -> tuple[list[dict], int]:
 def apply_deanonymization(text: str, mapping: dict[str, str]) -> str:
     """
     对文本应用完整反匿名化
-    
+
     替换规则:
     0. OTHERHER → 真实姓名 (双重替换残留)
     1. [PERSON_N] → 真实姓名
     2. 第X天 → YYYY-MM-DD 真实日期
-    3. "ME:" (speaker标记) → "江泽东:" 
-    4. "OTHER:" (speaker标记) → "刘双:"
+    3. "ME:" (speaker标记) → "测试用户A:"
+    4. "OTHER:" (speaker标记) → "测试用户B:"
     5. 分析文本中独立出现的 ME/OTHER → 真实姓名
     6. 地名反向映射
     """
@@ -293,7 +293,7 @@ def apply_deanonymization(text: str, mapping: dict[str, str]) -> str:
     text, _ = convert_day_references(text)
 
     # Step 3: 替换 speaker 标记中的 ME/OTHER
-    # "ME:" → "江泽东:", "OTHER:" → "刘双:"
+    # "ME:" → "测试用户A:", "OTHER:" → "测试用户B:"
     text = re.sub(r'\bME:', f'{me_primary}:', text)
     text = re.sub(r'\bOTHER:', f'{other_primary}:', text)
 
@@ -319,7 +319,7 @@ def deanonymize_training_data(
 ) -> tuple[list[dict], dict]:
     """
     反匿名化训练数据
-    
+
     Returns:
         (deanonymized_data, stats)
     """
@@ -368,12 +368,12 @@ def deanonymize_analysis_data(
 ) -> tuple[list[dict], dict]:
     """
     反匿名化 MoA 分析文件
-    
+
     处理字段:
     - conversation: 对话文本 (含 [第X天 HH:MM] ME: OTHER:)
     - analysis_features: 分析结果 dict (各字段值含 第X天, ME, OTHER)
-    - DeepSeek_raw/GLM_raw: 原始分析 (如存在)
-    
+    - claude_raw/gpt_raw: 原始分析 (如存在)
+
     Returns:
         (deanonymized_data, stats)
     """
@@ -426,8 +426,8 @@ def deanonymize_analysis_data(
                 stats["analysis_deanon"] += 1
             new_d["analysis_features"] = new_af
 
-        # 3. 反匿名化 DeepSeek_raw / GLM_raw (if present, string fields)
-        for raw_key in ("DeepSeek_raw", "GLM_raw"):
+        # 3. 反匿名化 claude_raw / gpt_raw (if present, string fields)
+        for raw_key in ("claude_raw", "gpt_raw"):
             raw_val = d.get(raw_key, "")
             if raw_val and isinstance(raw_val, str):
                 new_d[raw_key] = apply_deanonymization(raw_val, mapping)

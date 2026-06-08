@@ -2,7 +2,7 @@
 LLM 分析生成器模块
 
 功能：
-- 调用各种 LLM API（OpenAI、DeepSeek、Kimi、Kimi、Qwen、DeepSeek、Qwen、GLM 等）生成关系分析
+- 调用各种 LLM API（OpenAI、Claude、Gemini、Kimi、Grok、DeepSeek、Qwen、GLM 等）生成关系分析
 - 支持 8+ 后端的统一接口（OpenAI 兼容 + Anthropic 原生 + Response API）
 - 三种 Agent 类型的专用提示词模板（neutral/supportive/psychoanalytic）
 - 通过 ModelRouter 智能路由到合适的后端
@@ -31,7 +31,7 @@ LLM 分析生成器模块
 
 依赖：
 - openai: OpenAI 兼容 API 客户端（覆盖大部分后端）
-- anthropic: Anthropic DeepSeek 原生 SDK（仅官方 API 使用）
+- anthropic: Anthropic Claude 原生 SDK（仅官方 API 使用）
 - httpx: Response API 的 SSE 流式请求
 - scripts.advisor.schemas: Pydantic Schema 定义
 - scripts.advisor.schema_validator: JSON Schema 校验与自修复
@@ -42,23 +42,23 @@ LLM 分析生成器模块
     from scripts.advisor.model_router import ModelRouter
     from scripts.advisor.schema_validator import SchemaValidator
     from scripts.advisor.safety_layer import SafetyLayer
-    
+
     # 初始化组件
     generator = AnalysisGenerator(
-        config={'backend': 'openai', 'model': 'GLM-4'},
+        config={'backend': 'openai', 'model': 'gpt-4'},
         router=ModelRouter(config),
         validator=SchemaValidator(config),
         safety=SafetyLayer(config),
     )
-    
+
     # 单条分析
     result = generator.generate_analysis(conversation_text, agent_type='neutral')
-    
+
     # 批量分析（支持断点续跑）
     results = generator.batch_generate(chunks, 'neutral', 'output.jsonl')
 
 性能参考：
-- 单条分析耗时取决于 LLM 后端（GLM-4: 10-30s, DeepSeek: 5-15s, DeepSeek: 5-20s）
+- 单条分析耗时取决于 LLM 后端（GPT-4: 10-30s, Claude: 5-15s, DeepSeek: 5-20s）
 - Schema 自修复每轮额外增加一次 API 调用
 - 批量模式每条写完立即刷盘，中断不丢失已完成数据
 
@@ -68,7 +68,7 @@ LLM 分析生成器模块
 - 第三方代理（有自定义 base_url）自动使用 stream 模式避免 500 错误
 - Response API 模式通过 {BACKEND}_WIRE_API=responses 环境变量启用
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -92,6 +92,80 @@ from scripts.advisor.schema_validator import SchemaValidator
 from scripts.advisor.safety_layer import SafetyLayer
 
 logger = logging.getLogger('advisor.generator')
+
+
+ANALYSIS_SCHEMA = {
+    "type": "object",
+    "required": [
+        "relationship_status",
+        "communication_quality",
+        "emotional_balance",
+        "key_issues",
+        "advice",
+        "criticism",
+        "overall_assessment",
+    ],
+    "properties": {
+        "relationship_status": {
+            "type": "string",
+            "enum": ["健康期", "甜蜜期", "平淡期", "冷淡期", "冲突期"],
+        },
+        "communication_quality": {
+            "type": "string",
+            "enum": ["优秀", "良好", "一般", "较差", "很差"],
+        },
+        "emotional_balance": {"type": "string"},
+        "key_issues": {"type": "array", "maxItems": 3},
+        "advice": {"type": "array", "maxItems": 3},
+        "criticism": {
+            "type": "object",
+            "required": ["ME", "OTHER"],
+            "properties": {
+                "ME": {"type": "string"},
+                "OTHER": {"type": "string"},
+            },
+        },
+        "overall_assessment": {"type": "string"},
+    },
+}
+
+
+def validate_analysis(analysis: dict) -> list[str]:
+    errors = []
+    if not isinstance(analysis, dict):
+        return ["analysis must be a dict"]
+
+    for field in ANALYSIS_SCHEMA["required"]:
+        if field not in analysis:
+            errors.append(f"missing required field: {field}")
+
+    properties = ANALYSIS_SCHEMA["properties"]
+    for field, spec in properties.items():
+        if field not in analysis:
+            continue
+        value = analysis[field]
+        expected_type = spec.get("type")
+        if expected_type == "string" and not isinstance(value, str):
+            errors.append(f"{field} must be string")
+        elif expected_type == "array" and not isinstance(value, list):
+            errors.append(f"{field} must be array")
+        elif expected_type == "object" and not isinstance(value, dict):
+            errors.append(f"{field} must be object")
+
+        if "enum" in spec and isinstance(value, str) and value not in spec["enum"]:
+            errors.append(f"{field} invalid enum value: {value}")
+        if "maxItems" in spec and isinstance(value, list) and len(value) > spec["maxItems"]:
+            errors.append(f"{field} has too many items")
+
+    criticism = analysis.get("criticism")
+    if isinstance(criticism, dict):
+        for subfield in properties["criticism"]["required"]:
+            if subfield not in criticism:
+                errors.append(f"criticism missing required field: {subfield}")
+            elif not isinstance(criticism[subfield], str):
+                errors.append(f"criticism.{subfield} must be string")
+
+    return errors
 
 
 # =============================================================================
@@ -321,11 +395,11 @@ PROMPTS = {
 
 class AnalysisGenerator:
     """LLM 分析生成器
-    
+
     通过 ModelRouter 路由到合适的后端，
     使用 SchemaValidator 进行结构化输出校验与自修复，
     通过 SafetyLayer 隔离云端推理过程。
-    
+
     Attributes:
         backend (str): 当前 LLM 后端名称
         model (str): 当前模型名称
@@ -340,15 +414,15 @@ class AnalysisGenerator:
         safety (SafetyLayer): 安全隔离层
         stats (dict): 生成统计（success/failed/total_tokens/retries/schema_repairs）
         client: API 客户端实例（OpenAI 或 Anthropic）
-    
+
     Example:
-        >>> generator = AnalysisGenerator({'backend': 'DeepSeek', 'model': 'DeepSeek-V3.2'})
+        >>> generator = AnalysisGenerator({'backend': 'claude', 'model': 'claude-sonnet-4-20250514'})
         >>> result = generator.generate_analysis("对话内容...", agent_type='neutral')
     """
-    
+
     # 支持的后端（保留向后兼容）
-    SUPPORTED_BACKENDS = ['openai', 'DeepSeek', 'Kimi', 'kimi', 'Qwen', 'qwen_local', 'qwen_cloud', 'deepseek', 'glm']
-    
+    SUPPORTED_BACKENDS = ['openai', 'claude', 'gemini', 'kimi', 'grok', 'qwen_local', 'qwen_cloud', 'deepseek', 'glm']
+
     def __init__(
         self,
         config: Optional[dict] = None,
@@ -358,7 +432,7 @@ class AnalysisGenerator:
     ):
         """
         初始化生成器
-        
+
         Args:
             config: 配置字典，包含：
                 - backend: LLM 后端类型
@@ -373,8 +447,9 @@ class AnalysisGenerator:
             safety: 安全隔离层（可选，启用云端输出分离）
         """
         config = config or {}
+        self.config = config
         self.backend = config.get('backend', 'openai')
-        self.model = config.get('model', 'GLM-4')
+        self.model = config.get('model', 'gpt-4')
         self.api_key = config.get('api_key') or self._get_api_key_from_env()
         # base_url 优先级: CLI 参数 > 环境变量 > advisor.yaml > 内置默认
         self.base_url = config.get('base_url') or self._get_base_url_from_env()
@@ -387,12 +462,12 @@ class AnalysisGenerator:
         self.rate_limit_delay = config.get('rate_limit_delay', 1.0)
         self.max_retries = config.get('max_retries', 3)
         self.retry_delay = config.get('retry_delay', 5.0)
-        
+
         # 新组件
         self.router = router
         self.validator = validator or SchemaValidator()
         self.safety = safety or SafetyLayer()
-        
+
         # 统计信息
         self.stats = {
             'success': 0,
@@ -401,21 +476,21 @@ class AnalysisGenerator:
             'retries': 0,
             'schema_repairs': 0,
         }
-        
-        # Response API 模式检测 (第三方代理 GLM 必须用 Response API)
+
+        # Response API 模式检测 (OpenAI-compatible proxy GPT 必须用 Response API)
         self._use_response_api = self._detect_response_api()
-        
+
         # 初始化客户端
         self.client = None
         self._init_client()
-    
+
     # 后端名 → 环境变量前缀 的映射
     _ENV_PREFIX = {
         'openai': 'OPENAI',
-        'DeepSeek': 'ANTHROPIC',
-        'Kimi': 'GOOGLE',
+        'claude': 'ANTHROPIC',
+        'gemini': 'GOOGLE',
         'kimi': 'MOONSHOT',
-        'Qwen': 'QWEN',
+        'grok': 'XAI',
         'deepseek': 'DEEPSEEK',
         'qwen_local': 'QWEN_LOCAL',
         'qwen_cloud': 'DASHSCOPE',
@@ -427,13 +502,16 @@ class AnalysisGenerator:
 
     def _detect_response_api(self) -> bool:
         """检测是否需要使用 OpenAI Response API (wire_api=responses)
-        
-        某些代理商（如 第三方代理）要求 GLM 模型必须使用 Response API 格式。
-        通过环境变量 {BACKEND}_WIRE_API=responses 启用。
-        
+
+        某些代理商（如 OpenAI-compatible proxy）要求 GPT 模型必须使用 Response API 格式。
+        允许配置参数强制指定，否则通过环境变量 {BACKEND}_WIRE_API=responses 启用。
+
         Returns:
             bool: True 表示需要使用 Response API
         """
+        if 'wire_api' in self.config:
+            return self.config['wire_api'].lower() == 'responses'
+
         prefix = self._ENV_PREFIX.get(self.backend)
         if not prefix:
             return False
@@ -442,10 +520,10 @@ class AnalysisGenerator:
 
     def _is_thinking_model(self) -> bool:
         """判断当前模型是否为 thinking 模型
-        
+
         thinking 模型（如 o1, o3, DeepSeek-R1）不支持 temperature 等采样参数。
         通过模型名称中的关键词（think/reason/-high/o1/o3/o4）判断。
-        
+
         Returns:
             bool: True 表示是 thinking 模型
         """
@@ -454,10 +532,10 @@ class AnalysisGenerator:
 
     def _get_api_key_from_env(self) -> Optional[str]:
         """从环境变量获取 API 密钥
-        
+
         根据后端名称查找对应的环境变量：{BACKEND_PREFIX}_API_KEY
-        例如 openai → OPENAI_API_KEY, DeepSeek → ANTHROPIC_API_KEY
-        
+        例如 openai → OPENAI_API_KEY, claude → ANTHROPIC_API_KEY
+
         Returns:
             str | None: API 密钥，未找到返回 None
         """
@@ -468,10 +546,10 @@ class AnalysisGenerator:
 
     def _get_base_url_from_env(self) -> Optional[str]:
         """从环境变量获取自定义 base_url
-        
+
         支持第三方供应商的自定义 API 端点。
         环境变量格式：{BACKEND_PREFIX}_BASE_URL
-        
+
         Returns:
             str | None: 自定义 base_url，未找到返回 None
         """
@@ -482,10 +560,10 @@ class AnalysisGenerator:
 
     def _get_model_from_env(self) -> Optional[str]:
         """从环境变量获取模型名覆盖
-        
+
         允许通过环境变量 {BACKEND_PREFIX}_MODEL 覆盖配置文件中的模型名。
         仅当 CLI 未显式指定 model 参数时生效。
-        
+
         Returns:
             str | None: 模型名称，未找到返回 None
         """
@@ -493,39 +571,39 @@ class AnalysisGenerator:
         if not prefix:
             return None
         return os.environ.get(f'{prefix}_MODEL')
-    
+
     def _init_client(self):
         """初始化 API 客户端
-        
+
         策略：
-        - 当 DeepSeek 使用官方 API（无自定义 base_url）→ 使用 Anthropic 原生 SDK
-        - 当 DeepSeek 使用第三方供应商（有自定义 base_url）→ 走 OpenAI 兼容接口
+        - 当 Claude 使用官方 API（无自定义 base_url）→ 使用 Anthropic 原生 SDK
+        - 当 Claude 使用第三方供应商（有自定义 base_url）→ 走 OpenAI 兼容接口
         - 其余所有后端 → OpenAI 兼容接口
         """
         # 所有后端的官方默认 base_url
         default_urls = {
-            'openai': 'HTTPS://api.openai.com/v1',
-            'Kimi': 'HTTPS://api.Kimi.com/v1beta/openai/',
-            'kimi': 'HTTPS://api.kimi.com/v1',
-            'Qwen': 'HTTPS://api.Qwen.com/v1',
-            'deepseek': 'HTTPS://api.deepseek.com/v1',
+            'openai': 'https://api.openai.com/v1',
+            'gemini': 'https://generativelanguage.googleapis.com/v1beta/openai/',
+            'kimi': 'https://api.moonshot.cn/v1',
+            'grok': 'https://api.x.ai/v1',
+            'deepseek': 'https://api.deepseek.com/v1',
             'qwen_local': 'http://localhost:11434/v1',
             'qwen_cloud': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
             'glm': 'https://open.bigmodel.cn/api/paas/v4',
         }
-        
-        # 判断 DeepSeek 是否使用第三方供应商
-        self._DeepSeek_native = (self.backend == 'DeepSeek' and not self.base_url)
-        
-        if self._DeepSeek_native:
-            # DeepSeek 官方 API → Anthropic 原生 SDK
+
+        # 判断 Claude 是否使用第三方供应商
+        self._claude_native = (self.backend == 'claude' and not self.base_url)
+
+        if self._claude_native:
+            # Claude 官方 API → Anthropic 原生 SDK
             try:
                 from anthropic import Anthropic
                 self.client = Anthropic(api_key=self.api_key)
             except ImportError:
                 print("警告：未安装 anthropic 库，请运行 pip install anthropic")
         else:
-            # 所有后端（含第三方 DeepSeek）→ OpenAI 兼容接口
+            # 所有后端（含第三方 Claude）→ OpenAI 兼容接口
             base_url = self.base_url or default_urls.get(self.backend)
             try:
                 from openai import OpenAI
@@ -539,7 +617,7 @@ class AnalysisGenerator:
                 )
             except ImportError:
                 print("警告：未安装 openai 库，请运行 pip install openai")
-    
+
     def generate_analysis(
         self,
         conversation: str,
@@ -549,23 +627,23 @@ class AnalysisGenerator:
     ) -> Optional[CloudAnalysisResponse]:
         """
         为单个对话生成分析（含 JSON Schema 自修复循环和云端输出分层）
-        
+
         Args:
             conversation: 格式化的对话文本
             agent_type: Agent 类型（neutral/supportive/psychoanalytic）
             graph_context: GraphRAG 检索到的历史上下文（可选）
             mm_density: D1 多模态密度元数据（可选）
-        
+
         Returns:
             CloudAnalysisResponse（含 analysis_features + rationale_private）
         """
         if agent_type not in PROMPTS:
             raise ValueError(f"不支持的 Agent 类型: {agent_type}")
-        
+
         context_text = ""
         if graph_context:
             context_text = f"【历史上下文】\n{graph_context}"
-        
+
         # D2: 构建 mm_context（多模态密度提示）
         mm_context_text = ""
         if mm_density:
@@ -583,7 +661,7 @@ class AnalysisGenerator:
                     f"其中多模态消息{d['total_multimodal']}条（{', '.join(parts)}），"
                     f"多模态密度{density_pct}%。请特别关注这些非文字信号的情感含义。"
                 )
-        
+
         # 格式化 prompt（兼容有/无 mm_context 占位符的模板）
         try:
             prompt = PROMPTS[agent_type].format(
@@ -596,7 +674,7 @@ class AnalysisGenerator:
                 conversation=conversation,
                 graph_context=context_text,
             )
-        
+
         for attempt in range(self.max_retries):
             try:
                 response = self._call_api(prompt)
@@ -628,9 +706,9 @@ class AnalysisGenerator:
                 else:
                     logger.error(f"API 调用失败，已达最大重试次数: {e}")
                     self.stats['failed'] += 1
-        
+
         return None
-    
+
     def generate_safe_context(
         self,
         conversation: str,
@@ -639,14 +717,14 @@ class AnalysisGenerator:
     ) -> Optional[str]:
         """
         生成分析并返回安全的纯文本上下文（供本地模型使用）。
-        
+
         这是完整的 Cloud→Schema→Safety→Local 流程的前半段。
-        
+
         Args:
             conversation: 对话文本
             agent_type: Agent 类型
             graph_context: GraphRAG 上下文
-        
+
         Returns:
             安全的纯文本上下文字符串，或 None
         """
@@ -654,19 +732,19 @@ class AnalysisGenerator:
         if result is None:
             return None
         return self.safety.sanitize_for_local(result)
-    
+
     def _call_api(self, prompt: str) -> Optional[str]:
         """调用 LLM API（统一接口）
-        
+
         第三方代理对某些模型（如 thinking 模型）的 non-stream 模式可能返回 500，
         此时自动降级到 stream 模式收集完整响应。
         """
-        # Response API 模式 (第三方代理 GLM 要求)
+        # Response API 模式 (OpenAI-compatible proxy GPT 要求)
         if self._use_response_api:
             return self._call_api_response_api(prompt)
-        
-        if self._DeepSeek_native:
-            # DeepSeek 官方 API → Anthropic 原生 SDK
+
+        if self._claude_native:
+            # Claude 官方 API → Anthropic 原生 SDK
             response = self.client.messages.create(
                 model=self.model,
                 max_tokens=self.max_tokens,
@@ -676,7 +754,7 @@ class AnalysisGenerator:
                 self.stats['total_tokens'] += response.usage.input_tokens + response.usage.output_tokens
             return response.content[0].text
         else:
-            # 所有后端（含第三方 DeepSeek）→ OpenAI 兼容接口
+            # 所有后端（含第三方 Claude）→ OpenAI 兼容接口
             messages = [{"role": "user", "content": prompt}]
             # thinking 模型通常不支持 temperature 参数
             kwargs = dict(
@@ -686,10 +764,10 @@ class AnalysisGenerator:
             )
             if self.temperature is not None and not self._is_thinking_model():
                 kwargs['temperature'] = self.temperature
-            
+
             # 如果有自定义 base_url（第三方代理），优先用 stream 模式
             use_stream = bool(self.base_url)
-            
+
             if use_stream:
                 return self._call_api_stream(kwargs)
             else:
@@ -697,15 +775,15 @@ class AnalysisGenerator:
                 if response.usage:
                     self.stats['total_tokens'] += response.usage.total_tokens
                 return response.choices[0].message.content
-    
+
     def _call_api_response_api(self, prompt: str) -> Optional[str]:
         """调用 OpenAI Response API (wire_api=responses)
-        
-        某些代理商 (如 第三方代理) 要求 GLM 模型必须使用 Response API 格式，
+
+        某些代理商 (如 OpenAI-compatible proxy) 要求 GPT 模型必须使用 Response API 格式，
         而非 Chat Completions。Response API 端点: {base_url}/responses
         """
         import httpx
-        
+
         url = f"{self.base_url.rstrip('/')}/responses"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -728,15 +806,15 @@ class AnalysisGenerator:
             "store": False,
             "stream": True,
         }
-        
+
         prefix = self._ENV_PREFIX.get(self.backend, '')
         effort = os.environ.get(f'{prefix}_REASONING_EFFORT', '')
         if effort:
             payload["reasoning"] = {"effort": effort}
-        
+
         if self.max_tokens:
             payload["max_output_tokens"] = self.max_tokens
-        
+
         timeout = httpx.Timeout(connect=30.0, read=300.0, write=30.0, pool=30.0)
         collected: list[str] = []
         usage: dict = {}
@@ -769,22 +847,22 @@ class AnalysisGenerator:
                         resp_obj = obj.get("response") or {}
                         usage = resp_obj.get("usage", {}) or {}
                         break
-        
+
         if usage:
             self.stats['total_tokens'] += usage.get('input_tokens', 0) + usage.get('output_tokens', 0)
-        
+
         text = ''.join(collected).strip()
         return text or None
-    
+
     def _call_api_stream(self, kwargs: dict) -> Optional[str]:
         """Stream 模式调用 API（兼容第三方代理）
-        
+
         使用 OpenAI 兼容的 stream 接口逐 chunk 收集响应文本。
         适用于第三方代理对 non-stream 模式支持不佳的情况。
-        
+
         Args:
             kwargs (dict): chat.completions.create 的参数字典
-        
+
         Returns:
             str | None: 完整响应文本，无内容返回 None
         """
@@ -795,32 +873,32 @@ class AnalysisGenerator:
             if chunk.choices and chunk.choices[0].delta.content:
                 collected.append(chunk.choices[0].delta.content)
         return ''.join(collected) if collected else None
-    
+
     def _get_fallback_fn(self) -> Optional[callable]:
         """获取 fallback LLM 调用函数
-        
+
         当 Schema 修复失败时，使用 fallback 模型（如 DeepSeek Reasoner）
         尝试将原始响应转换为合法 JSON 格式。
-        
+
         Returns:
             callable | None: fallback 函数，无 router 时返回 None
         """
         if self.router is None:
             return None
-        
+
         def fallback_fn(original_response: str) -> str:
             fallback_prompt = (
                 "请将以下分析结果严格转换为要求的 JSON 格式：\n\n"
                 f"{original_response[:3000]}"
             )
             return self.router.call('deepseek_reasoner', fallback_prompt)
-        
+
         return fallback_fn
-    
+
     def swap_api_key(self, new_key: str):
         """
         运行时切换 API 密钥（用于 key 被限流/封禁后热替换）
-        
+
         Args:
             new_key: 新的 API 密钥
         """
@@ -832,7 +910,7 @@ class AnalysisGenerator:
     def _scan_completed(output_path: str) -> set[str]:
         """
         扫描已有输出文件，收集已完成的 chunk_id 集合（用于断点续跑）
-        
+
         Returns:
             已完成的 chunk_id 集合
         """
@@ -863,20 +941,20 @@ class AnalysisGenerator:
     ) -> list[dict]:
         """
         批量生成分析并保存（支持断点续跑）
-        
+
         Args:
             chunks: 对话片段列表
             agent_type: Agent 类型
             output_path: 输出文件路径
             resume: 是否断点续跑（默认 True，跳过已完成的 chunk_id）
-        
+
         Returns:
             本次新生成的分析结果列表
         """
         results = []
         path = Path(output_path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # 断点续跑：扫描已完成的 chunk_id
         completed_ids = set()
         if resume:
@@ -884,28 +962,28 @@ class AnalysisGenerator:
             if completed_ids:
                 logger.info(f"断点续跑：已完成 {len(completed_ids)} 条，跳过")
                 print(f"\n断点续跑：已完成 {len(completed_ids)}/{len(chunks)} 条，继续处理剩余部分")
-        
+
         # 过滤待处理的 chunks
         pending = [
             c for c in chunks
             if c.get('chunk_id', '') not in completed_ids
         ]
-        
+
         if not pending:
             print("所有 chunks 已处理完毕，无需重新生成")
             return results
-        
+
         # 追加模式写入
         with open(path, 'a', encoding='utf-8') as f:
             for chunk in tqdm(pending, desc=f"生成 {agent_type} 分析"):
                 conversation = chunk.get('conversation_text', '')
                 chunk_id = chunk.get('chunk_id', '')
                 graph_context = chunk.get('graph_context')
-                
+
                 cloud_response = self.generate_analysis(
                     conversation, agent_type, graph_context,
                 )
-                
+
                 if cloud_response:
                     # 序列化：features 完整保存，private 仅保存元数据
                     features = cloud_response.get_features_for_local()
@@ -920,17 +998,17 @@ class AnalysisGenerator:
                     results.append(result)
                     f.write(json.dumps(result, ensure_ascii=False) + '\n')
                     f.flush()  # 每条写完立即刷盘，防止中断丢失
-                
+
                 # API 调用间隔
                 time.sleep(self.rate_limit_delay)
-        
+
         total = len(completed_ids) + len(results)
         logger.info(f"已保存 {total} 个分析到 {output_path}（本次新增 {len(results)}）")
         return results
-    
+
     def get_stats(self) -> dict:
         """获取生成统计信息
-        
+
         Returns:
             dict: 统计字典，包含：
                 - success (int): 成功生成数

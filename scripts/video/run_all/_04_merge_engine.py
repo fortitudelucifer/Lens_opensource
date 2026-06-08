@@ -64,7 +64,7 @@ QC 报告内容：
 - 内容类型分布：TYPE_A_NSFW, TYPE_B_GORE, TYPE_C_NORMAL, TYPE_D_DOC
 - 处理详情：前10个视频的详细信息（文件名、时长、帧数、类型）
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-02
 """
 import os

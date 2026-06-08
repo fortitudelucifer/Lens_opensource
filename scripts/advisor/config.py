@@ -37,7 +37,7 @@
     print(config.analysis.default_backend)
     
     # 指定配置文件和工作空间
-    config = load_config('configs/advisor.yaml', workspace='/path/to/project')
+    config = load_config('configs/advisor.yaml', workspace='/data/project')
     
     # 验证配置
     from scripts.advisor.config import validate_config
@@ -57,17 +57,39 @@
 - 训练参数（batch_size, learning_rate, num_epochs）有合法性校验
 - 推理参数（temperature 0-2, top_p 0-1）有范围校验
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
 import os
 import re
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
 import yaml
+
+
+class DataLevel(str, Enum):
+    L1 = 'l1'
+    L2 = 'l2'
+    L3 = 'l3'
+
+
+_LEVEL_ALIASES = {
+    'l1': DataLevel.L1,
+    'l2': DataLevel.L2,
+    'l3': DataLevel.L3,
+    'timeline': DataLevel.L3,
+}
+
+
+def parse_data_level(value: str) -> DataLevel:
+    normalized = value.strip().lower()
+    if normalized in _LEVEL_ALIASES:
+        return _LEVEL_ALIASES[normalized]
+    raise ValueError(f"无效数据级别: {value}")
 
 
 @dataclass
@@ -93,6 +115,7 @@ class ExtractionConfig:
     exclude_system: bool = True
     exclude_types: list[str] = field(default_factory=list)
     num_chunks: int = 100
+    segmentation_strategy: str = 'event_based'
 
 
 @dataclass
@@ -102,20 +125,20 @@ class AnalysisConfig:
     控制 AnalysisGenerator 的 API 调用参数和各后端配置。
     
     Attributes:
-        default_backend: 默认 LLM 后端（openai/DeepSeek/Kimi/kimi/Qwen/deepseek 等），默认 'openai'
+        default_backend: 默认 LLM 后端（openai/claude/gemini/kimi/grok/deepseek 等），默认 'openai'
         rate_limit_delay: API 调用间隔（秒），防止触发限流，默认 1.0
         max_retries: API 调用最大重试次数，默认 3
         retry_delay: 重试间隔（秒），支持指数退避，默认 5.0
         openai: OpenAI 后端配置字典（model, api_key, base_url, temperature 等）
-        DeepSeek: Anthropic DeepSeek 后端配置字典
-        Kimi: Google Kimi 后端配置字典
+        claude: Anthropic Claude 后端配置字典
+        gemini: Google Gemini 后端配置字典
         qwen_local: 本地 Qwen 模型配置字典（通过 Ollama 或 vLLM 提供）
         kimi: Moonshot Kimi 后端配置字典
-        Qwen: Qwen 后端配置字典
+        grok: xAI Grok 后端配置字典
         deepseek: DeepSeek 后端配置字典
     
     Example:
-        >>> config = AnalysisConfig(default_backend='DeepSeek', rate_limit_delay=2.0)
+        >>> config = AnalysisConfig(default_backend='claude', rate_limit_delay=2.0)
     """
     default_backend: str = 'openai'
     rate_limit_delay: float = 1.0
@@ -124,11 +147,11 @@ class AnalysisConfig:
     
     # 各后端配置
     openai: dict = field(default_factory=dict)
-    DeepSeek: dict = field(default_factory=dict)
-    Kimi: dict = field(default_factory=dict)
+    claude: dict = field(default_factory=dict)
+    gemini: dict = field(default_factory=dict)
     qwen_local: dict = field(default_factory=dict)
     kimi: dict = field(default_factory=dict)
-    Qwen: dict = field(default_factory=dict)
+    grok: dict = field(default_factory=dict)
     deepseek: dict = field(default_factory=dict)
 
 
@@ -231,7 +254,7 @@ class TrainingConfig:
     控制 AdvisorTrainer 的 QLoRA 微调参数。
     
     Attributes:
-        base_model: 基座模型路径（本地路径或 HuggingFace 模型 ID），默认 '/path/to/models/Qwen3-8B-Instruct'
+        base_model: 基座模型路径（本地路径或 HuggingFace 模型 ID），默认 '/data/models/Qwen3-8B-Instruct'
         lora_r: LoRA 秩（rank），控制低秩矩阵的维度，默认 32
         lora_alpha: LoRA 缩放因子（alpha/r 为实际缩放比），默认 64
         lora_dropout: LoRA 层的 Dropout 比率，默认 0.05
@@ -252,7 +275,7 @@ class TrainingConfig:
     Example:
         >>> config = TrainingConfig(num_epochs=3, learning_rate=5e-5)
     """
-    base_model: str = '/path/to/models/Qwen3-8B-Instruct'
+    base_model: str = '/data/models/Qwen3-8B-Instruct'
     lora_r: int = 32
     lora_alpha: int = 64
     lora_dropout: float = 0.05
@@ -298,6 +321,7 @@ class InferenceConfig:
     max_new_tokens: int = 1024
     do_sample: bool = True
     auto_unload: bool = True
+    thinking_mode: bool = False
 
 
 @dataclass
@@ -336,6 +360,7 @@ class AdvisorConfig:
     sft_l1_file: str = ''
     sft_l2_file: str = ''
     output_dir: str = ''
+    data_level: str = 'l1'
     
     # 子配置
     extraction: ExtractionConfig = field(default_factory=ExtractionConfig)
@@ -354,6 +379,16 @@ class AdvisorConfig:
     log_level: str = 'INFO'
     log_file: str = ''
 
+    def get_input_file(self, level: str) -> str:
+        data_level = parse_data_level(level)
+        if data_level == DataLevel.L1:
+            return self.sft_l1_file
+        if data_level == DataLevel.L2:
+            return self.sft_l2_file
+        if data_level == DataLevel.L3:
+            return self.timeline_file
+        raise ValueError(f"无效数据级别: {level}")
+
 
 def _resolve_variables(value: Any, variables: dict) -> Any:
     """递归解析配置值中的 ${variable} 变量引用
@@ -370,8 +405,8 @@ def _resolve_variables(value: Any, variables: dict) -> Any:
         Any: 解析后的配置值，类型与输入一致
     
     Example:
-        >>> _resolve_variables('${workspace}/output', {'workspace': '/path'})
-        '/path/output'
+        >>> _resolve_variables('${workspace}/output', {'workspace': '/data'})
+        '/data/output'
     """
     if isinstance(value, str):
         # 替换 ${var} 格式的变量
@@ -413,7 +448,7 @@ def load_config(
     
     Example:
         >>> config = load_config()
-        >>> config = load_config('configs/advisor.yaml', workspace='/path/to/project')
+        >>> config = load_config('configs/advisor.yaml', workspace='/data/project')
     """
     # 默认配置文件路径
     if config_path is None:
@@ -459,6 +494,7 @@ def load_config(
     config.sft_l1_file = paths.get('sft_l1_file', f'{workspace}/timeline_out/agent_sft_l1.jsonl')
     config.sft_l2_file = paths.get('sft_l2_file', f'{workspace}/timeline_out/agent_sft_l2.jsonl')
     config.output_dir = paths.get('output_dir', f'{workspace}/advisor_out')
+    config.data_level = parse_data_level(paths.get('data_level', 'l1')).value
     
     # 提取配置
     extraction = raw_config.get('extraction', {})
@@ -469,6 +505,7 @@ def load_config(
         exclude_system=extraction.get('exclude_system', True),
         exclude_types=extraction.get('exclude_types', []),
         num_chunks=extraction.get('num_chunks', 100),
+        segmentation_strategy=extraction.get('segmentation_strategy', 'event_based'),
     )
     
     # 分析配置
@@ -479,11 +516,11 @@ def load_config(
         max_retries=analysis.get('max_retries', 3),
         retry_delay=analysis.get('retry_delay', 5.0),
         openai=analysis.get('openai', {}),
-        DeepSeek=analysis.get('DeepSeek', {}),
-        Kimi=analysis.get('Kimi', {}),
+        claude=analysis.get('claude', {}),
+        gemini=analysis.get('gemini', {}),
         qwen_local=analysis.get('qwen_local', {}),
         kimi=analysis.get('kimi', {}),
-        Qwen=analysis.get('Qwen', {}),
+        grok=analysis.get('grok', {}),
         deepseek=analysis.get('deepseek', {}),
     )
     
@@ -493,7 +530,7 @@ def load_config(
     quant = training.get('quantization', {})
     
     config.training = TrainingConfig(
-        base_model=training.get('base_model', '/path/to/models/Qwen3-8B-Instruct'),
+        base_model=training.get('base_model', '/data/models/Qwen3-8B-Instruct'),
         lora_r=lora.get('r', 32),
         lora_alpha=lora.get('alpha', 64),
         lora_dropout=lora.get('dropout', 0.05),
@@ -524,6 +561,7 @@ def load_config(
         max_new_tokens=inference.get('max_new_tokens', 1024),
         do_sample=inference.get('do_sample', True),
         auto_unload=inference.get('auto_unload', True),
+        thinking_mode=inference.get('thinking_mode', False),
     )
     
     # 路由配置
@@ -629,6 +667,20 @@ def validate_config(config: AdvisorConfig) -> list[str]:
     return errors
 
 
+def validate_config_file(raw_config: dict) -> list[str]:
+    errors = []
+    required_sections = ['extraction', 'training', 'inference']
+    for section in required_sections:
+        if section not in raw_config:
+            errors.append(f"缺少必需配置节: {section}")
+
+    training = raw_config.get('training')
+    if isinstance(training, dict) and 'base_model' not in training:
+        errors.append("training 缺少 base_model")
+
+    return errors
+
+
 def merge_cli_args(config: AdvisorConfig, args) -> AdvisorConfig:
     """
     合并命令行参数到配置对象
@@ -674,5 +726,17 @@ def merge_cli_args(config: AdvisorConfig, args) -> AdvisorConfig:
     
     if hasattr(args, 'max_tokens') and args.max_tokens is not None:
         config.inference.max_new_tokens = args.max_tokens
+
+    if hasattr(args, 'num') and args.num is not None:
+        config.extraction.num_chunks = args.num
+
+    if hasattr(args, 'strategy') and args.strategy is not None:
+        config.extraction.segmentation_strategy = args.strategy
+
+    if hasattr(args, 'thinking') and args.thinking is not None:
+        config.inference.thinking_mode = args.thinking
+
+    if hasattr(args, 'max_seq_length') and args.max_seq_length is not None:
+        config.training.max_seq_length = args.max_seq_length
     
     return config

@@ -145,7 +145,7 @@ SFT 数据优化器 - Token 级别优化
 - 不损失任何语义信息
 - 提高训练效率，减少训练成本
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-02
 """
 
@@ -377,22 +377,13 @@ class SFTOptimizer:
         elif 'msg_uid' in msg:
             result['msg_uid'] = msg['msg_uid']
         
-        # 2. 时间戳处理：time_local → time
-        if 'time_local' in msg:
-            if self.compress_time:
-                # 压缩时间戳
-                compressed_time = self._compress_timestamp(msg['time_local'])
-                result['time'] = compressed_time
-                self.stats['time_savings'] += len(msg['time_local']) - len(compressed_time)
-            else:
-                # 保留完整时间戳（去掉秒）
-                try:
-                    dt = datetime.strptime(msg['time_local'], '%Y-%m-%d %H:%M:%S')
-                    full_time = dt.strftime('%Y-%m-%d %H:%M')
-                    result['time'] = full_time
-                except ValueError:
-                    # 如果解析失败，保留原始值
-                    result['time'] = msg['time_local']
+        # 2. 时间戳压缩：time_local → time
+        if self.compress_time and 'time_local' in msg:
+            compressed_time = self._compress_timestamp(msg['time_local'])
+            result['time'] = compressed_time
+            self.stats['time_savings'] += len(msg['time_local']) - len(compressed_time)
+        elif 'time_local' in msg:
+            result['time_local'] = msg['time_local']
         
         # 3. 保留 speaker
         if 'speaker' in msg:
@@ -464,7 +455,7 @@ class SFTOptimizer:
                 self.last_date = current_date
                 return dt.strftime('%Y-%m-%d %H:%M')
             
-            # 同一天内：仅保留时分
+            # 同一天内：仅保留时分，时间压缩
             return dt.strftime('%H:%M')
             
         except Exception as e:

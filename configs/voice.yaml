@@ -14,7 +14,7 @@ asr:
     hotword_file: "configs/hotword.txt"
   
   whisper:
-    model_path: "/path/to/models/faster-whisper-large-v3"
+    model_path: "/data/models/faster-whisper-large-v3"
     device: "cuda"
     compute_type: "float16"
     beam_size: 5
@@ -43,7 +43,7 @@ emotion:
   
   # Qwen2-Audio 深度分析
   qwen_audio:
-    model_path: "/path/to/models/qwen2-audio-7b-instruct"
+    model_path: "/data/models/qwen2-audio-7b-instruct"
     device_map: "auto"
     torch_dtype: "float16"
     generation:

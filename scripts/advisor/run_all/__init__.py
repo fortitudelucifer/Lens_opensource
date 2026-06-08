@@ -7,7 +7,7 @@ _00_verify_environment.py  - 验证训练环境（依赖、CUDA、基座模型�
 _01_extract_conversations.py - 从 SFT 数据提取对话片段
 _02_generate_analysis.py   - 调用 LLM API 生成关系分析
 _02b_model_comparison.py   - 多模型对比评测（5 chunks × 8 backends）
-_02c_fusion_pipeline.py    - 多专家并行融合流水线（DeepSeek+GLM+Kimi → Qwen MoA）
+_02c_fusion_pipeline.py    - 多专家并行融合流水线（Claude+GPT+Gemini → Grok MoA）
 _02c_rerun_moa.py          - MoA 重融合/修复（复用已有分析）
 _03_export_for_review.py   - 导出审核用 Markdown 文件
 _03b_ai_review.py          - AI 辅助审核（5 维度评分 + 补齐）

@@ -1,0 +1,70 @@
+# ============================================================
+# 确认人名列表配置模板
+# ============================================================
+# 
+# 此文件由两阶段 PII 检测系统生成和使用
+# 
+# 生成方法：
+#   python scripts/compression/two_stage_pii.py scan timeline_out/agent_sft_l1.jsonl
+# 
+# 人工审核：
+#   python scripts/compression/two_stage_pii.py review
+# 
+# 查看统计：
+#   python scripts/compression/two_stage_pii.py stats
+# 
+# ============================================================
+
+# 配置版本
+version: "1.0"
+
+# 生成时间（自动填充）
+generated_at: ""
+
+# 源文件路径（自动填充）
+source_file: ""
+
+# ========== 确认的人名列表 ==========
+# 这些人名会在匿名化时被精确替换
+# 
+# 字段说明：
+#   text: 人名文本
+#   category: 类别（real_name/uncertain）
+#   frequency: 出现频次
+#   alias: 预设别名（可选，如 ME/OTHER）
+#   contexts: 上下文示例（用于人工审核）
+# 
+confirmed_names:
+  # 示例：
+  # - text: "张三"
+  #   category: "real_name"
+  #   frequency: 42
+  #   alias: "OTHER"  # 可选：预设别名
+  #   contexts:
+  #     - "张三说今天天气不错"
+  #     - "我和张三约好明天见面"
+
+# ========== 排除列表 ==========
+# LLM 判定为非人名的词汇
+# 这些词汇不会被匿名化
+# 
+excluded:
+  # 示例：
+  # - text: "朋友"
+  #   category: "pronoun"
+  # - text: "猫咪"
+  #   category: "animal"
+  # - text: "北京"
+  #   category: "common"
+
+# ========== 待审核列表 ==========
+# LLM 无法确定的词汇，需要人工审核
+# 运行 'python scripts/compression/two_stage_pii.py review' 进行审核
+# 
+pending_review:
+  # 示例：
+  # - text: "小明"
+  #   category: "uncertain"
+  #   frequency: 5
+  #   contexts:
+  #     - "小明说今天天气不错"

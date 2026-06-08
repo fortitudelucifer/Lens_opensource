@@ -73,7 +73,7 @@ Pillow 解码验证：
 - 计算 megapixels（width * height / 1,000,000）
 - 捕获异常：DecompressionBombWarning, IOError, OSError 等
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-02
 """
 

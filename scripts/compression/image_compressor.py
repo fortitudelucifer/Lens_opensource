@@ -267,6 +267,9 @@ class ImageCompressor:
         
         # 4. 合并（不再强制截断，保留完整信息）
         summary = '，'.join(filter(None, summary_parts))
+        max_length = min(target_length, 150)
+        if len(summary) > max_length:
+            summary = summary[:max_length - 3].rstrip('，。、 \n') + '...'
         
         # 注意：不再强制截断，target_length 仅作为参考
         # 如果需要限制长度，应在上游 VLM 生成时控制
@@ -566,7 +569,7 @@ class ImageCompressor:
         
         # 品牌/App名称
         brand_patterns = [
-            r'(携程|美团|饿了么|淘宝|京东|社交媒体|微博|抖音|CHAT_APP)',
+            r'(携程|美团|饿了么|淘宝|京东|小红书|微博|抖音|微信)',
             r'(GRE|雅思|托福|考满分|扇贝|百词斩)',
             r'(Kindle|得到|喜马拉雅|网易云)',
             r'(霸王茶姬|喜茶|奈雪|瑞幸|星巴克)',
@@ -577,7 +580,7 @@ class ImageCompressor:
         
         # 地点名称
         place_patterns = [
-            r'(CITY_LIST)',
+            r'(重庆|贵阳|成都|北京|上海|广州|深圳)',
             r'([^\s]{2,4}(?:区|市|县|镇|街|路|广场|公园|景区|酒店))',
         ]
         for pattern in place_patterns:
@@ -640,7 +643,7 @@ class ImageCompressor:
         text_lower = text.lower()
         
         # 聊天截图
-        if any(kw in text for kw in ['CHAT_APP', '聊天', '消息', '对话', '群聊']):
+        if any(kw in text for kw in ['微信', '聊天', '消息', '对话', '群聊']):
             return '聊天截图'
         
         # 英语学习 - 放在学习资料前面，更精确
@@ -657,7 +660,7 @@ class ImageCompressor:
             return '旅游信息'
         
         # 社交截图
-        if any(kw in text for kw in ['评论', '点赞', '分享', '朋友圈', '社交媒体', '短视频', '社交平台']):
+        if any(kw in text for kw in ['评论', '点赞', '分享', '朋友圈', '微博', '抖音', '小红书']):
             return '社交截图'
         
         # 美食分享

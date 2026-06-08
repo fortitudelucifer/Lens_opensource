@@ -14,7 +14,7 @@
     python scripts/compression/two_stage_pii.py stats
     
     # 测试匿名化效果
-    python scripts/compression/two_stage_pii.py test "用户A和用户B约好明天见面"
+    python scripts/compression/two_stage_pii.py test "张三和李四约好明天见面"
 """
 
 import argparse

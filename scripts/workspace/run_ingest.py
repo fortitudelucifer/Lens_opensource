@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 def _resolve_workspace_root(workspace_name: str) -> Path:
     """根据 workspace 名称解析工作空间根目录。
 
-    优先从 configs/paths.yaml 读取 base_dir，回退到默认值 /path/to/data/root。
+    优先从 configs/paths.yaml 读取 base_dir，回退到默认值 <WORKSPACES_DIR>。
     """
     try:
         import yaml
@@ -60,11 +60,11 @@ def _resolve_workspace_root(workspace_name: str) -> Path:
         if config_path.exists():
             with open(config_path, "r", encoding="utf-8") as f:
                 config = yaml.safe_load(f)
-            base_dir = config.get("base_dir", "/path/to/data/root")
+            base_dir = config.get("base_dir", "<WORKSPACES_DIR>")
         else:
-            base_dir = "/path/to/data/root"
+            base_dir = "<WORKSPACES_DIR>"
     except Exception:
-        base_dir = "/path/to/data/root"
+        base_dir = "<WORKSPACES_DIR>"
 
     return Path(base_dir) / workspace_name
 

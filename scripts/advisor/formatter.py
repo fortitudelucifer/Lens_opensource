@@ -53,7 +53,7 @@
 - 审核 Markdown 中的复选框 [x] 表示已审核，[ ] 表示未审核
 - export_training_data 的 only_reviewed=True 可过滤未审核样本
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -110,6 +110,18 @@ class TrainingFormatter:
             'formatted': 0,
             'reviewed': 0,
         }
+
+    def format_conversation(self, messages: list[dict]) -> str:
+        lines = []
+        for msg in messages:
+            speaker = msg.get('speaker', '')
+            if speaker not in ('ME', 'OTHER'):
+                continue
+            text = msg.get('text_raw', '')
+            if not isinstance(text, str) or not text.strip():
+                continue
+            lines.append(f"{speaker}: {text.strip()}")
+        return '\n'.join(lines)
     
     def format_analysis_text(self, analysis: dict, agent_type: str = 'neutral') -> str:
         """

@@ -6,17 +6,17 @@ AI 辅助审核脚本
 - 使用云端大模型对 LLM 生成的关系分析进行自动质量审核
 - 5 维度评分（准确性/深度/平衡性/安全性/结构化，各 1-10 分）
 - 安全性一票否决机制（safety ≤ 4 分直接不通过）
-- 可选 Qwen 补齐：低分维度自动针对性改进
+- 可选 Grok 补齐：低分维度自动针对性改进
 - 支持断点续跑，大批量任务中断恢复
 
 处理流程：
 1. 加载 LLM 分析结果（raw_analysis_{agent_type}.jsonl）
 2. 对每条分析结果：
    a. 构建审核 prompt（含对话原文 + 分析结果）
-   b. 调用审核后端（默认 DeepSeek）进行 5 维度评分
+   b. 调用审核后端（默认 Claude）进行 5 维度评分
    c. 解析审核 JSON 结果（含截断修复机制）
    d. 安全性一票否决检查
-   e. 可选：低分维度 Qwen 补齐（≤7 分触发）
+   e. 可选：低分维度 Grok 补齐（≤7 分触发）
 3. 输出审核结果 JSONL + 不通过条目单独导出
 
 审核维度：
@@ -42,13 +42,13 @@ AI 辅助审核脚本
 - scripts/advisor/generator.py: AnalysisGenerator（调用审核后端）
 
 使用示例：
-    # 使用 DeepSeek 审核中立分析（默认）
+    # 使用 Claude 审核中立分析（默认）
     python scripts/advisor/run_all/_03b_ai_review.py --agent-type neutral
 
     # 使用 DeepSeek 审核，限制 10 条
     python scripts/advisor/run_all/_03b_ai_review.py --review-backend deepseek --limit 10
 
-    # 启用 Qwen 补齐（低分维度自动改进）
+    # 启用 Grok 补齐（低分维度自动改进）
     python scripts/advisor/run_all/_03b_ai_review.py --remediate
 
     # 禁用断点续跑
@@ -60,12 +60,12 @@ AI 辅助审核脚本
 - 全量 500 条审核：约 30-45 分钟
 
 注意事项：
-- 审核后端建议使用 DeepSeek（推理深度最好）
+- 审核后端建议使用 Claude（推理深度最好）
 - 生成后端和审核后端应使用不同模型，避免自我评价偏差
 - 安全性一票否决的条目需要人工重点复查
 - 断点续跑通过扫描已有输出文件的 chunk_id 实现
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -82,7 +82,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from scripts.advisor.generator import AnalysisGenerator
 
 # AI 审核 Prompt 模板
-REVIEW_PROMPT = """你是一位资深的关系互动质量审核专家。请对以下 LLM 生成的关系分析进行质量审核。
+REVIEW_PROMPT = """你是一位资深的关系咨询质量审核专家。请对以下 LLM 生成的关系分析进行质量审核。
 
 【原始对话片段】
 {conversation}
@@ -296,7 +296,7 @@ def review_single(
     return review
 
 
-# ── Qwen 补齐机制 ─────────────────────────────────────────────
+# ── Grok 补齐机制 ─────────────────────────────────────────────
 # 维度 → 对应的 analysis_features 字段映射
 _DIM_TO_FIELDS = {
     'accuracy': ['key_issues', 'conflict_root_causes', 'time_patterns'],
@@ -346,7 +346,7 @@ def remediate_weak_dimensions(
     对审核中单项 ≤ threshold 的维度进行针对性补齐。
 
     Args:
-        reviewer: Qwen generator
+        reviewer: Grok generator
         item: 包含 conversation 和 analysis_features 的原始条目
         review: 审核结果 (含 scores, issues)
         threshold: 补齐阈值，单项 ≤ 此值则触发补齐
@@ -399,7 +399,7 @@ def remediate_weak_dimensions(
             current_fields=current_text,
         )
 
-        # 调用 Qwen 补齐
+        # 调用 Grok 补齐
         raw = None
         for attempt in range(1, max_retries + 1):
             raw = reviewer._call_api(prompt)
@@ -441,10 +441,10 @@ def main():
     parser.add_argument('--agent-type', type=str, default='neutral',
                         choices=['neutral', 'supportive', 'psychoanalytic'],
                         help='要审核的 Agent 类型')
-    parser.add_argument('--review-backend', type=str, default='DeepSeek',
-                        choices=['openai', 'DeepSeek', 'Kimi', 'kimi', 'Qwen',
+    parser.add_argument('--review-backend', type=str, default='claude',
+                        choices=['openai', 'claude', 'gemini', 'kimi', 'grok',
                                  'deepseek', 'qwen_local', 'qwen_cloud', 'glm'],
-                        help='审核使用的 LLM 后端（默认 DeepSeek）')
+                        help='审核使用的 LLM 后端（默认 Claude）')
     parser.add_argument('--review-model', type=str, default=None,
                         help='审核模型名称（默认根据后端自动选择）')
     parser.add_argument('--input', type=str, default=None,
@@ -460,25 +460,11 @@ def main():
     parser.add_argument('--no-resume', action='store_true',
                         help='禁用断点续跑，从头开始（默认启用断点续跑）')
     parser.add_argument('--remediate', action='store_true',
-                        help='启用 Qwen 补齐：单项 ≤7 则自动补齐到 ≥8')
+                        help='启用 Grok 补齐：单项 ≤7 则自动补齐到 ≥8')
     parser.add_argument('--remediate-threshold', type=int, default=7,
                         help='补齐阈值（默认 7，即 ≤7 触发补齐）')
 
     args = parser.parse_args()
-
-    # 默认审核模型
-    default_review_models = {
-        'openai': 'GLM-4.7',
-        'DeepSeek': 'DeepSeek-V3.2',
-        'Kimi': 'Kimi-K2.5',
-        'kimi': 'moonshotai/Kimi-K2-Instruct',
-        'Qwen': 'Qwen3',
-        'deepseek': 'deepseek-ai/DeepSeek-V3.1',
-        'qwen_local': 'Qwen3-8B-Instruct',
-        'qwen_cloud': 'Qwen/Qwen3-235B-A22B-Instruct-2507',
-        'glm': 'z-ai/glm4.7',
-    }
-    review_model = args.review_model or default_review_models.get(args.review_backend)
 
     # 路径
     workspace = PROJECT_ROOT
@@ -490,7 +476,7 @@ def main():
     )
 
     print(f"审核后端: {args.review_backend}")
-    print(f"审核模型: {review_model}")
+    print(f"审核模型: {args.review_model or '从环境变量自动读取'}")
     print(f"Agent 类型: {args.agent_type}")
     print(f"输入文件: {input_path}")
     print(f"输出文件: {output_path}")
@@ -537,13 +523,15 @@ def main():
         # 仍然打印统计信息
         pending_items = []
 
-    # 创建审核器
-    reviewer = AnalysisGenerator({
+    # 创建审核器（不传 model → 让 AnalysisGenerator 自动从 .env.advisor 环境变量读取）
+    reviewer_config = {
         'backend': args.review_backend,
-        'model': review_model,
         'max_tokens': 16384,
         'rate_limit_delay': args.delay,
-    })
+    }
+    if args.review_model:
+        reviewer_config['model'] = args.review_model
+    reviewer = AnalysisGenerator(reviewer_config)
 
     # 执行审核
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
@@ -569,7 +557,7 @@ def main():
 
             review = review_single(reviewer, item)
 
-            # Qwen 补齐：单项 ≤ threshold 则针对性改进
+            # Grok 补齐：单项 ≤ threshold 则针对性改进
             remediated_fields = []
             if args.remediate and review.get('scores'):
                 weak = {d: s for d, s in review['scores'].items() if s <= args.remediate_threshold}

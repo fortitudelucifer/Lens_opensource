@@ -78,7 +78,7 @@
   * video_intent: 意图
   * video_content_type: 内容类型
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-02
 """
 import os

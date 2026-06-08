@@ -1,0 +1,8 @@
+# Windsurf Rules
+
+1. Always execute scripts inside `conda activate wechatDHA` environment (use `conda run -n wechatDHA` prefix)
+2. Models are stored uniformly at `/data/models/`
+3. Keep variables unified and reusable — avoid redundant definitions
+4. When facing uncertain choices, always ask the user or search the web before deciding
+5. When making large changes, ensure they do not break other pipelines
+6. 每完成一项任务，将其更新到 `advisor_out/comparison/pipeline_plan.md` 合适的位置记录起来，包括：完成时间、修改内容摘要、验证结果。这样做是为了方便记忆、避免失忆，确保每次对话都能快速回顾项目进度。

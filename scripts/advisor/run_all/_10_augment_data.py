@@ -3,9 +3,9 @@
 数据增强与多教师蒸馏脚本
 
 功能：
-- 从外部心理互动数据集导入数据（PsyCLIENT-CP、CPsDD、AuraDial）
+- 从外部心理咨询数据集导入数据（PsyCLIENT-CP、CPsDD、AuraDial）
 - 通过多教师模型蒸馏生成高质量训练样本
-- 逻辑教师（DeepSeek Reasoner）+ 风格教师（DeepSeek V3.2）双教师架构
+- 逻辑教师（DeepSeek Reasoner）+ 风格教师（Claude Opus）双教师架构
 - 质量过滤：自动过滤低质量蒸馏结果
 - 支持从 JSONL 文件直接导入
 
@@ -22,14 +22,14 @@
 4. 保存增强后的训练数据
 
 支持的外部数据集：
-- PsyCLIENT-CP: 中文心理互动对话数据集
+- PsyCLIENT-CP: 中文心理咨询对话数据集
 - CPsDD: 中文心理疾病对话数据集
-- AuraDial: 多轮心理互动对话数据集
+- AuraDial: 多轮心理咨询对话数据集
 
 教师模型配置：
 - deepseek_reasoner: DeepSeek Reasoner（逻辑推理，低成本）
-- DeepSeek_opus: DeepSeek V3.2（风格生成，高质量）
-- Qwen: Qwen 4（备选）
+- claude_opus: Claude Opus 4.6 Think（风格生成，高质量）
+- grok: Grok 4（备选）
 - qwen3_max: Qwen3-235B（备选）
 - glm4_plus: GLM-4-Plus（备选）
 
@@ -50,7 +50,7 @@
 
     # 指定教师模型
     python scripts/advisor/run_all/_10_augment_data.py --dataset CPsDD --data-path path/to/data \\
-        --logic-teacher deepseek_reasoner --style-teacher DeepSeek_V3_2
+        --logic-teacher deepseek_reasoner --style-teacher claude_opus
 
     # 仅质量过滤（跳过蒸馏）
     python scripts/advisor/run_all/_10_augment_data.py --jsonl path/to/data.jsonl --filter-only
@@ -66,7 +66,7 @@
 - --filter-only 模式可跳过蒸馏，仅做质量过滤
 - 增强数据可与原始训练数据合并使用
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -93,10 +93,10 @@ def main():
                         help='从 JSONL 文件导入（替代 --dataset）')
     parser.add_argument('--output', type=str, default=None,
                         help='输出文件路径')
-    parser.add_argument('--logic-teacher', type=str, default='deepseek_reasoner',
-                        help='逻辑教师模型（默认 deepseek_reasoner）')
-    parser.add_argument('--style-teacher', type=str, default='DeepSeek_V3_2',
-                                        help='风格教师模型（默认 DeepSeek_V3_2）')
+    parser.add_argument('--logic-teacher', type=str, default='claude_opus',
+                        help='逻辑教师模型（默认 claude_opus，可用: claude_opus/claude_backup/gpt/grok/gemini）')
+    parser.add_argument('--style-teacher', type=str, default='claude_backup',
+                        help='风格教师模型（默认 claude_backup，可用: claude_opus/claude_backup/gpt/grok/gemini）')
     parser.add_argument('--filter-only', action='store_true',
                         help='仅执行质量过滤，跳过蒸馏')
     parser.add_argument('--batch-size', type=int, default=5,
@@ -113,48 +113,49 @@ def main():
     )
 
     # 教师模型配置（从环境变量读取 API key / base_url / model）
-    # 与 .env.advisor 和 _02c_fusion_pipeline.py STEP_CONFIGS 保持一致
+    # 与 .env.advisor 保持一致
+    # 注意: 仅配置当前可用的后端（2026-04-26 验证）
     import os
     teacher_configs = {
-        'deepseek_reasoner': {
-            'model': os.environ.get('DEEPSEEK_MODEL', 'deepseek-reasoner'),
-            'base_url': os.environ.get('DEEPSEEK_BASE_URL', 'https://api.deepseek.com/v1'),
-            'api_key_env': 'DEEPSEEK_API_KEY',
-            'temperature': 0.7,
-            'max_tokens': 2000,
-            'cost_per_1k_tokens': 0.00028,
-        },
-        'DeepSeek_V3_2': {
-            'model': os.environ.get('ANTHROPIC_MODEL', 'DeepSeek-V3.2'),
-            'base_url': os.environ.get('ANTHROPIC_BASE_URL', 'https://ai.第三方代理.com/v1'),
+        'claude_opus': {
+            'model': os.environ.get('ANTHROPIC_MODEL', 'claude-sonnet-4.6-think'),
+            'base_url': os.environ.get('ANTHROPIC_BASE_URL', 'https://api.example.com/v1'),
             'api_key_env': 'ANTHROPIC_API_KEY',
             'temperature': 0.7,
             'max_tokens': 2000,
             'cost_per_1k_tokens': 0.015,
         },
-        'Qwen': {
-            'model': os.environ.get('QWEN_MODEL', 'Qwen3'),
-            'base_url': os.environ.get('QWEN_BASE_URL', 'https://ai.第三方代理.com/v1'),
-            'api_key_env': 'QWEN_API_KEY',
+        'claude_backup': {
+            'model': os.environ.get('ANTHROPIC_BACKUP_MODEL', 'claude-sonnet-4.6'),
+            'base_url': os.environ.get('ANTHROPIC_BACKUP_BASE_URL', 'https://api.example.com/v1'),
+            'api_key_env': 'ANTHROPIC_BACKUP_API_KEY',
+            'temperature': 0.7,
+            'max_tokens': 2000,
+            'cost_per_1k_tokens': 0.015,
+        },
+        'gpt': {
+            'model': os.environ.get('OPENAI_MODEL', 'gpt-5.3-codex-spark'),
+            'base_url': os.environ.get('OPENAI_BASE_URL', 'https://api.example.com/v1'),
+            'api_key_env': 'OPENAI_API_KEY',
             'temperature': 0.7,
             'max_tokens': 2000,
             'cost_per_1k_tokens': 0.003,
         },
-        'qwen3_max': {
-            'model': os.environ.get('DASHSCOPE_MODEL', 'qwen3-235b-a22b'),
-            'base_url': os.environ.get('DASHSCOPE_BASE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1'),
-            'api_key_env': 'DASHSCOPE_API_KEY',
+        'grok': {
+            'model': os.environ.get('XAI_MODEL', 'grok-4.1-thinking'),
+            'base_url': os.environ.get('XAI_BASE_URL', 'https://api.example.com/v1'),
+            'api_key_env': 'XAI_API_KEY',
+            'temperature': 0.7,
+            'max_tokens': 2000,
+            'cost_per_1k_tokens': 0.003,
+        },
+        'gemini': {
+            'model': os.environ.get('GOOGLE_MODEL', 'gemini-3.1-pro-preview'),
+            'base_url': os.environ.get('GOOGLE_BASE_URL', 'https://api.example.com/v1'),
+            'api_key_env': 'GOOGLE_API_KEY',
             'temperature': 0.7,
             'max_tokens': 2000,
             'cost_per_1k_tokens': 0.002,
-        },
-        'glm4_plus': {
-            'model': os.environ.get('ZHIPU_MODEL', 'glm-4-plus'),
-            'base_url': os.environ.get('ZHIPU_BASE_URL', 'https://open.bigmodel.cn/api/paas/v4'),
-            'api_key_env': 'ZHIPU_API_KEY',
-            'temperature': 0.7,
-            'max_tokens': 2000,
-            'cost_per_1k_tokens': 0.005,
         },
     }
 

@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Bell, FileText, Search, User } from 'lucide-react'
+import { Bell, FileText, Search, User, MessageSquare, SplitSquareHorizontal } from 'lucide-react'
 import { api, type ChatSessionSearchResult } from '../../lib/api'
+
+const STATUS_FILTERS = [
+  { value: '', label: '全部' },
+  { value: '进行中', label: '进行中' },
+  { value: '待评分', label: '待评分' },
+  { value: '已评分', label: '已评分' },
+  { value: '待回复', label: '待回复' },
+  { value: '危机干预', label: '危机干预' },
+] as const
 
 interface TopNavProps {
   sidebarCollapsed: boolean
@@ -11,6 +20,7 @@ export function TopNav({ sidebarCollapsed, onOpenSessionFromSearch }: TopNavProp
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<ChatSessionSearchResult[]>([])
+  const [statusFilter, setStatusFilter] = useState('')
 
   useEffect(() => {
     const keyword = query.trim()
@@ -23,7 +33,7 @@ export function TopNav({ sidebarCollapsed, onOpenSessionFromSearch }: TopNavProp
     const timer = window.setTimeout(async () => {
       setLoading(true)
       try {
-        const data = await api.searchSessions(keyword, 12)
+        const data = await api.searchSessions(keyword, 20)
         setResults(data.results || [])
       } catch {
         setResults([])
@@ -34,6 +44,10 @@ export function TopNav({ sidebarCollapsed, onOpenSessionFromSearch }: TopNavProp
 
     return () => window.clearTimeout(timer)
   }, [query])
+
+  const filteredResults = statusFilter
+    ? results.filter(r => r.communication_status === statusFilter)
+    : results
 
   return (
     <div
@@ -54,37 +68,65 @@ export function TopNav({ sidebarCollapsed, onOpenSessionFromSearch }: TopNavProp
           />
 
           {query.trim() && (
-            <div className="absolute left-0 right-0 mt-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] shadow-lg overflow-hidden max-h-96 overflow-y-auto">
+            <div className="absolute left-0 right-0 mt-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] shadow-lg overflow-hidden max-h-[28rem] overflow-y-auto">
               {loading && <div className="px-4 py-3 text-xs text-[var(--text-muted)]">搜索中...</div>}
 
-              {!loading && results.length === 0 && (
+              {!loading && results.length > 0 && (
+                <div className="flex items-center gap-1.5 px-4 py-2 border-b border-[var(--border-color)] bg-[var(--bg-secondary)]/30 flex-wrap">
+                  {STATUS_FILTERS.map(f => (
+                    <button key={f.value} onClick={() => setStatusFilter(f.value)}
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors ${statusFilter === f.value ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'}`}>
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {!loading && filteredResults.length === 0 && (
                 <div className="px-4 py-3 text-xs text-[var(--text-muted)]">未找到匹配会话（支持标题和全文匹配）</div>
               )}
 
-              {!loading && results.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    onOpenSessionFromSearch(item)
-                    setQuery('')
-                  }}
-                  className="w-full px-4 py-3 text-left border-b last:border-b-0 border-[var(--border-color)] hover:bg-[var(--bg-secondary)] transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-[var(--text-primary)] truncate">{item.title || '未命名会话'}</p>
-                      {item.matched_excerpt && (
-                        <p className="text-xs text-[var(--text-muted)] mt-1 line-clamp-2">{item.matched_excerpt}</p>
-                      )}
+              {!loading && filteredResults.length > 0 && (() => {
+                const groups: Record<string, { label: string; icon: typeof MessageSquare; color: string; items: typeof filteredResults }> = {
+                  chat: { label: '沉浸式互动', icon: MessageSquare, color: 'text-sky-500', items: [] },
+                  arena: { label: '双镜对比', icon: SplitSquareHorizontal, color: 'text-emerald-500', items: [] },
+                  sample: { label: '样例数据', icon: FileText, color: 'text-amber-500', items: [] },
+                }
+                for (const item of filteredResults) {
+                  const key = item.source === 'arena' ? 'arena' : item.source === 'sample' ? 'sample' : 'chat'
+                  groups[key].items.push(item)
+                }
+                return Object.entries(groups).filter(([, g]) => g.items.length > 0).map(([key, g]) => {
+                  const GIcon = g.icon
+                  return (
+                    <div key={key}>
+                      <div className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-secondary)]/50">
+                        <GIcon className={`w-3.5 h-3.5 ${g.color}`} />
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">{g.label}</span>
+                        <span className="text-[10px] text-[var(--text-muted)]">({g.items.length})</span>
+                      </div>
+                      {g.items.map(item => (
+                        <button key={item.id} type="button"
+                          onClick={() => { onOpenSessionFromSearch(item); setQuery('') }}
+                          className="w-full px-4 py-2.5 text-left border-b last:border-b-0 border-[var(--border-color)] hover:bg-[var(--bg-secondary)] transition-colors">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-[var(--text-primary)] truncate">{item.title || '未命名'}</p>
+                              {item.matched_excerpt && <p className="text-xs text-[var(--text-muted)] mt-0.5 line-clamp-1">{item.matched_excerpt}</p>}
+                              {item.communication_status && (
+                                <p className="text-[10px] text-[var(--text-muted)] mt-1">交流状态：{item.communication_status}</p>
+                              )}
+                            </div>
+                            <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-700 dark:text-emerald-300">
+                              {item.match_type === 'title' ? '标题' : item.match_type === 'fulltext' ? '全文' : '标题+全文'}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
                     </div>
-                    <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-700 dark:text-emerald-300">
-                      <FileText className="w-3 h-3" />
-                      {item.match_type === 'title' ? '标题' : item.match_type === 'fulltext' ? '全文' : '标题+全文'}
-                    </span>
-                  </div>
-                </button>
-              ))}
+                  )
+                })
+              })()}
             </div>
           )}
         </div>

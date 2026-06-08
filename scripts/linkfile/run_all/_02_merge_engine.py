@@ -51,7 +51,7 @@ Schema 版本：
 - 合并的记录数
 - link_sub_type 分布
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-02
 """
 

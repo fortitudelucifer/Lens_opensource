@@ -59,7 +59,7 @@
 - safe_api_call 仅对特定错误关键词（rate limit, timeout, 5xx 等）进行重试
 - ProgressReporter 非线程安全，多线程场景需外部加锁
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 

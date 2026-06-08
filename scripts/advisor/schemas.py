@@ -60,7 +60,7 @@
 - CloudAnalysisResponse 的 validate_features_match_type 确保 features 类型与 agent_type 一致
 - 扩展字段（conflict_root_causes, time_patterns 等）为 Optional，向后兼容旧版数据
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 

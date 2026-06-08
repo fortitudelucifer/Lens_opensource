@@ -4,7 +4,7 @@
 功能：
 - 支持两种对话模式的实时流式交互：
   1. listen（即时倾听）：纯本地 Qwen3-8B 非思考模式，低延迟共情响应
-  2. consult（深度互动）：GraphRAG 检索 + 云端深度分析 → SafetyLayer 隔离 → 本地生成
+  2. consult（深度咨询）：GraphRAG 检索 + 云端深度分析 → SafetyLayer 隔离 → 本地生成
 - 基于 vLLM/Ollama OpenAI 兼容接口进行流式推理
 - 对话历史管理（滑动窗口，保留最近 N 轮）
 - 意图分类驱动的模式自动切换
@@ -59,7 +59,7 @@ consult 模式：
 - consult 模式需要云端 API 可用
 - 对话历史默认保留最近 10 轮，可通过配置调整
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -94,6 +94,13 @@ class DialogueTurn:
     mode: str = ''  # 当时使用的模式
 
 
+class ContextMessage(dict):
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return self.get('content') == other
+        return super().__eq__(other)
+
+
 @dataclass
 class DialogueConfig:
     """对话引擎配置"""
@@ -102,11 +109,11 @@ class DialogueConfig:
 
     # 本地推理后端（vLLM / Ollama OpenAI 兼容接口）
     local_base_url: str = 'http://localhost:11434/v1'
-    local_model: str = 'qwen3:8b'
+    local_model: str = 'Qwen3-8B-Instruct'
     local_api_key: str = 'not-needed'
 
     # 云端后端
-    cloud_backend: str = 'deepseek'  # deepseek / DeepSeek / qwen_cloud
+    cloud_backend: str = 'deepseek'  # deepseek / claude / qwen_cloud
     cloud_base_url: str = 'https://api.deepseek.com/v1'
     cloud_model: str = 'deepseek-reasoner'
     cloud_api_key: str = ''
@@ -129,6 +136,7 @@ class DialogueConfig:
         "避免使用任何心理学专业术语，用日常语言表达。"
         "不要重复分析内容，而是给出具体可操作的建议。"
     )
+    mode: str = 'listen'
 
 
 # =============================================================================
@@ -150,7 +158,7 @@ class StreamingDialogueEngine:
         self._config = DialogueConfig(
             context_window=raw.get('context_window', 10),
             local_base_url=raw.get('local_base_url', 'http://localhost:11434/v1'),
-            local_model=raw.get('local_model', 'qwen3:8b'),
+            local_model=raw.get('local_model', 'Qwen3-8B-Instruct'),
             local_api_key=raw.get('local_api_key', 'not-needed'),
             cloud_backend=raw.get('cloud_backend', 'deepseek'),
             cloud_base_url=raw.get('cloud_base_url', 'https://api.deepseek.com/v1'),
@@ -217,14 +225,21 @@ class StreamingDialogueEngine:
             mode=self._mode.value,
         ))
 
-    def get_context(self) -> list[str]:
+    def get_context(self) -> list[ContextMessage]:
         """
         获取当前上下文窗口中的消息内容列表
 
         Returns:
-            消息内容列表
+            消息列表
         """
-        return [turn.content for turn in self._history]
+        return [
+            ContextMessage({
+                'role': turn.role,
+                'content': turn.content,
+                'mode': turn.mode,
+            })
+            for turn in self._history
+        ]
 
     def get_history(self) -> list[DialogueTurn]:
         """获取完整对话历史"""
@@ -233,6 +248,10 @@ class StreamingDialogueEngine:
     def clear_history(self):
         """清空对话历史"""
         self._history.clear()
+
+    def reset_context(self):
+        """清空上下文窗口"""
+        self.clear_history()
 
     async def chat(self, user_message: str) -> AsyncGenerator[str, None]:
         """
@@ -561,11 +580,11 @@ class StreamingDialogueEngine:
                 import os
                 env_map = {
                     'deepseek': 'DEEPSEEK_API_KEY',
-                    'DeepSeek': 'ANTHROPIC_API_KEY',
+                    'claude': 'ANTHROPIC_API_KEY',
                     'qwen_cloud': 'DASHSCOPE_API_KEY',
                     'openai': 'OPENAI_API_KEY',
                     'kimi': 'MOONSHOT_API_KEY',
-                    'Qwen': 'QWEN_API_KEY',
+                    'grok': 'XAI_API_KEY',
                 }
                 env_var = env_map.get(self._config.cloud_backend, '')
                 api_key = os.environ.get(env_var, '')

@@ -133,7 +133,7 @@ def run_script(script_path: Path, log_file: Path, modality: str, step_name: str)
     
     try:
         # 使用 conda 环境运行，添加 --no-capture-output 避免 conda 缓冲
-        cmd = ["conda", "run", "--no-capture-output", "-n", "CHAT_APP_DHA", "python", "-u", str(script_path)]
+        cmd = ["conda", "run", "--no-capture-output", "-n", "wechatDHA", "python", "-u", str(script_path)]
         
         # 记录命令到日志
         with open(log_file, "a", encoding="utf-8") as f:

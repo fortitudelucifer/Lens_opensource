@@ -6,12 +6,12 @@
 - 将审核后的分析结果或 MoA 融合数据转换为 SFT 训练格式
 - 支持多种数据来源（MoA 融合/审核后/原始分析）
 - 支持 JSONL 和 Alpaca 两种输出格式
-- 自动剥离冗余字段（DeepSeek_raw/GLM_raw 等），减小训练数据体积
+- 自动剥离冗余字段（claude_raw/gpt_raw 等），减小训练数据体积
 
 处理流程：
 1. 自动检测或指定数据来源（MoA > reviewed > raw）
 2. 加载分析结果样本
-3. 可选：剥离冗余字段（DeepSeek_raw, GLM_raw, step_details 等）
+3. 可选：剥离冗余字段（claude_raw, gpt_raw, step_details 等）
 4. 使用 TrainingFormatter 转换为 SFT 训练格式
 5. 输出训练数据 JSONL 并展示样本示例
 
@@ -45,11 +45,11 @@
 
 注意事项：
 - 建议优先使用 MoA 融合数据，质量最高
-- --strip-raw 默认开启，会移除 DeepSeek_raw/GLM_raw 等冗余字段
+- --strip-raw 默认开启，会移除 claude_raw/gpt_raw 等冗余字段
 - 生成的训练数据将作为 _05b_filter_split_training.py 的输入
 - 确保先完成分析生成和审核流程
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -102,7 +102,7 @@ def main():
     parser.add_argument('--only-reviewed', action='store_true',
                         help='只导出已审核的样本')
     parser.add_argument('--strip-raw', action='store_true', default=True,
-                        help='移除 DeepSeek_raw/GLM_raw 等冗余字段（默认开启）')
+                        help='移除 claude_raw/gpt_raw 等冗余字段（默认开启）')
     
     args = parser.parse_args()
     
@@ -155,10 +155,10 @@ def main():
     
     # MoA 融合数据特有字段统计
     moa_count = sum(1 for s in samples if s.get('merge_quality', '').startswith('moa'))
-    has_raw = sum(1 for s in samples if 'DeepSeek_raw' in s or 'GLM_raw' in s)
+    has_raw = sum(1 for s in samples if 'claude_raw' in s or 'gpt_raw' in s)
     if moa_count > 0:
         print(f"MoA 融合: {moa_count}")
-        print(f"含原始分析(DeepSeek_raw/GLM_raw): {has_raw}（不会进入训练数据）")
+        print(f"含原始分析(claude_raw/gpt_raw): {has_raw}（不会进入训练数据）")
     
     # 统计审核状态
     reviewed_count = sum(1 for s in samples if s.get('reviewed', False))
@@ -169,8 +169,8 @@ def main():
     # Strip 冗余字段
     if args.strip_raw:
         for s in samples:
-            s.pop('DeepSeek_raw', None)
-            s.pop('GLM_raw', None)
+            s.pop('claude_raw', None)
+            s.pop('gpt_raw', None)
             s.pop('step_details', None)
             s.pop('review_scores', None)
             s.pop('review_verdict', None)

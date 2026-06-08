@@ -54,7 +54,7 @@ GraphRAG 向量索引构建脚本
 - 构建完成后可用于 _08_run_dialogue.py 的 GraphRAG 检索
 - 单 GPU 串行策略：用完自动卸载模型释放显存
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -121,6 +121,8 @@ def main():
                         help='禁用 GPU，使用 CPU 编码')
     parser.add_argument('--from-analysis', action='store_true',
                         help='从 MoA 分析结果文件构建索引（含 analysis_features 作为 metadata）')
+    parser.add_argument('--index-type', type=str, default='auto', choices=['auto', 'flat', 'ivf', 'hnsw'],
+                        help='FAISS 索引类型：auto(默认,自动选择) / flat(暴力搜索) / ivf(IVFFlat) / hnsw(预留)')
 
     args = parser.parse_args()
 
@@ -150,6 +152,7 @@ def main():
         'embedding_model': args.embedding_model,
         'reranker_model': args.reranker_model,
         'index_dir': str(output_dir),
+        'index_type': args.index_type,
         'use_gpu_for_embedding': not args.no_gpu,
     }
     manager = GraphRAGManager(config)

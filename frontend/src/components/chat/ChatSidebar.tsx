@@ -1,15 +1,20 @@
 import { Plus, Clock } from 'lucide-react'
 import type { Session } from '../../types'
+
+type SessionWithStatus = Session & { communication_status?: string }
 import { PERSONAS } from '../../constants'
+import { SessionOptions } from '../shared/SessionOptions'
 
 interface ChatSidebarProps {
   sessions: Session[]
   currentSessionId: number | null
   onSessionSelect: (id: number) => void
   onNewChat: () => void
+  onRenameSession: (backendId: string, newTitle: string) => Promise<void>
+  onDeleteSession: (backendId: string) => Promise<void>
 }
 
-export function ChatSidebar({ sessions, currentSessionId, onSessionSelect, onNewChat }: ChatSidebarProps) {
+export function ChatSidebar({ sessions, currentSessionId, onSessionSelect, onNewChat, onRenameSession, onDeleteSession }: ChatSidebarProps) {
   return (
     <div className="w-72 border-r border-[var(--border-color)] bg-[var(--bg-card)] flex flex-col h-full z-10 hidden lg:flex">
       {/* New Chat Button */}
@@ -24,7 +29,7 @@ export function ChatSidebar({ sessions, currentSessionId, onSessionSelect, onNew
       </div>
 
       {/* Session List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-1">
+      <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-1">
         <div className="px-2 mb-3 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
           近期会话
         </div>
@@ -38,8 +43,8 @@ export function ChatSidebar({ sessions, currentSessionId, onSessionSelect, onNew
               key={session.id}
               onClick={() => onSessionSelect(session.id)}
               className={`group relative rounded-xl transition-all duration-300 cursor-pointer border p-3 flex items-start gap-3 ${
-                isActive 
-                  ? 'bg-emerald-500/5 border-emerald-500/20 shadow-sm' 
+                isActive
+                  ? 'bg-emerald-500/5 border-emerald-500/20 shadow-sm'
                   : 'bg-transparent border-transparent hover:bg-[var(--bg-secondary)]'
               }`}
             >
@@ -48,9 +53,20 @@ export function ChatSidebar({ sessions, currentSessionId, onSessionSelect, onNew
                 style={{ backgroundColor: persona.hex }}
               />
               <div className="flex-1 min-w-0">
-                <h3 className={`text-sm font-medium truncate mb-1 ${isActive ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'}`}>
-                  {session.title}
-                </h3>
+                <div className="flex items-start justify-between">
+                  <h3 className={`text-sm font-medium truncate mb-1 pr-2 ${isActive ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'}`}>
+                    {session.title}
+                  </h3>
+                  {session.backendSessionId && (
+                    <SessionOptions
+                      sessionId={session.backendSessionId}
+                      initialTitle={session.title}
+                      onRename={onRenameSession}
+                      onDelete={onDeleteSession}
+                      className="-mt-1 -mr-1"
+                    />
+                  )}
+                </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="truncate text-[10px] uppercase font-semibold" style={{ color: persona.hex }}>
                     {persona.name}
@@ -60,6 +76,11 @@ export function ChatSidebar({ sessions, currentSessionId, onSessionSelect, onNew
                     <span>{session.time}</span>
                   </div>
                 </div>
+                {(session as SessionWithStatus).communication_status && (
+                  <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                    交流状态：{(session as SessionWithStatus).communication_status}
+                  </p>
+                )}
               </div>
             </div>
           )

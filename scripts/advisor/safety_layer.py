@@ -43,7 +43,7 @@
 - 审计日志默认保存到 {workspace}/advisor_out/audit_logs/
 - 风险级别为 HIGH 或 CRITICAL 时会在上下文中注入安全干预提示
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 

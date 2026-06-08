@@ -4,7 +4,7 @@ PII 检测器 - 纯规则引擎架构
 
 功能：
 - 规则引擎 PII 检测（正则 + 配置映射）
-- 支持多种 PII 类型（电话、邮箱、身份证、CHAT_APP_ID、日期等）
+- 支持多种 PII 类型（电话、邮箱、身份证、微信ID、日期等）
 - 已知实体检测（人名、地名从配置加载）
 - 置信度评分（1.0，规则匹配）
 - 排除列表支持（公众人物、历史人物等）
@@ -18,7 +18,7 @@ PII 检测器 - 纯规则引擎架构
 
 当前架构：
 Layer 1: 规则引擎（正则 + 配置映射）
-  - 正则规则：电话、邮箱、身份证、CHAT_APP_ID、日期等
+  - 正则规则：电话、邮箱、身份证、微信ID、日期等
   - 配置映射：从 anonymization.yaml 加载已知实体（人名、地名）
   - 优点：快速、确定性、置信度 1.0、无显存占用
   - 缺点：无法识别未知实体（由两阶段 PII 系统补充）
@@ -48,18 +48,18 @@ Layer 1: 规则引擎（正则 + 配置映射）
     from scripts.compression.pii_detector import PIIDetector
     
     detector = PIIDetector()
-    matches = detector.detect("CONTACT_NAME的电话是PHONE_PLACEHOLDER，邮箱是example@domain.com")
+    matches = detector.detect("张三的电话是13812345678，邮箱是test@example.com")
     
     for match in matches:
         print(f"[{match.source}] {match.type}: '{match.value}' "
               f"(位置: {match.start}-{match.end}, 置信度: {match.confidence:.2f})")
     
     # 输出：
-    # [config] PERSON: '用户A' (位置: 0-2, 置信度: 1.00)
-    # [regex] PHONE: 'PHONE_PLACEHOLDER' (位置: 6-17, 置信度: 1.00)
-    # [regex] EMAIL: 'example@domain.com' (位置: 21-37, 置信度: 1.00)
+    # [config] PERSON: '张三' (位置: 0-2, 置信度: 1.00)
+    # [regex] PHONE: '13812345678' (位置: 6-17, 置信度: 1.00)
+    # [regex] EMAIL: 'test@example.com' (位置: 21-37, 置信度: 1.00)
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-06
 """
 
@@ -136,7 +136,7 @@ class PIIDetector:
             (r'1[3-9]\d{9}', 'PHONE', '中国手机号'),
             (r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', 'EMAIL', '邮箱'),
             (r'\d{17}[\dXx]', 'ID_CARD', '身份证号'),
-            (r'wxid_[a-zA-Z0-9]+', 'CHAT_APP_ID', 'CHAT_APP_ID'),
+            (r'wxid_[a-zA-Z0-9]+', 'WECHAT_ID', '微信ID'),
             (r'\d{3,4}[-\s]?\d{7,8}', 'PHONE', '固定电话'),
             (r'(?:19|20)\d{2}[-/年]\d{1,2}[-/月]\d{1,2}[日号]?', 'DATE', '日期'),
         ]
@@ -325,9 +325,9 @@ def main():
     
     # 测试用例
     test_cases = [
-        "我的电话是PHONE_PLACEHOLDER，邮箱是example@domain.com",
-        "CHAT_APP号是wxid_example123，身份证号是ID_CARD_PLACEHOLDER",
-        "2025年7月14日，我们在CITY_PLACEHOLDER区开会",
+        "我的电话是13812345678，邮箱是test@example.com",
+        "微信号是wxid_abc123xyz，身份证号是110101199001011234",
+        "2025年7月14日，我们在深圳南山区开会",
     ]
     
     for i, text in enumerate(test_cases, 1):

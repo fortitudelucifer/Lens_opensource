@@ -1,15 +1,18 @@
 import { useEffect, useRef } from 'react'
+import { SplitSquareHorizontal } from 'lucide-react'
 import type { Message, Persona } from '../../types'
 import { ThinkingUI } from './ThinkingUI'
 import { MarkdownContent } from './MarkdownContent'
+import { TypingIndicator } from './TypingIndicator'
 import { format } from 'date-fns'
 
 interface ChatAreaProps {
   messages: Message[]
   currentPersona: Persona
+  onSendToArena?: (content: string) => void
 }
 
-export function ChatArea({ messages, currentPersona }: ChatAreaProps) {
+export function ChatArea({ messages, currentPersona, onSendToArena }: ChatAreaProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
   const Icon = currentPersona.icon
 
@@ -18,7 +21,7 @@ export function ChatArea({ messages, currentPersona }: ChatAreaProps) {
   }, [messages])
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-8 md:px-12">
+    <div className="flex-1 overflow-y-auto scrollbar-fade px-4 py-8 md:px-12">
       <div className="max-w-5xl mx-auto space-y-8">
         {messages.map((msg) => {
           const isUser = msg.role === 'user'
@@ -61,23 +64,35 @@ export function ChatArea({ messages, currentPersona }: ChatAreaProps) {
                     <ThinkingUI content={msg.thinking} />
                   )}
 
-                  {/* Message Bubble */}
                   <div
-                    className={`px-5 py-4 text-[15px] leading-relaxed shadow-sm break-words ${
+                    className={`px-5 py-4 text-[15px] leading-relaxed shadow-sm break-words min-h-[56px] ${
                       isUser
                         ? 'bg-emerald-600 text-white rounded-2xl rounded-tr-sm shadow-emerald-600/20'
                         : 'bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-2xl rounded-tl-sm'
                     }`}
                   >
-                    <MarkdownContent content={msg.content} isUser={isUser} />
+                    {!isUser && !msg.content ? (
+                      <div className="flex items-center h-full pt-1">
+                        <TypingIndicator personaName={currentPersona.name} color={currentPersona.hex} />
+                      </div>
+                    ) : (
+                      <MarkdownContent content={msg.content} isUser={isUser} />
+                    )}
                   </div>
 
-                  {/* Timestamp */}
-                  <span
-                    className={`text-[10px] text-[var(--text-muted)] mt-1 ${isUser ? 'text-right pr-1' : 'text-left pl-1'}`}
-                  >
-                    {format(msg.timestamp, 'HH:mm')}
-                  </span>
+                  {/* Timestamp + Quick Reuse */}
+                  <div className={`flex items-center gap-2 mt-1 ${isUser ? 'justify-end pr-1' : 'justify-start pl-1'}`}>
+                    <span className="text-[10px] text-[var(--text-muted)]">
+                      {format(msg.timestamp, 'HH:mm')}
+                    </span>
+                    {isUser && onSendToArena && (
+                      <button onClick={() => onSendToArena(msg.content)}
+                        className="text-[10px] text-[var(--text-muted)] hover:text-emerald-500 flex items-center gap-0.5 transition-colors"
+                        title="发送到双镜对比">
+                        <SplitSquareHorizontal className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

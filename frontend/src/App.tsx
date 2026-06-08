@@ -1,17 +1,58 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Toaster } from 'sonner'
 import { Sidebar } from './components/layout/Sidebar'
 import { TopNav } from './components/layout/TopNav'
 import { Dashboard } from './pages/Dashboard'
 import { ChatPage } from './pages/ChatPage'
 import { WelcomeScreen } from './pages/WelcomeScreen'
+import { ArenaPage } from './pages/ArenaPage'
+import { FeedbackButton } from './components/feedback/FeedbackButton'
+import { FeedbackForm } from './components/feedback/FeedbackForm'
+import { DataEraseDialog } from './components/settings/DataEraseDialog'
+import { AssessmentPage } from './pages/AssessmentPage'
+import { CommunicationStatusPage } from './pages/CommunicationStatusPage'
+import { KnowledgeCenterPage } from './pages/KnowledgeCenterPage'
+import { ConsentPage } from './pages/ConsentPage'
+import { PrivacyPage } from './pages/PrivacyPage'
+import { RoundtablePage } from './pages/RoundtablePage'
+import { RoundtableSessionPage } from './pages/RoundtableSessionPage'
+import { useRoundtableStore } from './stores/useRoundtableStore'
 import ModelSelector from './components/ModelSelector'
 import ModelTester from './components/ModelTester'
 import ApiKeyChecker from './components/ApiKeyChecker'
 import ReviewPanel from './components/ReviewPanel'
+import { CrisisBanner } from './components/safety/CrisisBanner'
+import { ConsentModal } from './components/safety/ConsentModal'
 import { PERSONAS } from './constants'
 import type { Persona } from './types'
 import type { ChatSessionSearchResult } from './lib/api'
 import { PanelLeftOpen } from 'lucide-react'
+
+/**
+ * 圆桌讨论路由壳 · 按 `currentPhase` + `sessionId` 组合切换：
+ *   - `setup` 且无 sessionId → `RoundtablePage`（选 persona + 输入问题）
+ *   - `setup` 但 sessionId 仍存在 → **保持在** `RoundtableSessionPage`
+ *     （`continue` 新一轮场景 · `archiveCurrentRoundAndReset` 会把 phase 置回
+ *      'setup' 以重置当前轮 UI · 此时若 unmount SessionPage 会导致 SSE 关闭 ·
+ *      第 2 轮 phase pipeline 无法启动 · D7.1.j++ bug fix · 2026-04-30）
+ *   - 其他（phase1/phase2/phase3/done）→ `RoundtableSessionPage`
+ * `onBack` 调 `resetSession` 回到 setup（会同时清空 sessionId）。
+ * `onNavigateToChat` · 引导用户去沉浸式互动（轻量问题降级路径）。
+ */
+function RoundtableRouter({ onNavigateToChat }: { onNavigateToChat: () => void }) {
+  const currentPhase = useRoundtableStore((s) => s.currentPhase)
+  const sessionId = useRoundtableStore((s) => s.sessionId)
+  const resetSession = useRoundtableStore((s) => s.resetSession)
+
+  // D7.1.j++ · continue 新一轮时 currentPhase='setup' 但 sessionId 仍存在 · 不跳回 setup 页
+  if (currentPhase === 'setup' && !sessionId) {
+    return <RoundtablePage onNavigateToChat={onNavigateToChat} />
+  }
+  return <RoundtableSessionPage onBack={resetSession} />
+}
+
+// 导出供单测（__tests__/RoundtableRouter.test.tsx）使用 · 非 App 外部 API
+export { RoundtableRouter as _RoundtableRouter }
 
 export function App() {
   const normalizePath = (path: string) => {
@@ -30,6 +71,7 @@ export function App() {
   )
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [searchTargetSession, setSearchTargetSession] = useState<ChatSessionSearchResult | null>(null)
+  const [showDataErase, setShowDataErase] = useState(false)
 
   const navigate = useCallback((path: string, replace = false) => {
     const target = normalizePath(path)
@@ -49,6 +91,7 @@ export function App() {
 
     if (window.location.pathname === '/') {
       window.history.replaceState(null, '', '/dashboard')
+      setCurrentPath('/dashboard')
     }
 
     const onPopState = () => {
@@ -70,11 +113,13 @@ export function App() {
     if (currentPath.startsWith('/consent')) return 'consent'
     if (currentPath.startsWith('/chat')) return 'chat'
     if (currentPath.startsWith('/review')) return 'review'
-    if (currentPath.startsWith('/dual-mirror')) return 'dual-mirror'
+    if (currentPath.startsWith('/arena') || currentPath.startsWith('/dual-mirror')) return 'arena'
+    if (currentPath.startsWith('/assessment')) return 'assessment'
     if (currentPath.startsWith('/communication-status')) return 'communication-status'
     if (currentPath.startsWith('/roundtable')) return 'roundtable'
     if (currentPath.startsWith('/knowledge-center')) return 'knowledge-center'
     if (currentPath.startsWith('/settings')) return 'settings'
+    if (currentPath.startsWith('/privacy')) return 'privacy'
     return 'dashboard'
   }, [currentPath])
 
@@ -102,10 +147,13 @@ export function App() {
       dashboard: '/dashboard',
       review: '/review',
       settings: '/settings',
-      'dual-mirror': '/dual-mirror',
+      arena: '/arena',
+      'dual-mirror': '/arena',
+      assessment: '/assessment',
       'communication-status': '/communication-status',
       roundtable: '/roundtable',
       'knowledge-center': '/knowledge-center',
+      privacy: '/privacy',
     }
 
     const path = navRouteMap[id] || '/dashboard'
@@ -157,11 +205,7 @@ export function App() {
             sidebarCollapsed ? 'lg:pl-0' : 'lg:pl-64'
           }`}
         >
-          {activeNav === 'consent' && (
-            <div className="flex-1 p-8">
-              <div className="h-full rounded-2xl border border-dashed border-[var(--border-color)] bg-[var(--bg-card)]/70" />
-            </div>
-          )}
+          {activeNav === 'consent' && <ConsentPage />}
 
           {activeNav === 'dashboard' && <Dashboard />}
           
@@ -188,7 +232,7 @@ export function App() {
           )}
           
           {activeNav === 'settings' && (
-            <div className="flex-1 overflow-y-auto p-6 space-y-8">
+            <div className="flex-1 overflow-y-auto scrollbar-fade p-6 space-y-8">
               {/* Header */}
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-2xl" />
@@ -243,7 +287,7 @@ export function App() {
                 </h2>
                 <div className="space-y-3 text-sm">
                   {[
-                    { label: "API Key 配置", path: "/data/wechatDHA/ls_windsurf/local_secrets/.env.advisor", color: "text-blue-500" },
+                    { label: "API Key 配置", path: "local_secrets/.env.advisor", color: "text-blue-500" },
                     { label: "模型配置", path: "configs/advisor.yaml", color: "text-emerald-500" },
                     { label: "L1 训练数据", path: "timeline_out/agent_sft_l1.jsonl", color: "text-purple-500" },
                     { label: "L2 匿名数据", path: "timeline_out/agent_sft_l2.jsonl", color: "text-orange-500" },
@@ -261,6 +305,50 @@ export function App() {
                     <strong className="font-semibold">提示：</strong> 编辑 <code className="bg-blue-500/20 px-1 rounded">.env.advisor</code> 后运行{" "}
                     <code className="bg-blue-500/20 px-1 rounded">source .env.advisor</code> 加载到环境。
                   </p>
+                </div>
+              </div>
+
+              {/* Problem & Suggestion Feedback */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-6 bg-pink-500 rounded-full" />
+                  <h2 className="text-lg font-semibold">问题与建议反馈</h2>
+                </div>
+                <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 space-y-4 shadow-sm">
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                    遇到 Bug、AI 回答异常、产品体验问题，或有任何改进建议？在此留言，我们会及时跟进处理。
+                    <br />
+                    <span className="text-xs text-[var(--text-muted)]">
+                      反馈将写入 <code className="bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded text-pink-500">advisor_out/feedback/ui_feedback.jsonl</code>，包含当前页面与浏览器信息。
+                    </span>
+                  </p>
+                  <FeedbackForm
+                    textareaClassName="h-40"
+                    placeholder="例如：XXX 顾问在谈到 YYY 时出现幻觉 / 希望增加 ZZZ 功能 / 夜间模式下 XXX 组件对比度偏低..."
+                    alignRight={false}
+                  />
+                </div>
+              </div>
+
+              {/* Data Erase (GDPR / CCPA compliance) */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-6 bg-red-500 rounded-full" />
+                  <h2 className="text-lg font-semibold">数据清除</h2>
+                </div>
+                <div className="rounded-2xl border border-red-500/20 bg-[var(--bg-card)] p-6 space-y-4 shadow-sm">
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                    您拥有对自己数据的完整主权。点击下方按钮可<strong className="text-red-500">永久删除</strong>本机存储的全部对话会话、测评记录、危机归档、UI 反馈及浏览器本地偏好。
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)]">
+                    系统配置、模型、知识库等非个人数据将被保留。详细政策见 <button onClick={() => navigate('/privacy')} className="text-emerald-500 hover:underline">隐私政策</button>。
+                  </p>
+                  <button
+                    onClick={() => setShowDataErase(true)}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-500 text-xs font-semibold rounded-lg transition-colors"
+                  >
+                    删除所有本地数据
+                  </button>
                 </div>
               </div>
 
@@ -297,31 +385,29 @@ export function App() {
             </div>
           )}
 
-          {activeNav === 'dual-mirror' && (
-            <div className="flex-1 p-8">
-              <div className="h-full rounded-2xl border border-dashed border-[var(--border-color)] bg-[var(--bg-card)]/70" />
-            </div>
-          )}
+          {activeNav === 'arena' && <ArenaPage />}
 
-          {activeNav === 'communication-status' && (
-            <div className="flex-1 p-8">
-              <div className="h-full rounded-2xl border border-dashed border-[var(--border-color)] bg-[var(--bg-card)]/70" />
-            </div>
-          )}
+          {activeNav === 'assessment' && <AssessmentPage />}
+
+          {activeNav === 'communication-status' && <CommunicationStatusPage />}
 
           {activeNav === 'roundtable' && (
-            <div className="flex-1 p-8">
-              <div className="h-full rounded-2xl border border-dashed border-[var(--border-color)] bg-[var(--bg-card)]/70" />
+            <div className="flex-1 overflow-y-auto scrollbar-fade">
+              <RoundtableRouter onNavigateToChat={() => navigate('/chat/select-advisor')} />
             </div>
           )}
 
-          {activeNav === 'knowledge-center' && (
-            <div className="flex-1 p-8">
-              <div className="h-full rounded-2xl border border-dashed border-[var(--border-color)] bg-[var(--bg-card)]/70" />
-            </div>
-          )}
+          {activeNav === 'knowledge-center' && <KnowledgeCenterPage />}
+
+          {activeNav === 'privacy' && <PrivacyPage onBack={() => navigate('/settings')} />}
         </main>
       </div>
+
+      <CrisisBanner />
+      <ConsentModal />
+      <FeedbackButton />
+      <DataEraseDialog open={showDataErase} onClose={() => setShowDataErase(false)} />
+      <Toaster position="top-center" richColors />
     </div>
   )
 }

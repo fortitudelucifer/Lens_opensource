@@ -62,7 +62,7 @@
     # 压缩所有模态
     all_stats = engine.compress_all()
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-02
 """
 

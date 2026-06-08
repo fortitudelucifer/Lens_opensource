@@ -13,7 +13,7 @@
 1. route(): 评估任务复杂度 → 选择最优后端
    - simple (< 0.3): 路由到本地 Qwen3-8B
    - medium (< 0.6): 路由到经济型云端模型（如 DeepSeek）
-   - complex (≥ 0.6): 路由到旗舰云端模型（如 GLM-4/DeepSeek）
+   - complex (≥ 0.6): 路由到旗舰云端模型（如 GPT-4/Claude）
 2. call(): 调用选定后端的 API
    - 云端调用前确保 GPU 已清空（_ensure_gpu_clean）
    - 本地调用前加载模型到 GPU
@@ -48,7 +48,7 @@
 - 路由到云端时 GPU 显存占用为 0
 - 预算控制基于估算的 token 消耗，非精确计费
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -185,9 +185,9 @@ DEFAULT_BACKENDS = {
         'api_key_env': 'DEEPSEEK_API_KEY',
         'cost_per_1k_tokens': 0.00028,
     },
-    'DeepSeek_V3_2': {
+    'claude_opus': {
         'type': 'cloud',
-        'model': 'DeepSeek-V3.2',
+        'model': 'claude-opus-4.6-think',
         'api_key_env': 'ANTHROPIC_API_KEY',
         'cost_per_1k_tokens': 0.015,
     },
@@ -205,11 +205,11 @@ DEFAULT_BACKENDS = {
         'api_key_env': 'MOONSHOT_API_KEY',
         'cost_per_1k_tokens': 0.002,
     },
-    'Qwen': {
+    'grok': {
         'type': 'cloud',
-        'model': 'Qwen3',
-        'base_url': 'https://ai.第三方代理.com/v1',
-        'api_key_env': 'QWEN_API_KEY',
+        'model': 'grok-4.1-thinking',
+        'base_url': 'https://api.x.ai/v1',
+        'api_key_env': 'XAI_API_KEY',
         'cost_per_1k_tokens': 0.003,
     },
 }
@@ -226,7 +226,7 @@ class ModelRouter:
     根据 complexity_score 路由：
     - <=0.3 → local_qwen3 (non-thinking)
     - <=0.6 → local_qwen3_thinking / qwen_cloud
-    - >0.6  → deepseek_reasoner / DeepSeek_V3_2
+    - >0.6  → deepseek_reasoner / claude_opus
     - 长上下文 → kimi_long
     
     单 GPU 串行：路由到本地前 _ensure_gpu_clean()，路由到云端 0 VRAM。
@@ -255,8 +255,20 @@ class ModelRouter:
         self.threshold_medium = thresholds.get('medium', 0.6)
 
         # 预算
-        self.budget_limit_daily = config.get('budget_limit_daily', 5.0)
+        budget = config.get('budget', {})
+        self.budget_limit_daily = config.get(
+            'budget_limit_daily',
+            budget.get('daily_limit_usd', 5.0),
+        )
+        self.budget_limit_monthly = config.get(
+            'budget_limit_monthly',
+            budget.get('monthly_limit_usd', 100.0),
+        )
         self.daily_cost = 0.0
+        self.monthly_cost = 0.0
+        self._daily_cost = 0.0
+        self._monthly_cost = 0.0
+        self._total_calls = 0
         self.cost_reset_date = None
 
         # Fallback
@@ -404,8 +416,11 @@ class ModelRouter:
         """获取云端调用成本报告"""
         return {
             'daily_cost': self.daily_cost,
+            'daily_cost_usd': round(max(self.daily_cost, self._daily_cost), 4),
+            'monthly_cost_usd': round(max(self.monthly_cost, self._monthly_cost), 4),
             'budget_limit': self.budget_limit_daily,
             'budget_remaining': max(0, self.budget_limit_daily - self.daily_cost),
+            'total_calls': self._total_calls,
             'stats': self.stats.copy(),
         }
 
@@ -428,8 +443,22 @@ class ModelRouter:
         today = date.today()
         if self.cost_reset_date != today:
             self.daily_cost = 0.0
+            if self._daily_cost < self.budget_limit_daily:
+                self._daily_cost = 0.0
             self.cost_reset_date = today
-        return self.daily_cost >= self.budget_limit_daily
+        daily_cost = max(self.daily_cost, self._daily_cost)
+        monthly_cost = max(self.monthly_cost, self._monthly_cost)
+        return (
+            daily_cost >= self.budget_limit_daily
+            or monthly_cost >= self.budget_limit_monthly
+        )
+
+    def _record_cost(self, backend_name: str, cost: float) -> None:
+        self.daily_cost += cost
+        self.monthly_cost += cost
+        self._daily_cost += cost
+        self._monthly_cost += cost
+        self._total_calls += 1
 
     def _call_cloud(
         self,
@@ -442,8 +471,8 @@ class ModelRouter:
         """调用云端 API"""
         model = backend['model']
 
-        if backend_name == 'DeepSeek_V3_2':
-            return self._call_DeepSeek(backend, prompt, temperature, max_tokens)
+        if backend_name == 'claude_opus':
+            return self._call_claude(backend, prompt, temperature, max_tokens)
         else:
             return self._call_openai_compatible(
                 backend, prompt, temperature, max_tokens,
@@ -456,7 +485,7 @@ class ModelRouter:
         temperature: float,
         max_tokens: int,
     ) -> Optional[str]:
-        """调用 OpenAI 兼容接口（DeepSeek / Qwen / Kimi / Qwen）"""
+        """调用 OpenAI 兼容接口（DeepSeek / Qwen / Kimi / Grok）"""
         from openai import OpenAI
 
         model = backend['model']
@@ -485,19 +514,19 @@ class ModelRouter:
 
         return response.choices[0].message.content
 
-    def _call_DeepSeek(
+    def _call_claude(
         self,
         backend: dict,
         prompt: str,
         temperature: float,
         max_tokens: int,
     ) -> Optional[str]:
-        """调用 DeepSeek API"""
+        """调用 Claude API"""
         from anthropic import Anthropic
 
         api_key = os.environ.get(backend.get('api_key_env', ''))
 
-        client_key = f"DeepSeek:{api_key[:8] if api_key else 'none'}"
+        client_key = f"claude:{api_key[:8] if api_key else 'none'}"
         if client_key not in self._api_clients:
             self._api_clients[client_key] = Anthropic(api_key=api_key)
         client = self._api_clients[client_key]

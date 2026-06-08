@@ -149,7 +149,7 @@ L2（云端训练）：
 - recall_anonymized: 撤回消息匿名化数
 - compression_ratio: 字段压缩比（%）
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-02
 """
 
@@ -457,8 +457,8 @@ class SFTTrimmer:
                     if not value:
                         continue
                     
-                    # 如果 intent 是明确情绪，检查 summary 是否冗余
-                    if is_specific_intent:
+                    # 如果 intent 是明确情绪，检查视觉描述型 summary 是否冗余
+                    if is_specific_intent and value.startswith("[表情包:"):
                         # 提取 summary 中的情绪部分（去掉方括号）
                         summary_clean = value.replace('[', '').replace(']', '').strip()
                         

@@ -30,7 +30,7 @@ export function ThinkingUI({ content }: ThinkingUIProps) {
             exit={{ opacity: 0, height: 0, marginTop: 0 }}
             className="overflow-hidden"
           >
-            <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] border-l-2 border-l-violet-500/50 text-sm text-[var(--text-muted)] max-h-64 overflow-y-auto whitespace-pre-wrap font-mono leading-relaxed">
+            <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] border-l-2 border-l-violet-500/50 text-sm text-[var(--text-muted)] max-h-64 overflow-y-auto scrollbar-thin whitespace-pre-wrap font-mono leading-relaxed">
               {content}
             </div>
           </motion.div>

@@ -2,7 +2,7 @@
 schema_utils.py
 统一的 merged_final.jsonl 字段定义和工具函数
 
-本模块定义了 CHAT_APP_DHA 项目中四个模态（image, voice, video, sticker）的
+本模块定义了 wechatDHA 项目中四个模态（image, voice, video, sticker）的
 merged_final.jsonl 文件的统一字段结构。
 
 核心功能：
@@ -45,12 +45,12 @@ COMMON_HEADER_FIELDS: List[str] = [
     "schema_version",   # 版本控制，标识数据格式版本
     "seq_in_html",      # 原始序号，消息在 HTML 导出中的顺序
     "msg_uid",          # 唯一标识，格式为 "P1:MsgSvrID"
-    "MsgSvrID",         # 服务器ID，CHAT_APP服务器分配的消息ID
+    "MsgSvrID",         # 服务器ID，微信服务器分配的消息ID
     "token",            # 消息token，用于去重和关联
     "ts",               # Unix时间戳，消息发送时间（秒）
     "time_local",       # 本地时间，格式为 "YYYY-MM-DD HH:MM:SS"
     "speaker",          # 发送者，"ME" 或 "OTHER"
-    "type",             # 消息类型，CHAT_APP消息类型码（如 3=图片, 34=语音, 43=视频, 47=表情）
+    "type",             # 消息类型，微信消息类型码（如 3=图片, 34=语音, 43=视频, 47=表情）
     "sub_type",         # 子类型，消息子类型码
     "modality",         # 模态，"image", "voice", "video", "sticker" 之一
     "media_path",       # 媒体路径，相对于 raw/ 目录的文件路径
@@ -256,9 +256,9 @@ LINKFILE_SPECIFIC_FIELDS: List[str] = [
     "link_title",           # 链接标题
     "link_type",            # 链接类型分类
     
-    # MINIPROGRAM字段 (miniprogram)
-    "miniprogram_appid",    # MINIPROGRAM AppID
-    "miniprogram_name",     # MINIPROGRAM名称
+    # 小程序字段 (miniprogram)
+    "miniprogram_appid",    # 小程序 AppID
+    "miniprogram_name",     # 小程序名称
     
     # 文件字段 (file)
     "file_name",            # 文件名
@@ -279,7 +279,7 @@ Linkfile 模态特定字段列表（type=49 消息）。
 1. 子类型标识 - link_sub_type
 2. 引用消息字段 - quote_* (sub_type=57)
 3. 链接字段 - link_* (sub_type=5, 33, 36)
-4. MINIPROGRAM字段 - miniprogram_* (sub_type=33, 36)
+4. 小程序字段 - miniprogram_* (sub_type=33, 36)
 5. 文件字段 - file_* (sub_type=6)
 6. 内容字段 - content_* (sub_type=19, 51)
 7. 错误处理 - error_*

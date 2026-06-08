@@ -56,7 +56,7 @@
 - 超过阈值标记为 TYPE_A_NSFW 或 TYPE_B_GORE
 - 否则标记为 TYPE_C_NORMAL
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-02
 """
 

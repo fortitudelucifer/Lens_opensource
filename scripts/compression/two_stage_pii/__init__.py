@@ -15,8 +15,8 @@ Phase 2: 精确替换 - 基于确认列表做精确字符串匹配
     # Phase 2: 在匿名化时自动使用精确匹配
     from scripts.compression.two_stage_pii import TwoStagePIIScanner
     scanner = TwoStagePIIScanner()
-    matches = scanner.detect("用户A说...")
-    anonymized = scanner.anonymize("用户A说...")
+    matches = scanner.detect("张三说...")
+    anonymized = scanner.anonymize("张三说...")
 """
 
 from .models import CandidateWord, CandidateList, ValidationResult, ConfirmedNames, ConfirmedName

@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 
-export type PersonaType = 'neutral' | 'supportive' | 'psychoanalytic'
+export type PersonaType = 'neutral' | 'supportive' | 'psychoanalytic' | 'eft' | 'bowen' | 'sociology' | 'philosophy' | 'game_theory' | 'cultural'
 export type ChatMode = 'listen' | 'deep'
 
 export interface Persona {
@@ -14,9 +14,10 @@ export interface Persona {
 
 export interface Session {
   id: number
+  backendSessionId?: string
   title: string
   time: string
-  personaId: PersonaType
+  personaId: PersonaType | string
   active: boolean
 }
 
@@ -25,7 +26,7 @@ export interface Message {
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
-  personaId: PersonaType
+  personaId: PersonaType | string
   thinking?: string
 }
 

@@ -58,7 +58,7 @@
 - NeutralityChecker 的评分范围 0-1，低于 0.6 建议人工审核
 - PsychoanalyticDetector 的分析结果需经 SafetyLayer 处理后才能下发用户
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -133,6 +133,7 @@ class ResponseTimeAnalyzer:
         self,
         cold_threshold_hours: float = 6.0,  # 冷暴力阈值（小时）
         argument_threshold_minutes: float = 2.0,  # 争吵阈值（分钟）
+        argument_threshold_seconds: Optional[float] = None,
         min_cold_messages: int = 3,  # 最少连续冷淡消息数
     ):
         """
@@ -144,7 +145,11 @@ class ResponseTimeAnalyzer:
             min_cold_messages: 判定冷暴力需要的最少连续冷淡消息数
         """
         self.cold_threshold = cold_threshold_hours * 3600  # 转换为秒
-        self.argument_threshold = argument_threshold_minutes * 60  # 转换为秒
+        self.argument_threshold = (
+            argument_threshold_seconds
+            if argument_threshold_seconds is not None
+            else argument_threshold_minutes * 60
+        )
         self.min_cold_messages = min_cold_messages
     
     def analyze(self, messages: list[dict]) -> ResponseTimeStats:

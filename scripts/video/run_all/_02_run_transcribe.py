@@ -94,7 +94,7 @@ Triage 触发条件：
 - 模型会自动下载到 ~/.cache/modelscope/
 - 情绪检测结果会用于后续的 Caption 生成
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-02
 """
 import os

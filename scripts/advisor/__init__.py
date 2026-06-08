@@ -68,7 +68,7 @@
 - GPU 密集型模块（inference, trainer, graph_rag）建议按需导入，避免不必要的显存占用
 - 配置文件路径默认为 configs/advisor.yaml，可通过 load_config() 参数覆盖
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 

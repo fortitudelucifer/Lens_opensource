@@ -51,7 +51,7 @@
 - 梯度累积步数 = 16，等效批次大小 = 1 × 16 = 16
 - 建议使用 gradient_checkpointing 节省显存
 
-作者：forcifer
+作者：[Author]
 更新于：2026-02-15
 """
 
@@ -100,7 +100,7 @@ class AdvisorTrainer:
         if self.use_unsloth and not _UNSLOTH_AVAILABLE:
             raise ImportError(
                 "use_unsloth=True 但 unsloth 未安装。"
-                "请使用 CHAT_APP_DHA_unsloth 环境: conda run -n CHAT_APP_DHA_unsloth ..."
+                "请使用 wechatDHA_unsloth 环境: conda run -n wechatDHA_unsloth ..."
             )
         
         # 模型配置

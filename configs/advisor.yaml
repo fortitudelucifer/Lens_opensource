@@ -1,8 +1,7 @@
 # 关系顾问 Agent 配置文件
-# 版本: 2.1.0
-# 更新日期: 2026-02-21
+# 版本: 2.0.0
+# 更新日期: 2026-07-15
 # 架构: 云端大脑 + 本地嘴巴 | 单 GPU (5070 Ti 16GB) 串行执行
-# 修复: 版本号标准化、清除重复配置、修正API端点
 
 # =============================================================================
 # 路径配置
@@ -10,12 +9,12 @@
 paths:
   # 工作空间根目录（从 paths.yaml 继承）
   workspace: ${workspace}
-  
+
   # 输入文件
   timeline_file: ${workspace}/timeline_out/enriched_full.jsonl
   sft_l1_file: ${workspace}/timeline_out/agent_sft_l1.jsonl
   sft_l2_file: ${workspace}/timeline_out/agent_sft_l2.jsonl
-  
+
   # 输出目录
   output_dir: ${workspace}/advisor_out
   chunks_dir: ${workspace}/advisor_out/chunks
@@ -32,14 +31,14 @@ extraction:
   window_size: 20           # 每个片段的消息数量
   step_size: 10             # 滑动步长
   min_messages: 10          # 最小消息数（少于此数的片段会被过滤）
-  
+
   # 过滤选项
   exclude_system: true      # 排除系统消息
   exclude_types: []         # 不排除任何消息类型（time_gap 保留用于时间模式分析）
-  
+
   # 提取数量
   num_chunks: 100           # 默认提取数量
-  
+
   # 优先提取的对话类型权重
   priority_weights:
     conflict: 1.5           # 冲突对话
@@ -52,45 +51,44 @@ extraction:
 # =============================================================================
 analysis:
   # 默认后端
-  default_backend: DeepSeek
+  default_backend: openai
 
-    
   # -----------------------------------------------------------------------
-  # DeepSeek 配置（OpenAI 兼容接口）
-  # 环境变量: DEEPSEEK_API_KEY
-  # 可选模型: deepseek-chat (非思考模式), deepseek-reasoner (思考模式)
+  # OpenAI 配置（OpenAI 兼容接口）
+  # 环境变量: OPENAI_API_KEY
+  # 可选模型: gpt-5 / gpt-5.2 / gpt-4.1 / gpt-4o
   # -----------------------------------------------------------------------
-  DeepSeek:
-    model: deepseek-chat
-    api_key: ${DEEPSEEK_API_KEY}
-    base_url: https://api.deepseek.com/v1
+  openai:
+    model: gpt-5.3-codex-spark
+    api_key: ${OPENAI_API_KEY}
+    base_url: https://api.example.com/v1
     temperature: 0.7
     max_tokens: 16384
-    
+
   # -----------------------------------------------------------------------
-  # DeepSeek 思考模式配置（OpenAI 兼容接口）
-  # 环境变量: DEEPSEEK_API_KEY
-  # 适用于复杂推理任务
+  # Claude 配置（OpenAI 兼容接口，通过 Anthropic 官方兼容层）
+  # 环境变量: ANTHROPIC_API_KEY
+  # 可选模型: claude-sonnet-4-5-20250514 / claude-opus-4-20250514
   # -----------------------------------------------------------------------
-  DeepSeek_Reasoner:
-    model: deepseek-reasoner
-    api_key: ${DEEPSEEK_API_KEY}
-    base_url: https://api.deepseek.com/v1
+  claude:
+    model: claude-sonnet-4.6-think
+    api_key: ${ANTHROPIC_API_KEY}
+    base_url: https://api.example.com/v1
     temperature: 0.7
     max_tokens: 16384
-    
+
   # -----------------------------------------------------------------------
-  # Kimi 配置（OpenAI 兼容接口）
-  # 环境变量: MOONSHOT_API_KEY
-  # 可选模型: moonshot-v1-8k / moonshot-v1-32k / moonshot-v1-128k
+  # Gemini 配置（OpenAI 兼容接口，通过 Google 官方兼容层）
+  # 环境变量: GOOGLE_API_KEY
+  # 可选模型: gemini-2.5-pro / gemini-2.5-flash / gemini-3-pro-preview
   # -----------------------------------------------------------------------
-  Kimi:
-    model: Kimi-2.5
-    api_key: ${MOONSHOT_API_KEY}
-    base_url: https://api.moonshot.cn/v1
+  gemini:
+    model: gemini-3.1-pro-preview
+    api_key: ${GOOGLE_API_KEY}
+    base_url: https://api.example.com/v1
     temperature: 0.7
     max_tokens: 16384
-    
+
   # -----------------------------------------------------------------------
   # 本地 Qwen 配置（vLLM / Ollama OpenAI 兼容接口）
   # 无需 API Key
@@ -101,34 +99,63 @@ analysis:
     api_key: not-needed
     temperature: 0.7
     max_tokens: 8192
-  
-  
+
   # -----------------------------------------------------------------------
-  # Qwen 配置（OpenAI 兼容接口）
-  # 环境变量: QWEN_API_KEY
-  # 可选模型: qwen-turbo / qwen-plus / qwen-max
+  # Kimi 配置（OpenAI 兼容接口）
+  # 环境变量: MOONSHOT_API_KEY
   # -----------------------------------------------------------------------
-  Qwen:
-    model: qwen-turbo
-    api_key: ${QWEN_API_KEY}
-    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  kimi:
+    model: gemini-3-flash
+    api_key: ${MOONSHOT_API_KEY}
+    base_url: https://api.example.com/v1
     temperature: 0.7
     max_tokens: 16384
-  
+
   # -----------------------------------------------------------------------
-  # GLM 配置（智谱AI OpenAI 兼容接口）
+  # Grok 配置（OpenAI 兼容接口）
+  # 环境变量: XAI_API_KEY
+  # -----------------------------------------------------------------------
+  grok:
+    model: grok-4.1-thinking
+    api_key: ${XAI_API_KEY}
+    base_url: https://api.example.com/v1
+    temperature: 0.7
+    max_tokens: 16384
+
+  # -----------------------------------------------------------------------
+  # DeepSeek 配置（OpenAI 兼容接口）
+  # 环境变量: DEEPSEEK_API_KEY
+  # deepseek-chat = V3.2 非思考模式, deepseek-reasoner = V3.2 思考模式
+  # -----------------------------------------------------------------------
+  deepseek:
+    model: gemini-2.5-flash
+    api_key: ${DEEPSEEK_API_KEY}
+    base_url: https://api.example.com/v1
+    temperature: 0.7
+    max_tokens: 16384
+
+  # -----------------------------------------------------------------------
+  # 通义千问云端配置（OpenAI 兼容接口）
+  # 环境变量: DASHSCOPE_API_KEY
+  # -----------------------------------------------------------------------
+  qwen_cloud:
+    model: gemini-2.5-flash
+    api_key: ${DASHSCOPE_API_KEY}
+    base_url: https://api.example.com/v1
+    temperature: 0.7
+    max_tokens: 16384
+
+  # -----------------------------------------------------------------------
+  # 智谱 GLM 配置（OpenAI 兼容接口）
   # 环境变量: ZHIPU_API_KEY
-  # 可选模型: glm-4 / glm-4-flash / glm-3-turbo
   # -----------------------------------------------------------------------
   glm:
-    model: glm-4.7
+    model: gemini-2.5-flash
     api_key: ${ZHIPU_API_KEY}
-    base_url: https://open.bigmodel.cn/api/paas/v4
+    base_url: https://api.example.com/v1
     temperature: 0.7
     max_tokens: 16384
-  
-  
-  
+
   # 通用设置
   rate_limit_delay: 1.0     # API 调用间隔（秒）
   max_retries: 3            # 最大重试次数
@@ -144,14 +171,14 @@ agent_types:
     system_prompt: |
       你是一位专业的关系顾问，擅长分析情侣/伴侣之间的对话，提供客观、专业的评价和建议。
       你的分析应该保持中立，不偏袒任何一方，对双方的问题都要指出。
-      
+
   supportive:
     name: 支持性顾问
     description: 情感验证，从用户角度理解问题
     system_prompt: |
       你是一位支持性的关系顾问，你的首要任务是理解和支持用户（ME）的感受。
       你会首先验证用户的情感体验，从用户的角度理解问题，同时保持基本的客观性。
-      
+
   psychoanalytic:
     name: 精神分析顾问
     description: 基于客体关系和拉康派理论的深度分析
@@ -164,8 +191,8 @@ agent_types:
 # =============================================================================
 training:
   # 基座模型
-  base_model: Qwen/Qwen3-8B-Instruct
-  
+  base_model: /data/models/Qwen3-8B-Instruct
+
   # LoRA 配置（优化为 16GB 单卡）
   lora:
     r: 32                   # LoRA rank（从 64 降为 32，省显存）
@@ -175,14 +202,14 @@ training:
       - q_proj
       - k_proj
       - v_proj
-  
+
   # 量化配置（节省显存）
   quantization:
     load_in_4bit: true
     bnb_4bit_compute_dtype: bfloat16
     bnb_4bit_quant_type: nf4
     use_double_quant: true
-  
+
   # 训练参数
   learning_rate: 1.0e-4
   num_epochs: 5
@@ -191,18 +218,18 @@ training:
   max_seq_length: 2048
   warmup_ratio: 0.03
   optimizer: paged_adamw_32bit  # 分页优化器，节省显存
-  
+
   # 显存优化
   use_gradient_checkpointing: true
-  
+
   # 保存配置
   save_steps: 100
   save_total_limit: 3       # 最多保存 3 个 checkpoint
-  
+
   # 日志配置
   logging_steps: 10
   report_to: tensorboard
-  
+
   # 模型命名规范
   model_name_prefix: emotion-advisor-qwen3-8b
 
@@ -212,14 +239,14 @@ training:
 inference:
   # 量化配置
   quantization: 4bit        # 4bit/8bit/none
-  
+
   # 生成参数
   temperature: 0.7
   top_p: 0.9
   top_k: 50
   max_new_tokens: 1024
   do_sample: true
-  
+
   # 显存管理
   auto_unload: true         # 推理完成后自动卸载模型
 
@@ -236,16 +263,16 @@ review:
 routing:
   # 复杂度阈值
   complexity_thresholds:
-    simple: 0.3             # <=0.3 -> qwen_local (non-thinking)
-    medium: 0.6             # <=0.6 -> qwen_local (thinking)
-                            # >0.6  -> DeepSeek_Reasoner
-  
+    simple: 0.3             # <=0.3 -> local_qwen3 (non-thinking)
+    medium: 0.6             # <=0.6 -> local_qwen3_thinking
+                            # >0.6  -> deepseek_reasoner / claude_opus
+
   # 云端日预算上限（美元）
   budget_limit_daily: 5.0
-  
+
   # 兆底模型
-  fallback_model: qwen_local
-  
+  fallback_model: local_qwen3
+
   # 长上下文阈值（token 数，超过则路由到 kimi）
   long_context_threshold: 32000
 
@@ -255,7 +282,7 @@ routing:
 safety:
   # 审计日志目录
   audit_log_dir: ${workspace}/advisor_out/audit_logs
-  
+
   # 风险检测
   enable_risk_detection: true
 
@@ -265,7 +292,7 @@ safety:
 cloud_analysis:
   # Schema 修复最大尝试次数
   max_repair_attempts: 2
-  
+
   # 是否启用 fallback 到更强模型
   fallback_enabled: true
 
@@ -275,17 +302,17 @@ cloud_analysis:
 memory:
   # 向量化模型
   embedding_model: BAAI/bge-m3
-  
+
   # 重排模型
   reranker_model: BAAI/bge-reranker-v2-m3
-  
+
   # FAISS 索引目录
   index_dir: ${workspace}/advisor_out/faiss_index
-  
+
   # 检索参数
   top_k_retrieval: 20       # 向量召回数量
   top_k_rerank: 5           # 重排后返回数量
-  
+
   # 是否使用 GPU 做嵌入（单 GPU 串行时需要与其他模型串行加载）
   use_gpu_for_embedding: true
 
