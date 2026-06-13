@@ -17,21 +17,27 @@
 
 ## Overview
 
-Lens is an end-to-end data processing pipeline that converts raw CHATAPP chat exports (text, images, voice messages, videos, stickers, links, and files) into structured, privacy-safe JSONL datasets suitable for Supervised Fine-Tuning (SFT) of Large Language Models. The system adopts a **local-cloud collaborative processing architecture**: completing multi-modal information parsing and multi-dimensional anonymization locally before sending to cloud large models for annotation (local model annotation is also supported). The annotated files reviewed by humans and agents are de-anonymized and returned to local for real information training, ultimately enabling local conversations with real information. On top of the data pipeline, it includes a four-layer retrieval dynamic RAG full-stack AI Relationship Advisor system trained on the processed data, which can interact directly with the web frontend. Multi-modal supports accurate parsing of NSFW adult, violent, cross-cultural, and sensitive content locally (no minor content parsing capability), with zero data leakage.
+Lens is an end-to-end, local-first pipeline for transforming private CHAT_APP-style communication exports into privacy-safe multi-modal timelines, Agent SFT datasets, and an AI relationship advisor application. It normalizes heterogeneous chat exports, enriches messages with image/voice/video/sticker/link-file analysis, applies anonymization and PII controls, and builds downstream training and retrieval assets.
+
+The current system is a modular pipeline stack rather than a single converter. It includes Universal Ingestion, multi-modal processing, Agent SFT preparation, Advisor MoA analysis, Knowledge/Graph RAG, a FastAPI + React advisor app, Dual-Mirror Arena evaluation, safety/crisis guardrails, and LLM-as-Judge supervision.
+
+Lens is designed for research, personal data organization, and relationship reflection tooling. It is not a medical, diagnostic, psychotherapy, crisis-counseling, or emergency-response system.
 
 ### Key Capabilities
 
-- **Local-Cloud Collaborative Processing**: Local multi-modal parsing + anonymization, cloud large model annotation, de-anonymized local real information training
-- **Multi-Modal Processing**: Five dedicated sub-pipelines for Image, Voice, Video, Sticker, and Link/File messages
-- **Privacy-First Design**: Two-tier anonymization (L1 reversible / L2 irreversible) with two-stage PII detection (rule engine + LLM validation)
-- **Secure Content Parsing**: Local support for accurate parsing of NSFW adult, violent, cross-cultural, and sensitive content, zero data leakage
-- **Universal Ingestion**: Plugin-based adapter architecture supporting CHATAPP, Telegram, WhatsApp structured files and generic CSV/JSONL imports
-- **Intelligent Analysis**: OCR routing, VLM captioning, ASR transcription, emotion detection, and semantic compression across all modalities
-- **Expert Model Routing**: Content-aware triage system that routes NSFW, gore, and cross-cultural document images to specialized abliterated/uncensored models
-- **Relationship Advisor Agent**: MoA (Mixture of Agents) fusion analysis, QLoRA fine-tuning, Hybrid RAG real-time dialogue with 3 agent personas
-- **Web Dashboard**: React + Vite frontend for pipeline control, real-time chat, human review, model management, and detection
+- **Universal Ingestion**: Plugin-based adapters normalize CHAT_APP, Telegram, WhatsApp, generic CSV, and generic JSONL exports into a canonical JSONL timeline.
+- **Multi-Modal Processing**: Dedicated Image, Voice, Video, Sticker, and Link/File pipelines extract, analyze, compress, merge, and update the shared timeline.
+- **Privacy-First Design**: Local anonymization, L1/L2 data branches, two-stage PII detection, public templates, and gitignored runtime/private data boundaries.
+- **Agent SFT Data Pipeline**: Timeline post-processing, semantic compression, field trimming, privacy shielding, and SFT optimization for local or anonymized training data.
+- **Advisor MoA Pipeline**: Conversation extraction, multi-expert analysis, fusion, AI/human review, remediation, formatting, QLoRA training, inference, and augmentation.
+- **Knowledge-Augmented RAG**: Timeline retrieval, professional knowledge injection, assessment context injection, FAISS indexing, and hybrid graph/chunk retrieval.
+- **Knowledge Center**: Web-based index for active and planned knowledge bases, including interdisciplinary perspectives, communication methods, crisis resources, and EFT resources.
+- **Advisor Web Application**: React + Vite frontend and modular FastAPI backend for chat, dashboard, assessment, privacy, knowledge center, Arena, Roundtable, and supervision views.
+- **Dual-Mirror Arena**: Blind A/B comparison for models, advisor styles, and interdisciplinary perspectives with voting, multi-dimensional scoring, and ranking data.
+- **Roundtable Discussion**: Three-persona multi-agent discussion with SSE streaming, multi-round continuation, context injection, deep mode, and moderator synthesis.
+- **Safety and Supervision**: Four-level crisis detection, consent and disclaimers, red-line wording checks, fixed crisis-resource responses, and LLM-as-Judge quality monitoring.
 
-For detailed architecture and implementation details, <u>**must**</u> see [modality_fields_and_models.md](docs/modality_fields_and_models.md). For future design and development ideas, please see [RoadMap.md](RoadMap.md) - whether they will be implemented depends on the author's future energy.
+For detailed architecture and implementation details, see [modality_fields_and_models.md](docs/pipelines/modality_fields_and_models.md), [advisor_pipeline_overview.md](docs/advisor/advisor_pipeline_overview.md), and [RoadMap.md](RoadMap.md).
 
 <div align="center">
   <img src="assets/lens_data.png" alt="Lens Data Flow" width="800">
@@ -44,160 +50,62 @@ For detailed architecture and implementation details, <u>**must**</u> see [modal
 
 ```mermaid
 graph TB
-    subgraph "Phase -1: Normalized Input"
-        Z1["Multi-source Data<br/>CHAT_APP HTML · Telegram JSON<br/>WhatsApp TXT · CSV · JSONL"]
-        Z2["source_manifest.yaml<br/>source_type + participant_map<br/>+ field_mapping"]
-        Z3["AdapterRegistry<br/>5 adapters auto-discovery"]
-        Z4["IngestionEngine<br/>Schema validation · Media categorization<br/>ts sorting · Export generation"]
-        Z5["P1_messages_raw.jsonl<br/>Canonical Schema ✅"]
-        Z6["raw/ Standard Media Directories<br/>image/ voice/ video/<br/>sticker/ file/"]
+    subgraph "Input and Normalization"
+        A[Raw chat exports and media]
+        B[Universal Ingestion<br/>CHAT_APP · Telegram · WhatsApp · CSV · JSONL]
+        C[Canonical JSONL timeline<br/>raw/P1_messages_raw.jsonl]
+        D[Standard media directories<br/>image · voice · video · sticker · file]
     end
 
-    subgraph "Phase 0: Raw Data"
-        A1[P1_messages_raw.jsonl]
-        A2[raw/image/]
-        A3[raw/voice/]
-        A4[raw/video/]
-        A5[raw/sticker/]
-        A6[raw/file/]
-    end
-    
-    subgraph "Phase 1: Modality Processing"
-        B1[Image: OCR + Caption<br/>300-800 tokens]
-        B2[Voice: ASR + Emotion<br/>100-400 tokens]
-        B3[Video: Keyframes + Transcribe<br/>1500-2500 tokens 🔥]
-        B4[Sticker: Caption + OCR<br/>50-200 tokens]
-        B5[Linkfile: Extract + File Summary<br/>20-200 tokens]
-    end
-    
-    subgraph "Phase 2: Semantic Compression"
-        C1[_02.5_compress.py<br/>80-150 tokens ✅]
-        C2[_02.5_compress.py<br/>50-100 tokens ✅]
-        C3[_03.5_compress.py<br/>150-250 tokens ✅]
-        C4[_05.5_compress.py<br/>30-60 tokens ✅]
-        C5[_01.5_file_summary.py<br/>15-100 tokens ✅]
-    end
-    
-    subgraph "Phase 3: Merge + Timeline"
-        D[Merge multi-modal data<br/>Associate by msg_uid]
-        E1[enriched_full.jsonl]
-    end
-    
-    subgraph "Phase 4: Timeline Post-processing"
-        F1[postprocess_timeline.py<br/>Message merging+time markers]
-        F2[enriched_full_processed.jsonl]
-    end
-    
-    subgraph "Phase 5: L1/L2 Branch"
-        G1[L1: Field trimming<br/>Preserve real data]
-        G2[L2: PII detection+anonymization<br/>Two-stage high-precision detection]
-        G3[L2: Field trimming]
-    end
-    
-    subgraph "Phase 6: SFT Optimization"
-        H1[sft_optimizer.py<br/>ID simplification+time compression]
-        H2[sft_optimizer.py<br/>ID simplification+time compression]
-        I1[agent_sft_l1.jsonl<br/>Local training ✅]
-        I2[agent_sft_l2.jsonl<br/>Cloud training ✅]
-    end
-    
-    subgraph "Phase 7: Advisor Conversation Extraction"
-        J1[_01_extract_conversations.py<br/>Sliding window extraction]
+    subgraph "Multi-Modal Processing"
+        E1[Image pipeline<br/>OCR · VLM · compression]
+        E2[Voice pipeline<br/>ASR · emotion · compression]
+        E3[Video pipeline<br/>keyframes · transcription · captions]
+        E4[Sticker pipeline<br/>sniff · process · triage · captions]
+        E5[Link/File pipeline<br/>extract · anonymize · summarize]
+        F[Enriched timeline<br/>merged_v2 / enriched_full.jsonl]
     end
 
-    subgraph "Phase 8: MoA Multi-Expert Fusion"
-        K1[DeepSeek+GLM+Kimi<br/>Three-expert parallel analysis]
-        K2[Kimi K2.5<br/>S4 fallback #2]
+    subgraph "Training and Offline Advisor Pipeline"
+        G[Timeline post-processing<br/>merge turns · time gaps · L1/L2 branches]
+        H[Agent SFT pipeline<br/>PII · trimming · optimization]
+        I[Advisor MoA pipeline<br/>extract · analyze · fuse · review]
+        J[QLoRA / inference / augmentation]
     end
 
-    subgraph "Phase 9: De-anonymization + Training"
-        L1[De-anonymization<br/>Six-layer mapping restoration]
-        L2[QLoRA training<br/>Qwen3-8B + Unsloth]
-        L3[LoRA weights<br/>advisor_out/models/ ✅]
+    subgraph "Retrieval, Safety, and Online App"
+        K[Knowledge / Graph RAG<br/>FAISS · BGE-M3 · knowledge injection]
+        L[Safety and supervision<br/>crisis levels · red lines · LLM-as-Judge]
+        M[FastAPI Advisor API<br/>chat · rag · arena · roundtable · assessment]
+        N[React Web App<br/>Chat · Dashboard · Arena · Roundtable]
     end
 
-    subgraph "Phase 10: RAG + Online Service"
-        M1[FAISS vector index<br/>BGE-M3 + Reranker]
-        M2[Online chat service<br/>9 backends + 3 Agents]
-        M3[React frontend<br/>localhost:5173 ✅]
-    end
-
-    Z1 --> Z2 --> Z3 --> Z4
-    Z4 --> Z5
-    Z4 --> Z6
-
-    Z5 --> A1
-    Z6 --> A2
-    Z6 --> A3
-    Z6 --> A4
-    Z6 --> A5
-    Z6 --> A6
-    
-    A1 --> B5
-    A2 --> B1
-    A3 --> B2
-    A4 --> B3
-    A5 --> B4
-    A6 --> B5
-    
-    B1 --> C1
-    B2 --> C2
-    B3 --> C3
-    B4 --> C4
-    B5 --> C5
-    
-    C1 --> D
-    C2 --> D
-    C3 --> D
-    C4 --> D
-    C5 --> D
-    
+    A --> B
+    B --> C
+    B --> D
+    C --> E5
     D --> E1
-    E1 --> F1
-    F1 --> F2
-    
-    F2 --> G1
-    F2 --> G2
-    G2 --> G3
-    
-    G1 --> H1
-    G3 --> H2
-    
-    H1 --> I1
-    H2 --> I2
-
-    I2 --> J1
-    J1 --> K1
-    K1 --> K2
-    K2 --> L1
-    L1 --> L2
-    L2 --> L3
-    J1 --> M1
-    K2 --> M1
-    L3 --> M2
-    M1 --> M2
-    M2 --> M3
-    
-    style Z1 fill:#e6f0ff
-    style Z3 fill:#e6f0ff
-    style Z4 fill:#e6f0ff
-    style Z5 fill:#ccffcc
-    style Z6 fill:#ccffcc
-    style C1 fill:#ffcccc
-    style C2 fill:#ffcccc
-    style C3 fill:#ffcccc
-    style C4 fill:#ffcccc
-    style C5 fill:#ffcccc
-    style F1 fill:#ffe6cc
-    style G1 fill:#e6f3ff
-    style G2 fill:#fff0e6
-    style I1 fill:#ccffcc
-    style I2 fill:#ccffcc
-    style K1 fill:#e6ccff
-    style K2 fill:#e6ccff
-    style L3 fill:#ccffcc
-    style M2 fill:#ccffe6
-    style M3 fill:#ccffe6
+    D --> E2
+    D --> E3
+    D --> E4
+    D --> E5
+    E1 --> F
+    E2 --> F
+    E3 --> F
+    E4 --> F
+    E5 --> F
+    F --> G
+    G --> H
+    G --> I
+    H --> J
+    I --> J
+    F --> K
+    I --> K
+    J --> M
+    K --> M
+    L --> M
+    M --> N
+    N --> L
 ```
 
 ---
@@ -206,28 +114,52 @@ graph TB
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           Lens_opensource Pipeline                            │
+│                         Lens_opensource Pipeline Stack                       │
 │                                                                             │
-│  ┌─────────────┐   ┌──────────────────────────────────────────────────┐    │
-│  │  Universal   │   │         Multi-Modal Processing Pipelines        │    │
-│  │  Ingestion   │──▶│  Image │ Voice │ Video │ Sticker │ Linkfile    │    │
-│  │  (5 adapters)│   └────────────────────┬───────────────────────────┘    │
-│  └─────────────┘                         │                                │
-│                                          ▼                                │
-│                              ┌──────────────────────┐                     │
-│                              │  Unified Timeline     │                     │
-│                              │  enriched_full.jsonl   │                     │
-│                              └──────────┬───────────┘                     │
-│                                         │                                 │
-│                          ┌──────────────┼──────────────┐                  │
-│                          ▼              ▼              ▼                  │
-│                   ┌────────────┐ ┌────────────┐ ┌────────────┐           │
-│                   │ Agent SFT  │ │ Advisor    │ │ Web        │           │
-│                   │ Pipeline   │ │ Pipeline   │ │ Dashboard  │           │
-│                   │ L1/L2 data │ │ MoA+QLoRA  │ │ React+Vite │           │
-│                   └────────────┘ └────────────┘ └────────────┘           │
+│  Raw Exports ─▶ Universal Ingestion ─▶ Canonical Timeline                    │
+│                     │                         │                              │
+│                     ▼                         ▼                              │
+│        Standard Media Directories     Multi-Modal Pipelines                  │
+│                                      Image │ Voice │ Video │ Sticker │ File  │
+│                                                │                            │
+│                                                ▼                            │
+│                                      Enriched Timeline                       │
+│                                                │                            │
+│                 ┌──────────────────────────────┼─────────────────────────┐  │
+│                 ▼                              ▼                         ▼  │
+│          Agent SFT Pipeline           Advisor MoA Pipeline          RAG Index │
+│      L1/L2 · PII · Optimize       Analyze · Fuse · Review       FAISS · BGE │
+│                 │                              │                         │  │
+│                 └──────────────┬───────────────┴──────────────┬──────────┘  │
+│                                ▼                              ▼             │
+│                     FastAPI Advisor API              Safety / Supervision    │
+│                 Chat · RAG · Arena · Roundtable      Crisis · Judge          │
+│                                │                                            │
+│                                ▼                                            │
+│                         React + Vite Web App                                 │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Pipeline Modules
+
+| Module | Main Responsibility | Main Entry / Area | Detailed Docs |
+|---|---|---|---|
+| Universal Ingestion | Normalize multiple chat export formats into the canonical timeline | `scripts/workspace/run_ingest.py`, `scripts/workspace/ingestion/` | [Ingestion Pipeline](docs/pipelines/ingestion_pipeline_overview.md) |
+| Workspace Initialization | Create standard workspace folders and local configuration scaffolding | `scripts/workspace/init_workspace.py` | [Workspace Init](docs/pipelines/workspace_init.md) |
+| Multi-Modal Processing | Process image, voice, video, sticker, and link/file messages | `run_all_pipelines.py`, `scripts/*/run_all/` | [Full Pipeline](docs/pipelines/pipeline.md) |
+| Shared Utilities | Text normalization, anonymization, media filtering, schema/path helpers | `scripts/_common/` | [Modality Fields](docs/pipelines/modality_fields_and_models.md) |
+| Agent SFT Data | Convert enriched timelines into L1/L2 SFT-ready datasets | `scripts/timeline/`, `scripts/compression/`, `scripts/advisor/run_all/_05*.py` | [Agent SFT](docs/pipelines/agent_sft_pipeline_overview.md) |
+| Advisor MoA | Extract conversations, generate multi-expert analyses, fuse/review/remediate | `scripts/advisor/run_all/_01*` to `_04*` | [MoA Fusion](docs/advisor/advisor_moa_fusion_overview.md) |
+| Training / Inference | QLoRA training, inference comparison, optional augmentation | `scripts/advisor/run_all/_06*` to `_10*` | [Advisor Training](docs/advisor/advisor_training_overview.md) |
+| Knowledge / Graph RAG | Build retrieval indexes and inject timeline/knowledge/assessment context | `scripts/advisor/run_all/_09_build_graph.py` | [Knowledge RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) |
+| Knowledge Center | Web index for active/planned knowledge bases and RAG-ready FAQ resources | `frontend/src/pages/KnowledgeCenterPage.tsx` | [Knowledge RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) |
+| Advisor API | Modular FastAPI backend for chat, RAG, review, models, safety, Arena, Roundtable | `scripts/advisor/api/main.py`, `scripts/advisor/api/routes/` | [Advisor Service](docs/advisor/advisor_service_overview.md) |
+| Web App | React pages for dashboard, chat, consent, privacy, assessment, knowledge, Arena, Roundtable | `frontend/src/pages/` | [Web App Design](docs/app/web_app_overview.md) |
+| Roundtable Discussion | Three-persona multi-agent discussion with SSE streaming, multi-round follow-up, context injection, and moderator synthesis | `frontend/src/pages/RoundtablePage.tsx`, `scripts/advisor/api/routes/roundtable.py` | [Roundtable Design](docs/app/roundtable_discussion_overview.md) |
+| Safety / Crisis | Four-level crisis detection, red-line wording checks, consent and fixed resources | `scripts/advisor/api/crisis_detector.py`, `scripts/advisor/api/routes/safety.py` | [Safety Crisis](docs/pipelines/safety_crisis_overview.md) |
+| Arena / Supervision | Dual-mirror comparison and LLM-as-Judge quality/risk monitoring | `arena.py`, `supervision_agent.py` | [Arena](docs/pipelines/arena_dual_mirror_overview.md), [Supervision](docs/pipelines/supervision_pipeline_overview.md), [Communication Status](docs/app/communication_status_overview.md) |
 
 ---
 
@@ -352,7 +284,7 @@ python run_all_pipelines.py --only video sticker
 
 ## Multi-Modal Processing Pipelines
 
-Each modality has a dedicated sub-pipeline under `scripts/<modality>/run_all/`. All pipelines follow the same pattern: **Extract → Analyze → Compress (optional) → Merge → Update Timeline**.
+Each modality has a dedicated sub-pipeline under `scripts/<modality>/run_all/`, orchestrated by `run_all_pipelines.py`. The shared execution pattern is **Extract → Analyze → Compress (optional) → Merge → Update Timeline**, with modality-specific review, triage, cleanup, and schema validation steps where needed.
 
 ### Image Pipeline (4 steps)
 
@@ -1085,38 +1017,55 @@ conda run -n CHAT_APP_DHA python -m pytest tests/test_advisor_analyzers_properti
 
 ## Documentation
 
-Detailed documentation for each subsystem is available in the `docs/` directory:
+Detailed documentation for each subsystem is available in the `docs/` directory. The top-level README keeps the public project overview; implementation details live in the dedicated documents below.
+
+### Getting Started
+- [Quick Start](docs/QUICKSTART.md) - Environment setup and local launch
+- [Beta User Guide](docs/BETA_USER_GUIDE.md) - Product-facing usage guide
+- [Electron Build](docs/ELECTRON_BUILD.md) - Desktop packaging guide
 
 ### Core Architecture Documentation
-- [Full Pipeline Reference](docs/pipeline.md) - End-to-end pipeline complete guide
-- [Modality Fields & Models Details](docs/modality_fields_and_models.md) - All modality processing fields and model details
-- [Workspace Initialization](docs/workspace_init.md) - Environment configuration and initialization guide
+- [Full Pipeline Reference](docs/pipelines/pipeline.md) - End-to-end pipeline reference
+- [Modality Fields & Models Details](docs/pipelines/modality_fields_and_models.md) - Fields, schemas, and models by modality
+- [Workspace Initialization](docs/pipelines/workspace_init.md) - Workspace structure and initialization flow
 
 ### Data Processing Pipeline
-- [Universal Ingestion](docs/ingestion_pipeline_overview.md) - Multi-source data normalized ingestion
-- [Image Pipeline Design](docs/image_pipeline_overview.md) - OCR + VLM image processing
-- [Voice Pipeline Design](docs/voice_pipeline_overview.md) - ASR + emotion detection
-- [Video Pipeline Design](docs/video_pipeline_overview.md) - Keyframe + transcription processing
-- [Sticker Pipeline Design](docs/sticker_pipeline_overview.md) - Animated image processing and description
-- [Linkfile Pipeline Design](docs/linkfile_pipeline_overview.md) - File extraction and summarization
+- [Universal Ingestion](docs/pipelines/ingestion_pipeline_overview.md) - Multi-source normalized ingestion design
+- [Ingestion Guide](docs/pipelines/ingestion_guide.md) - How to configure and run ingestion
+- [Image Pipeline Design](docs/pipelines/image_pipeline_overview.md) - OCR + VLM image processing
+- [Voice Pipeline Design](docs/pipelines/voice_pipeline_overview.md) - ASR + emotion detection
+- [Video Pipeline Design](docs/pipelines/video_pipeline_overview.md) - Keyframe + transcription + caption processing
+- [Sticker Pipeline Design](docs/pipelines/sticker_pipeline_overview.md) - Animated/static sticker processing
+- [Link/File Pipeline Design](docs/pipelines/linkfile_pipeline_overview.md) - File extraction and summarization
+- [Agent SFT Pipeline](docs/pipelines/agent_sft_pipeline_overview.md) - Timeline-to-training-data pipeline
 
 ### AI Advisor System
-- [Advisor System Overview](docs/advisor_pipeline_overview.md) - Relationship advisor system architecture
-- [MoA Fusion Mechanism](docs/advisor_moa_fusion_overview.md) - Multi-expert fusion analysis
-- [RAG Retrieval System](docs/advisor_rag_overview.md) - Hybrid retrieval architecture
-- [Service Deployment](docs/advisor_service_overview.md) - Online service deployment
-- [Training System](docs/advisor_training_overview.md) - QLoRA fine-tuning training
-- [Step-by-Step Guide](docs/advisor_step_by_step.md) - Complete usage workflow
+- [Advisor System Overview](docs/advisor/advisor_pipeline_overview.md) - Offline and online relationship advisor architecture
+- [MoA Fusion Mechanism](docs/advisor/advisor_moa_fusion_overview.md) - Multi-expert fusion analysis
+- [RAG Retrieval System](docs/advisor/advisor_rag_overview.md) - Hybrid retrieval architecture
+- [Service Deployment](docs/advisor/advisor_service_overview.md) - Online service and API structure
+- [Training System](docs/advisor/advisor_training_overview.md) - QLoRA fine-tuning and evaluation
+- [Step-by-Step Guide](docs/advisor/advisor_step_by_step.md) - Complete workflow guide
+- [Knowledge RAG Upgrade](docs/pipelines/knowledge_rag_upgrade_overview.md) - Knowledge injection and FAISS index upgrades
+- Knowledge Center - Frontend knowledge-base index at `frontend/src/pages/KnowledgeCenterPage.tsx`
+- [Advisor Web Application](docs/app/web_app_overview.md) - React application shell, pages, API client, state boundaries, safety surfaces, and operations UX
+- [Roundtable Discussion](docs/app/roundtable_discussion_overview.md) - Three-persona multi-agent discussion, SSE protocol, continuation, context injection, and Moderator synthesis
 
-### SFT Training System
-- [Agent SFT Pipeline](docs/agent_sft_pipeline_overview.md) - Conversation data training pipeline
+### Safety, Evaluation, and Privacy
+- [Safety and Crisis System](docs/pipelines/safety_crisis_overview.md) - Four-level crisis detection and safety governance
+- [Arena Dual-Mirror System](docs/pipelines/arena_dual_mirror_overview.md) - A/B evaluation, voting, scoring, and ranking
+- [Supervision Pipeline](docs/pipelines/supervision_pipeline_overview.md) - LLM-as-Judge monitoring and quality/risk evaluation
+- [Communication Status](docs/app/communication_status_overview.md) - Frontend communication progress analysis and dialogue supervision
+- [Privacy & PII Guide](docs/pipelines/pii_detection_guide.md) - Privacy information detection
+- [Privacy Mapping](docs/pipelines/privacy_mapping.md) - Anonymization mapping rules
 
-### Privacy & Security
-- [Privacy & PII Guide](docs/pii_detection_guide.md) - Privacy information detection
-- [Privacy Mapping](docs/privacy_mapping.md) - Anonymization mapping rules
+---
 
-### Data Ingestion Guide
-- [Ingestion Guide](docs/ingestion_guide.md) - Data ingestion detailed instructions
+## Safety Notice
+
+Lens is a data processing and relationship reflection tool. It does not provide medical diagnosis, psychotherapy, crisis counseling, or emergency intervention. The safety layer is designed to reduce risk, detect high-risk language, enforce wording boundaries, and guide users toward appropriate resources, but it is not a substitute for professional help.
+
+If you or someone else may be in immediate danger, contact local emergency services or a qualified crisis hotline.
 
 ---
 

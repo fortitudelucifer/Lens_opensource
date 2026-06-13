@@ -81,7 +81,7 @@ confirmed_names:
 - 用户可根据自己的数据生成真实列表
 - 如不使用，可忽略两阶段 PII 检测功能
 
-### 3. `/docs/linkfile_pipeline_overview.md`
+### 3. `/docs/pipelines/linkfile_pipeline_overview.md`
 
 **占位符：**
 - `[SERVER_ID]` - 服务器ID（可选替换）

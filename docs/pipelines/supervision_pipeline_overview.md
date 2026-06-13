@@ -2,7 +2,7 @@
 
 > 📌 **本文档定位**：这是 [多模态处理流水线文档](modality_fields_and_models.md) 的详细设计文档，专注于 LLM-as-Judge 监督评估系统的架构、六维度打分机制、优先级链降级策略、前端交流状态展示和数据持久化。
 >
-> 📌 **关联文档**：[综合执行计划 §4.6](../research/big_plan/plan_v1/综合执行计划_v2.md) · [Arena 双镜对比概览](arena_dual_mirror_overview.md)
+> 📌 **关联文档**：综合执行计划 §4.6（`research/big_plan/plan_v1/综合执行计划_v2.md`） · [Arena 双镜对比概览](arena_dual_mirror_overview.md)
 >
 > 更新于：2026-03-08 v1.0
 

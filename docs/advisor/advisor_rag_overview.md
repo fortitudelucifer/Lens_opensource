@@ -1,6 +1,6 @@
 # 多维度 Hybrid RAG 索引与混合检索
 
-> 📌 **本文档定位**：这是 [多模态处理流水线文档](modality_fields_and_models.md) Section 15 的详细设计文档，专注于关系咨询场景下的 Hybrid RAG 系统——包括稀疏+稠密混合检索、日期精确索引、多维评分、意图分类和增量更新机制。
+> 📌 **本文档定位**：这是 [多模态处理流水线文档](../pipelines/modality_fields_and_models.md) Section 15 的详细设计文档，专注于关系咨询场景下的 Hybrid RAG 系统——包括稀疏+稠密混合检索、日期精确索引、多维评分、意图分类和增量更新机制。
 
 ## 1. 设计理念
 
@@ -496,5 +496,5 @@ advisor_out/faiss_index/
 **文档版本**: v1.1
 **创建时间**: 2026-02-15
 **最后更新**: 2026-03-06（use_rag 前端开关生效、ME/OTHER 标记在输出前替换为真名、聚焦指令防重复）
-**关联主文档**: [modality_fields_and_models.md](modality_fields_and_models.md) Section 15
+**关联主文档**: [modality_fields_and_models.md](../pipelines/modality_fields_and_models.md) Section 15
 **核心脚本**: `chunk_based_rag.py`, `graph_rag.py`, `intent_classifier.py`, `_09_build_graph.py`

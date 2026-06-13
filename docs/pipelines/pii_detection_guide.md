@@ -256,6 +256,6 @@ python scripts/compression/privacy_shield.py
 
 ## 参考资料
 
-- [两阶段 PII 检测脚本](../scripts/compression/two_stage_pii.py)
-- [测试用例](../tests/test_pii_detector.py)
-- [配置文件](../configs/compression.yaml)
+- [两阶段 PII 检测脚本](../../scripts/compression/two_stage_pii.py)
+- [测试用例](../../tests/test_pii_detector.py)
+- [配置文件](../../configs/compression.yaml)

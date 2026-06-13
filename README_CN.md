@@ -17,21 +17,27 @@
 
 ## 概述
 
-Lens 是一个端到端的数据处理流水线，将 CHATAPP 聊天导出的原始数据（文本、图片、语音、视频、表情包、链接和文件）转化为结构化、隐私安全的 JSONL 数据集，适用于大语言模型的监督微调（SFT）。系统采用**本地-云端协同处理架构**：在本地完成多模态信息解析并加上多维度匿名处理后交由云端大模型标注（本地模型标注也可以），将人工和agent审核的标注文件反匿名处理后回到本地进行真实信息训练，并最终可以在本地用真实信息对话讨论。在数据流水线之上，还包含一个基于处理后数据训练的四层检索动态 RAG 全栈 AI 关系顾问系统，可与网页端直接交互。多模态在本地支持NSFW成人、暴力、跨文化和敏感内容的准确解析（无未成年人内容解析能力），不会数据泄漏。
+Lens 是一个本地优先的私密关系与沟通数据处理系统，用于将 CHAT_APP 风格的聊天导出转化为隐私安全的多模态时间轴、Agent SFT 数据集，以及 AI 关系顾问应用所需的训练与检索资产。系统会归一化多来源聊天记录，富化图片、语音、视频、表情包、链接/文件消息，并在本地完成匿名化、PII 控制和数据边界管理。
+
+当前系统已经不再是单一转换脚本，而是模块化流水线栈：包括通用数据接入、多模态处理、Agent SFT 准备、关系顾问 MoA 分析、知识/Graph RAG、FastAPI + React 顾问应用、双镜 Arena 评测、安全/危机护栏，以及 LLM-as-Judge 监督评估。
+
+Lens 面向研究、个人数据整理与关系反思工具场景，不是医疗、诊断、心理治疗、危机咨询或紧急响应系统。
 
 ### 核心能力
 
-- **本地-云端协同处理**：本地多模态解析+匿名化，云端大模型标注，反匿名化后本地真实信息训练
-- **多模态处理**：五条专用子流水线分别处理图片、语音、视频、表情包和链接/文件消息
-- **隐私优先设计**：两级匿名化（L1 可逆 / L2 不可逆），两阶段 PII 检测（规则引擎 + LLM 验证）
-- **安全内容解析**：本地支持 NSFW 成人、暴力、跨文化和敏感内容准确解析，零数据泄漏
-- **通用数据接入**：插件式适配器架构，支持Wechat、Telegram、WhatsApp的结构化文件以及其通用 CSV/JSONL 导入
-- **智能分析**：OCR 路由、VLM 描述生成、ASR 转写、情绪检测、语义压缩，覆盖所有模态
-- **专家模型路由**：内容感知的分诊系统，将 NSFW、暴力和跨文化文档图片路由到专用的无审查模型
-- **关系顾问 Agent**：MoA（多模型融合）分析、QLoRA 微调、Hybrid RAG 实时对话，支持 3 种 Agent 人格
-- **Web 仪表盘**：React + Vite 前端，支持流水线控制、实时对话、人工审核和模型管理和检测
+- **通用数据接入**：插件式适配器将 CHAT_APP、Telegram、WhatsApp、通用 CSV、通用 JSONL 导出归一化为 Canonical JSONL 时间轴。
+- **多模态处理**：图片、语音、视频、表情包、链接/文件流水线执行提取、分析、压缩、合并和时间轴回写。
+- **隐私优先设计**：本地匿名化、L1/L2 数据分支、两阶段 PII 检测、公开模板配置，以及运行时/私密数据 gitignore 边界。
+- **Agent SFT 数据流水线**：完成时间轴后处理、语义压缩、字段精简、隐私防护和 SFT 优化，生成本地或匿名训练数据。
+- **关系顾问 MoA 流水线**：对话提取、多专家分析、融合、AI/人工审核、补齐、格式化、QLoRA 训练、推理与数据增强。
+- **知识增强 RAG**：组合时间轴检索、专业知识注入、测评结果注入、FAISS 索引，以及 graph/chunk 混合检索。
+- **知识中心**：Web 端知识库索引，展示已激活和规划中的知识库，包括跨学科视角、沟通方法、危机资源和 EFT 资源。
+- **关系顾问 Web 应用**：React + Vite 前端与模块化 FastAPI 后端，覆盖聊天、仪表盘、测评、隐私、知识中心、Arena、Roundtable 和监督视图。
+- **双镜 Arena**：对模型、顾问流派和跨学科视角进行盲评 A/B 对比，支持投票、多维评分与排名数据。
+- **圆桌讨论**：三人格多 Agent 圆桌讨论，支持 SSE 流式输出、多轮追问、上下文注入、深度模式和 Moderator 综合总结。
+- **安全与监督**：四级危机检测、知情同意与免责声明、用词红线、固定危机资源响应，以及 LLM-as-Judge 质量监控。
 
-详细架构和实现细节<u>**务必**</u>请参考 [modality_fields_and_models.md](docs/modality_fields_and_models.md)。目前的未来设计开发思路详见 [RoadMap.md](RoadMap.md)，是否实现就看作者未来是否有精力实现了。
+详细架构和实现细节请参考 [modality_fields_and_models.md](docs/pipelines/modality_fields_and_models.md)、[advisor_pipeline_overview.md](docs/advisor/advisor_pipeline_overview.md) 和 [RoadMap.md](RoadMap.md)。
 
 <div align="center">
   <img src="assets/lens_data.png" alt="Lens Data Flow" width="800">
@@ -44,160 +50,62 @@ Lens 是一个端到端的数据处理流水线，将 CHATAPP 聊天导出的原
 
 ```mermaid
 graph TB
-    subgraph "阶段 -1: 归一化输入"
-        Z1["多源数据<br/>CHAT_APP HTML · Telegram JSON<br/>WhatsApp TXT · CSV · JSONL"]
-        Z2["source_manifest.yaml<br/>source_type + participant_map<br/>+ field_mapping"]
-        Z3["AdapterRegistry<br/>5 个适配器自动发现"]
-        Z4["IngestionEngine<br/>Schema 校验 · 媒体归类<br/>ts 排序 · 导出生成"]
-        Z5["P1_messages_raw.jsonl<br/>Canonical Schema ✅"]
-        Z6["raw/ 标准媒体目录<br/>image/ voice/ video/<br/>sticker/ file/"]
+    subgraph "输入与归一化"
+        A[原始聊天导出与媒体]
+        B[通用数据接入<br/>CHAT_APP · Telegram · WhatsApp · CSV · JSONL]
+        C[Canonical JSONL 时间轴<br/>raw/P1_messages_raw.jsonl]
+        D[标准媒体目录<br/>image · voice · video · sticker · file]
     end
 
-    subgraph "阶段 0: 原始数据"
-        A1[P1_messages_raw.jsonl]
-        A2[raw/image/]
-        A3[raw/voice/]
-        A4[raw/video/]
-        A5[raw/sticker/]
-        A6[raw/file/]
-    end
-    
-    subgraph "阶段 1: 模态处理"
-        B1[图片: OCR + 描述<br/>300-800 tokens]
-        B2[语音: ASR + 情绪<br/>100-400 tokens]
-        B3[视频: 关键帧 + 转写<br/>1500-2500 tokens 🔥]
-        B4[表情包: 描述 + OCR<br/>50-200 tokens]
-        B5[链接文件: 提取 + 文件摘要<br/>20-200 tokens]
-    end
-    
-    subgraph "阶段 2: 语义压缩"
-        C1[_02.5_compress.py<br/>80-150 tokens ✅]
-        C2[_02.5_compress.py<br/>50-100 tokens ✅]
-        C3[_03.5_compress.py<br/>150-250 tokens ✅]
-        C4[_05.5_compress.py<br/>30-60 tokens ✅]
-        C5[_01.5_file_summary.py<br/>15-100 tokens ✅]
-    end
-    
-    subgraph "阶段 3: 合并 + 时间轴"
-        D[合并各模态数据<br/>按 msg_uid 关联]
-        E1[enriched_full.jsonl]
-    end
-    
-    subgraph "阶段 4: 时间轴后处理"
-        F1[postprocess_timeline.py<br/>消息合并+时间标记]
-        F2[enriched_full_processed.jsonl]
-    end
-    
-    subgraph "阶段 5: L1/L2 分支"
-        G1[L1: 字段精简<br/>保留真实数据]
-        G2[L2: PII检测+匿名化<br/>两阶段高精度检测]
-        G3[L2: 字段精简]
-    end
-    
-    subgraph "阶段 6: SFT 优化"
-        H1[sft_optimizer.py<br/>ID简化+时间压缩]
-        H2[sft_optimizer.py<br/>ID简化+时间压缩]
-        I1[agent_sft_l1.jsonl<br/>本地训练 ✅]
-        I2[agent_sft_l2.jsonl<br/>云端训练 ✅]
-    end
-    
-    subgraph "阶段 7: Advisor 对话提取"
-        J1[_01_extract_conversations.py<br/>滑动窗口提取]
+    subgraph "多模态处理"
+        E1[图片流水线<br/>OCR · VLM · 压缩]
+        E2[语音流水线<br/>ASR · 情绪 · 压缩]
+        E3[视频流水线<br/>关键帧 · 转写 · 描述]
+        E4[表情包流水线<br/>嗅探 · 处理 · 分诊 · 描述]
+        E5[链接/文件流水线<br/>提取 · 匿名化 · 摘要]
+        F[富化时间轴<br/>merged_v2 / enriched_full.jsonl]
     end
 
-    subgraph "阶段 8: MoA 多专家融合"
-        K1[DeepSeek+GLM+Kimi<br/>三专家并行分析]
-        K2[Kimi K2.5<br/>S4 降级 #2]
+    subgraph "训练与离线顾问流水线"
+        G[时间轴后处理<br/>合并轮次 · 时间间隔 · L1/L2 分支]
+        H[Agent SFT 流水线<br/>PII · 精简 · 优化]
+        I[关系顾问 MoA 流水线<br/>提取 · 分析 · 融合 · 审核]
+        J[QLoRA / 推理 / 数据增强]
     end
 
-    subgraph "阶段 9: 反匿名化 + 训练"
-        L1[反匿名化<br/>六层映射还原]
-        L2[QLoRA 训练<br/>Qwen3-8B + Unsloth]
-        L3[LoRA 权重<br/>advisor_out/models/ ✅]
+    subgraph "检索、安全与在线应用"
+        K[Knowledge / Graph RAG<br/>FAISS · BGE-M3 · 知识注入]
+        L[安全与监督<br/>危机等级 · 用词红线 · LLM-as-Judge]
+        M[FastAPI Advisor API<br/>chat · rag · arena · roundtable · assessment]
+        N[React Web App<br/>聊天 · 仪表盘 · Arena · Roundtable]
     end
 
-    subgraph "阶段 10: RAG + 在线服务"
-        M1[FAISS 向量索引<br/>BGE-M3 + Reranker]
-        M2[在线对话服务<br/>9 后端 + 3 Agent]
-        M3[React 前端<br/>localhost:5173 ✅]
-    end
-
-    Z1 --> Z2 --> Z3 --> Z4
-    Z4 --> Z5
-    Z4 --> Z6
-
-    Z5 --> A1
-    Z6 --> A2
-    Z6 --> A3
-    Z6 --> A4
-    Z6 --> A5
-    Z6 --> A6
-    
-    A1 --> B5
-    A2 --> B1
-    A3 --> B2
-    A4 --> B3
-    A5 --> B4
-    A6 --> B5
-    
-    B1 --> C1
-    B2 --> C2
-    B3 --> C3
-    B4 --> C4
-    B5 --> C5
-    
-    C1 --> D
-    C2 --> D
-    C3 --> D
-    C4 --> D
-    C5 --> D
-    
+    A --> B
+    B --> C
+    B --> D
+    C --> E5
     D --> E1
-    E1 --> F1
-    F1 --> F2
-    
-    F2 --> G1
-    F2 --> G2
-    G2 --> G3
-    
-    G1 --> H1
-    G3 --> H2
-    
-    H1 --> I1
-    H2 --> I2
-
-    I2 --> J1
-    J1 --> K1
-    K1 --> K2
-    K2 --> L1
-    L1 --> L2
-    L2 --> L3
-    J1 --> M1
-    K2 --> M1
-    L3 --> M2
-    M1 --> M2
-    M2 --> M3
-    
-    style Z1 fill:#e6f0ff
-    style Z3 fill:#e6f0ff
-    style Z4 fill:#e6f0ff
-    style Z5 fill:#ccffcc
-    style Z6 fill:#ccffcc
-    style C1 fill:#ffcccc
-    style C2 fill:#ffcccc
-    style C3 fill:#ffcccc
-    style C4 fill:#ffcccc
-    style C5 fill:#ffcccc
-    style F1 fill:#ffe6cc
-    style G1 fill:#e6f3ff
-    style G2 fill:#fff0e6
-    style I1 fill:#ccffcc
-    style I2 fill:#ccffcc
-    style K1 fill:#e6ccff
-    style K2 fill:#e6ccff
-    style L3 fill:#ccffcc
-    style M2 fill:#ccffe6
-    style M3 fill:#ccffe6
+    D --> E2
+    D --> E3
+    D --> E4
+    D --> E5
+    E1 --> F
+    E2 --> F
+    E3 --> F
+    E4 --> F
+    E5 --> F
+    F --> G
+    G --> H
+    G --> I
+    H --> J
+    I --> J
+    F --> K
+    I --> K
+    J --> M
+    K --> M
+    L --> M
+    M --> N
+    N --> L
 ```
 
 ---
@@ -206,28 +114,52 @@ graph TB
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           Lens_opensource 流水线                              │
+│                         Lens_opensource 流水线栈                              │
 │                                                                             │
-│  ┌─────────────┐   ┌──────────────────────────────────────────────────┐    │
-│  │  通用数据    │   │           多模态处理流水线                       │    │
-│  │  接入引擎    │──▶│  图片 │ 语音 │ 视频 │ 表情包 │ 链接/文件       │    │
-│  │  (5种适配器) │   └────────────────────┬───────────────────────────┘    │
-│  └─────────────┘                         │                                │
-│                                          ▼                                │
-│                              ┌──────────────────────┐                     │
-│                              │  统一时间轴            │                     │
-│                              │  enriched_full.jsonl   │                     │
-│                              └──────────┬───────────┘                     │
-│                                         │                                 │
-│                          ┌──────────────┼──────────────┐                  │
-│                          ▼              ▼              ▼                  │
-│                   ┌────────────┐ ┌────────────┐ ┌────────────┐           │
-│                   │ Agent SFT  │ │ 关系顾问   │ │ Web        │           │
-│                   │ 数据流水线  │ │ 流水线     │ │ 仪表盘     │           │
-│                   │ L1/L2 数据 │ │ MoA+QLoRA  │ │ React+Vite │           │
-│                   └────────────┘ └────────────┘ └────────────┘           │
+│  原始导出 ─▶ 通用数据接入 ─▶ Canonical 时间轴                                  │
+│                    │                         │                               │
+│                    ▼                         ▼                               │
+│             标准媒体目录                  多模态流水线                         │
+│                                图片 │ 语音 │ 视频 │ 表情包 │ 文件             │
+│                                              │                              │
+│                                              ▼                              │
+│                                      富化时间轴                               │
+│                                              │                              │
+│              ┌───────────────────────────────┼──────────────────────────┐   │
+│              ▼                               ▼                          ▼   │
+│       Agent SFT 流水线              关系顾问 MoA 流水线              RAG 索引 │
+│    L1/L2 · PII · 优化             分析 · 融合 · 审核           FAISS · BGE   │
+│              │                               │                          │   │
+│              └──────────────┬────────────────┴───────────────┬──────────┘   │
+│                             ▼                                ▼              │
+│                    FastAPI Advisor API                 安全 / 监督           │
+│              Chat · RAG · Arena · Roundtable           危机 · Judge          │
+│                             │                                               │
+│                             ▼                                               │
+│                       React + Vite Web App                                   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 流水线模块
+
+| 模块 | 主要职责 | 主入口 / 区域 | 详细文档 |
+|---|---|---|---|
+| 通用数据接入 | 将多种聊天导出格式归一化为 Canonical 时间轴 | `scripts/workspace/run_ingest.py`, `scripts/workspace/ingestion/` | [数据接入流水线](docs/pipelines/ingestion_pipeline_overview.md) |
+| 工作空间初始化 | 创建标准工作空间目录与本地配置骨架 | `scripts/workspace/init_workspace.py` | [工作空间初始化](docs/pipelines/workspace_init.md) |
+| 多模态处理 | 处理图片、语音、视频、表情包、链接/文件消息 | `run_all_pipelines.py`, `scripts/*/run_all/` | [完整流水线](docs/pipelines/pipeline.md) |
+| 共享工具层 | 文本归一化、匿名化、媒体过滤、schema/path 工具 | `scripts/_common/` | [模态字段](docs/pipelines/modality_fields_and_models.md) |
+| Agent SFT 数据 | 将富化时间轴转换为 L1/L2 SFT 训练数据 | `scripts/timeline/`, `scripts/compression/`, `scripts/advisor/run_all/_05*.py` | [Agent SFT](docs/pipelines/agent_sft_pipeline_overview.md) |
+| 关系顾问 MoA | 提取对话、生成多专家分析、融合/审核/补齐 | `scripts/advisor/run_all/_01*` 到 `_04*` | [MoA 融合](docs/advisor/advisor_moa_fusion_overview.md) |
+| 训练 / 推理 | QLoRA 训练、推理对比、可选数据增强 | `scripts/advisor/run_all/_06*` 到 `_10*` | [顾问训练](docs/advisor/advisor_training_overview.md) |
+| Knowledge / Graph RAG | 构建检索索引并注入时间轴/知识/测评上下文 | `scripts/advisor/run_all/_09_build_graph.py` | [知识增强 RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) |
+| 知识中心 | Web 端知识库索引，展示已激活/规划中的知识库与 RAG-ready FAQ 资源 | `frontend/src/pages/KnowledgeCenterPage.tsx` | [知识增强 RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) |
+| Advisor API | 模块化 FastAPI 后端，支持 chat、RAG、review、models、safety、Arena、Roundtable | `scripts/advisor/api/main.py`, `scripts/advisor/api/routes/` | [顾问服务](docs/advisor/advisor_service_overview.md) |
+| Web 应用 | Dashboard、Chat、Consent、Privacy、Assessment、Knowledge、Arena、Roundtable 页面 | `frontend/src/pages/` | [Web 应用设计](docs/app/web_app_overview.md) |
+| 圆桌讨论 | 三人格多 Agent 讨论，支持 SSE 流式输出、多轮追问、上下文注入和 Moderator 综合总结 | `frontend/src/pages/RoundtablePage.tsx`, `scripts/advisor/api/routes/roundtable.py` | [圆桌讨论设计](docs/app/roundtable_discussion_overview.md) |
+| 安全 / 危机 | 四级危机检测、用词红线、知情同意和固定资源 | `scripts/advisor/api/crisis_detector.py`, `scripts/advisor/api/routes/safety.py` | [安全危机系统](docs/pipelines/safety_crisis_overview.md) |
+| Arena / 监督 | 双镜对比与 LLM-as-Judge 质量/风险监控 | `arena.py`, `supervision_agent.py` | [Arena](docs/pipelines/arena_dual_mirror_overview.md), [监督评估](docs/pipelines/supervision_pipeline_overview.md), [交流状态](docs/app/communication_status_overview.md) |
 
 ---
 
@@ -352,7 +284,7 @@ python run_all_pipelines.py --only video sticker
 
 ## 多模态处理流水线
 
-每个模态都有专用的子流水线，位于 `scripts/<模态>/run_all/`。所有流水线遵循相同模式：**提取 → 分析 → 压缩（可选）→ 合并 → 更新时间轴**。
+每个模态都有专用的子流水线，位于 `scripts/<模态>/run_all/`，并由 `run_all_pipelines.py` 统一编排。共享执行模式为 **提取 → 分析 → 压缩（可选）→ 合并 → 更新时间轴**，各模态可按需要增加审核、分诊、清理和 schema 校验步骤。
 
 ### 图片流水线（4 步）
 
@@ -912,38 +844,55 @@ conda run -n CHAT_APP_DHA python -m pytest tests/test_advisor_analyzers_properti
 
 ## 文档
 
-各子系统的详细文档位于 `docs/` 目录：
+各子系统的详细文档位于 `docs/` 目录。README 保持公开首页级概览，具体实现细节下沉到对应专题文档。
+
+### 入门
+- [快速开始](docs/QUICKSTART.md) - 环境配置与本地启动
+- [Beta 用户指南](docs/BETA_USER_GUIDE.md) - 面向用户的产品使用指南
+- [Electron 构建](docs/ELECTRON_BUILD.md) - 桌面端打包说明
 
 ### 核心架构文档
-- [完整流水线参考](docs/pipeline.md) - 端到端流水线完整说明
-- [模态字段与模型详解](docs/modality_fields_and_models.md) - 所有模态处理字段和模型详情
-- [工作空间初始化](docs/workspace_init.md) - 环境配置和初始化指南
+- [完整流水线参考](docs/pipelines/pipeline.md) - 端到端流水线参考
+- [模态字段与模型详解](docs/pipelines/modality_fields_and_models.md) - 各模态字段、schema 与模型说明
+- [工作空间初始化](docs/pipelines/workspace_init.md) - 工作空间结构和初始化流程
 
 ### 数据处理流水线
-- [通用数据接入](docs/ingestion_pipeline_overview.md) - 多源数据归一化接入
-- [图片流水线设计](docs/image_pipeline_overview.md) - OCR + VLM 图片处理
-- [语音流水线设计](docs/voice_pipeline_overview.md) - ASR + 情绪检测
-- [视频流水线设计](docs/video_pipeline_overview.md) - 关键帧 + 转写处理
-- [表情包流水线设计](docs/sticker_pipeline_overview.md) - 动图处理和描述
-- [链接/文件流水线设计](docs/linkfile_pipeline_overview.md) - 文件提取和摘要
+- [通用数据接入](docs/pipelines/ingestion_pipeline_overview.md) - 多源数据归一化接入设计
+- [数据接入指南](docs/pipelines/ingestion_guide.md) - 接入配置与运行方法
+- [图片流水线设计](docs/pipelines/image_pipeline_overview.md) - OCR + VLM 图片处理
+- [语音流水线设计](docs/pipelines/voice_pipeline_overview.md) - ASR + 情绪检测
+- [视频流水线设计](docs/pipelines/video_pipeline_overview.md) - 关键帧 + 转写 + 描述处理
+- [表情包流水线设计](docs/pipelines/sticker_pipeline_overview.md) - 动图/静图表情包处理
+- [链接/文件流水线设计](docs/pipelines/linkfile_pipeline_overview.md) - 文件提取和摘要
+- [Agent SFT 流水线](docs/pipelines/agent_sft_pipeline_overview.md) - 时间轴到训练数据的流水线
 
 ### AI 顾问系统
-- [顾问系统概览](docs/advisor_pipeline_overview.md) - 关系顾问系统架构
-- [MoA 融合机制](docs/advisor_moa_fusion_overview.md) - 多专家融合分析
-- [RAG 检索系统](docs/advisor_rag_overview.md) - 混合检索架构
-- [服务部署](docs/advisor_service_overview.md) - 在线服务部署
-- [训练系统](docs/advisor_training_overview.md) - QLoRA 微调训练
-- [分步指南](docs/advisor_step_by_step.md) - 完整使用流程
+- [顾问系统概览](docs/advisor/advisor_pipeline_overview.md) - 离线与在线关系顾问架构
+- [MoA 融合机制](docs/advisor/advisor_moa_fusion_overview.md) - 多专家融合分析
+- [RAG 检索系统](docs/advisor/advisor_rag_overview.md) - 混合检索架构
+- [服务部署](docs/advisor/advisor_service_overview.md) - 在线服务与 API 结构
+- [训练系统](docs/advisor/advisor_training_overview.md) - QLoRA 微调与评估
+- [分步指南](docs/advisor/advisor_step_by_step.md) - 完整使用流程
+- [知识增强 RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) - 知识注入与 FAISS 索引升级
+- 知识中心 - 前端知识库索引页面 `frontend/src/pages/KnowledgeCenterPage.tsx`
+- [Web 应用设计](docs/app/web_app_overview.md) - React 应用壳、页面结构、API 客户端、状态边界、安全入口与运维 UX
+- [圆桌讨论设计](docs/app/roundtable_discussion_overview.md) - 三人格多 Agent 讨论、SSE 协议、多轮追问、上下文注入与 Moderator 综合总结
 
-### SFT 训练系统
-- [Agent SFT 流水线](docs/agent_sft_pipeline_overview.md) - 对话数据训练流水线
+### 安全、评估与隐私
+- [安全危机系统](docs/pipelines/safety_crisis_overview.md) - 四级危机检测与安全治理
+- [双镜 Arena](docs/pipelines/arena_dual_mirror_overview.md) - A/B 评测、投票、评分与排名
+- [监督评估流水线](docs/pipelines/supervision_pipeline_overview.md) - LLM-as-Judge 质量与风险评估
+- [交流状态](docs/app/communication_status_overview.md) - 前端交流进展分析与对话监督
+- [隐私与 PII 指南](docs/pipelines/pii_detection_guide.md) - 隐私信息检测
+- [隐私映射](docs/pipelines/privacy_mapping.md) - 匿名化映射规则
 
-### 隐私与安全
-- [隐私与 PII 指南](docs/pii_detection_guide.md) - 隐私信息检测
-- [隐私映射](docs/privacy_mapping.md) - 匿名化映射规则
+---
 
-### 数据接入指南
-- [接入指南](docs/ingestion_guide.md) - 数据接入详细说明
+## 安全声明
+
+Lens 是数据处理与关系反思工具，不提供医疗诊断、心理治疗、危机咨询或紧急干预。安全层用于降低风险、检测高风险表达、约束用词边界，并引导用户获取适当资源，但不能替代专业帮助。
+
+如果你或他人可能处于即时危险中，请联系当地紧急服务或合格的危机援助热线。
 
 ---
 

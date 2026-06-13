@@ -2,7 +2,7 @@
 
 > 📌 **本文档定位**：这是 [多模态处理流水线文档](modality_fields_and_models.md) Section 0.2 的详细设计文档，专注于多源数据归一化接入、适配器插件架构、Canonical Schema 定义、媒体文件组织和导出生成。
 >
-> 📖 **设计规范**：[research/universal-ingestion/design.md](../research/universal-ingestion/design.md) — 18 个正确性属性、Hypothesis 属性测试策略
+> 📖 **设计规范**：`research/universal-ingestion/design.md` — 18 个正确性属性、Hypothesis 属性测试策略
 >
 > 📖 **用户指南**：[workspace_init.md](workspace_init.md) | [ingestion_guide.md](ingestion_guide.md)
 

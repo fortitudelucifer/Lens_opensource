@@ -58,7 +58,7 @@
   → agent_sft_l1.jsonl / agent_sft_l2.jsonl   ← advisor 流水线的输入
 ```
 
-详见 [modality_fields_and_models.md](modality_fields_and_models.md) 和 [agent_sft_pipeline_overview.md](agent_sft_pipeline_overview.md)。
+详见 [modality_fields_and_models.md](../pipelines/modality_fields_and_models.md) 和 [agent_sft_pipeline_overview.md](../pipelines/agent_sft_pipeline_overview.md)。
 
 ---
 

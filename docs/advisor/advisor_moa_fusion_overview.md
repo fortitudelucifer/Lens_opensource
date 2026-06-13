@@ -1,6 +1,6 @@
 # MoA 多专家融合与流水线标注架构
 
-> 📌 **本文档定位**：这是 [多模态处理流水线文档](modality_fields_and_models.md) Sections 10-12 的详细设计文档，专注于 MoA 多专家融合分析、CPU 流水线并行标注架构、以及审核补齐与多级降级容错机制。
+> 📌 **本文档定位**：这是 [多模态处理流水线文档](../pipelines/modality_fields_and_models.md) Sections 10-12 的详细设计文档，专注于 MoA 多专家融合分析、CPU 流水线并行标注架构、以及审核补齐与多级降级容错机制。
 
 ## 1. 设计理念
 
@@ -513,5 +513,5 @@ graph TB
 
 **文档版本**: v1.0
 **创建时间**: 2026-02-15
-**关联主文档**: [modality_fields_and_models.md](modality_fields_and_models.md) Sections 10-12
+**关联主文档**: [modality_fields_and_models.md](../pipelines/modality_fields_and_models.md) Sections 10-12
 **核心脚本**: `_02c_fusion_pipeline.py`, `pipeline_executor.py`, `_03b_ai_review.py`

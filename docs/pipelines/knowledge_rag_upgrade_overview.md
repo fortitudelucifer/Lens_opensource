@@ -166,4 +166,4 @@ ChatTopBar 在 EFT 顾问模式下显示粉色 badge：
 
 **文档版本**: v1.0
 **创建时间**: 2026-03-07
-**关联文档**: [综合执行计划](../research/big_plan/plan_v1/综合执行计划_v2.md) §4.4/§4.5, [arena_dual_mirror_overview.md](arena_dual_mirror_overview.md)
+**关联文档**: 综合执行计划（`research/big_plan/plan_v1/综合执行计划_v2.md`）§4.4/§4.5, [arena_dual_mirror_overview.md](arena_dual_mirror_overview.md)

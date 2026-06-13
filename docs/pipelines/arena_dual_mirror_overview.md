@@ -1139,4 +1139,4 @@ POST /api/arena/vote
 **文档版本**: v2.0
 **创建时间**: 2026-03-07
 **作者**: AI 工程团队
-**关联文档**: [综合执行计划 v2](../research/big_plan/plan_v1/综合执行计划_v2.md), [modality_fields_and_models.md](modality_fields_and_models.md) §21, [safety_crisis_overview.md](safety_crisis_overview.md) §8
+**关联文档**: 综合执行计划 v2（`research/big_plan/plan_v1/综合执行计划_v2.md`）, [modality_fields_and_models.md](modality_fields_and_models.md) §21, [safety_crisis_overview.md](safety_crisis_overview.md) §8

@@ -48,6 +48,7 @@
   - [21.10 下游数据消费](#2110-下游数据消费)
 - [22. 监督评估与交流状态系统](#22-监督评估与交流状态系统)
 - [23. S6 跨学科理论引擎与视角碰撞模式](#23-s6-跨学科理论引擎与视角碰撞模式)
+- [24. 圆桌讨论系统](#24-圆桌讨论系统)
 
 ---
 
@@ -1354,9 +1355,9 @@ python scripts/compression/validate_sft_quality.py --level all
 
 ## 10. 对话提取与 MoA 多专家融合分析
 
-> 📖 **详细设计文档**：[MoA 多专家融合与流水线标注架构](advisor_moa_fusion_overview.md) — 设计理念、四阶段融合、三专家角色分工、CPU 流水线并行、审核补齐与降级容错的完整说明
+> 📖 **详细设计文档**：[MoA 多专家融合与流水线标注架构](../advisor/advisor_moa_fusion_overview.md) — 设计理念、四阶段融合、三专家角色分工、CPU 流水线并行、审核补齐与降级容错的完整说明
 >
-> 📖 **Advisor Pipeline 概览**：[advisor_pipeline_overview.md](advisor_pipeline_overview.md) — 完整架构、API 端点、启动命令
+> 📖 **Advisor Pipeline 概览**：[advisor_pipeline_overview.md](../advisor/advisor_pipeline_overview.md) — 完整架构、API 端点、启动命令
 >
 > 📖 **进度记录**：`advisor_out/comparison/pipeline_plan.md` — 50 节持续更新的开发日志
 
@@ -1504,7 +1505,7 @@ Grok MoA 融合不是简单拼接三位专家输出，而是通过专用 prompt 
 
 ## 11. CPU 流水线式并行标注架构
 
-> 📖 **详细设计文档**：[MoA 多专家融合与流水线标注架构](advisor_moa_fusion_overview.md) Section 4 — CPU 流水线设计灵感、PipelineExecutor 类、并发控制、KeyRotator 与断点续传
+> 📖 **详细设计文档**：[MoA 多专家融合与流水线标注架构](../advisor/advisor_moa_fusion_overview.md) Section 4 — CPU 流水线设计灵感、PipelineExecutor 类、并发控制、KeyRotator 与断点续传
 
 ### 11.1 设计动机
 
@@ -1573,7 +1574,7 @@ grok:
 
 ## 12. 审核补齐与多级降级容错
 
-> 📖 **详细设计文档**：[MoA 多专家融合与流水线标注架构](advisor_moa_fusion_overview.md) Sections 5-7 — 五维评分、Verdict Override、JSON 五策略提取、Thinking 截断检测、四级降级链
+> 📖 **详细设计文档**：[MoA 多专家融合与流水线标注架构](../advisor/advisor_moa_fusion_overview.md) Sections 5-7 — 五维评分、Verdict Override、JSON 五策略提取、Thinking 截断检测、四级降级链
 
 ### 12.1 五维审核评分体系
 
@@ -1658,7 +1659,7 @@ LLM 返回的 JSON 常因多种原因损坏，`_extract_json_robust()` 实现了
 
 ## 13. 反匿名化与训练数据工程
 
-> 📖 **详细设计文档**：[反匿名化与 QLoRA 训练工程实践](advisor_training_overview.md) Sections 2-4 — 六层映射详解、OTHERHER Bug、日期格式、地名修复、Formatter 字段完整性、分层划分
+> 📖 **详细设计文档**：[反匿名化与 QLoRA 训练工程实践](../advisor/advisor_training_overview.md) Sections 2-4 — 六层映射详解、OTHERHER Bug、日期格式、地名修复、Formatter 字段完整性、分层划分
 
 ### 13.1 反匿名化的必要性
 
@@ -1730,7 +1731,7 @@ PATTERNS = [
 
 ## 14. 16GB 显卡 QLoRA 训练工程实践
 
-> 📖 **详细设计文档**：[反匿名化与 QLoRA 训练工程实践](advisor_training_overview.md) Sections 5-7 — 三策略对比、Unsloth 集成、LoRA 调优、OOM 管理、评估结果、运行命令
+> 📖 **详细设计文档**：[反匿名化与 QLoRA 训练工程实践](../advisor/advisor_training_overview.md) Sections 5-7 — 三策略对比、Unsloth 集成、LoRA 调优、OOM 管理、评估结果、运行命令
 
 ### 14.1 硬件约束与设计目标
 
@@ -1801,7 +1802,7 @@ PATTERNS = [
 
 ## 15. 多维度 Hybrid RAG 索引与混合检索
 
-> 📖 **详细设计文档**：[多维度 Hybrid RAG 索引与混合检索](advisor_rag_overview.md) — 稀疏+稠密混合检索、四层架构、日期索引、多维评分、意图分类、上下文组装、增量更新的完整说明
+> 📖 **详细设计文档**：[多维度 Hybrid RAG 索引与混合检索](../advisor/advisor_rag_overview.md) — 稀疏+稠密混合检索、四层架构、日期索引、多维评分、意图分类、上下文组装、增量更新的完整说明
 >
 > 📖 **知识库注入与索引升级**：[knowledge_rag_upgrade_overview.md](knowledge_rag_upgrade_overview.md) — 专业知识库 FAQ 注入、FAISS 索引工厂（FlatIP/IVFFlat/HNSW）、三开关独立控制、EFT 阶段追踪
 
@@ -1987,7 +1988,7 @@ final_score = semantic_score * 0.5 + time_score * 0.2 + emotion_score * 0.3
 
 ## 16. 在线对话服务与长对话记忆
 
-> 📖 **详细设计文档**：[在线对话服务与前端交互系统](advisor_service_overview.md) Sections 2-6 — Agent/Mode 矩阵、API 兼容层四轮迭代、三层记忆压缩、Key 管理、流式输出与 Thinking UI
+> 📖 **详细设计文档**：[在线对话服务与前端交互系统](../advisor/advisor_service_overview.md) Sections 2-6 — Agent/Mode 矩阵、API 兼容层四轮迭代、三层记忆压缩、Key 管理、流式输出与 Thinking UI
 
 ### 16.1 五种 Agent × 两种模式
 
@@ -2083,7 +2084,7 @@ graph TB
 
 ## 17. 前端交互系统
 
-> 📖 **详细设计文档**：[在线对话服务与前端交互系统](advisor_service_overview.md) Sections 7-9 — React 技术栈、核心组件、API 端点清单、SSE 流式处理
+> 📖 **详细设计文档**：[在线对话服务与前端交互系统](../advisor/advisor_service_overview.md) Sections 7-9 — React 技术栈、核心组件、API 端点清单、SSE 流式处理
 
 ### 17.1 技术栈
 
@@ -2555,28 +2556,102 @@ battles.jsonl
 | **单视角风险** | `single_perspective_risk` | 1-10 (10=平衡) | 立场偏见检测、多视角引导 |
 | **情感依赖** | `attachment_signal` | 1-10 (10=无依赖) | 拟人化依赖、角色边界 |
 
-### 22.3 触发与覆盖范围
+### 22.3 优先级链降级策略
 
-| 模块 | 触发函数 | 特殊处理 |
-|------|---------|---------|
-| Chat 沉浸式互动 | `run_supervision_async()` | 单路对话直接评估 |
-| Arena 双镜对比 | `run_supervision_arena_async()` | A/B 双路回复合并为一条后评估 |
+评估依赖独立 Judge 模型调用，若首选模型失败则按以下链降级，确保评估不阻塞主对话：
 
-### 22.4 前端展示
+```
+Claude Opus 4.5 ──失败──→ GPT-5.2 High ──失败──→ Kimi K2.5（兜底）
+```
 
-| 组件 | 位置 | 功能 |
+| 优先级 | 模型 | 用途 | 失败场景 |
+|--------|------|------|----------|
+| 1 | Claude Opus 4.5 | 首选 Judge | 超时 / 内容过滤 / 配额耗尽 |
+| 2 | GPT-5.2 High | 降级 | 同上 |
+| 3 | Kimi K2.5 | 兜底 | 前两路均失败时仍尝试一次 |
+
+> **兜底机制**：三级全部失败后，该轮不写入 `supervision_log`，但 session 标记 `supervision_state = None`，前端显示「评估不可用」占位。
+
+### 22.4 触发与覆盖范围
+
+| 模块 | 触发函数 | 特殊处理 | 接入状态 |
+|------|---------|---------|----------|
+| Chat 沉浸式互动 | `run_supervision_async()` | 单路对话直接评估 | ✅ 已接入 |
+| Arena 双镜对比 | `run_supervision_arena_async()` | A/B 双路回复合并为一条后评估 | ✅ 已接入 |
+| Roundtable 圆桌讨论 | — | 尚未接入监督评估 | ⏳ 未接入（见下方说明） |
+
+**触发时机**：每轮对话完成（`done` 状态）后异步触发；评估结果写入 `session.supervision_log` 并更新 `session.supervision_state`。
+
+**Arena 特殊处理**：`_arena_rounds_to_messages()` 将 A/B 双路回复合并为单条 assistant 消息（格式：`【顾问A】{response_a}\n\n【顾问B】{response_b}`），使 Judge 能同时评估两个回复的质量。
+
+**Roundtable 未接入说明**：
+
+当前 `RoundtableSession` 模型未包含 `supervision_log` / `supervision_state` 字段，后端 `roundtable_service.py` 也未调用 `SupervisionAgent`。原因如下：
+
+1. **评估对象差异**：Chat 和 Arena 评估的是「单一顾问回复」的质量；Roundtable 涉及 3 个 persona + Moderator 的多路输出，现有六维度 prompt 无法直接套用。
+2. **对话结构复杂**：Roundtable 每轮包含 Phase 1（独立回应）、Phase 2（交叉回应）、Phase 3（Moderator 综合），Judge 需要理解多 agent 的协作关系，而非单轮单回复。
+3. **前端展示独立**：CommunicationStatusPage 当前仅读取 `ChatSession`（`api.listSessions()`），未消费 Roundtable session 列表。
+
+> **演进方向**：若未来接入，需单独设计「多 agent 协作质量」评估维度（如视角覆盖度、Moderator 中立性、Phase 2 互引充分性），而非复用现有六维度体系。
+
+### 22.5 数据持久化结构
+
+每轮评估结果以 JSON 对象追加到 `session.supervision_log`：
+
+| 字段 | 类型 | 说明 |
 |------|------|------|
-| `DialogueProgressAnalysis.tsx` | Chat 侧边栏可折叠面板 | 时间线式展示每轮评估卡片 |
-| `CommunicationStatusPage.tsx` | 独立 `/communication-status` 页 | 最近 10 条会话的评估卡片网格 |
+| `dialogue_progress` | `str` | 阶段标签：`exploration` / `consolidation` / `action` |
+| `power_dynamics` | `float` | 1-10，权力动态健康度 |
+| `empathy_specificity` | `float` | 1-10，共情精准度 |
+| `safety_boundary` | `float` | 1-10，安全边界合规度 |
+| `single_perspective_risk` | `float` | 1-10，视角平衡度 |
+| `attachment_signal` | `float` | 1-10，依赖信号强度 |
+| `timestamp` | `str` | ISO 格式时间戳 |
 
-### 22.5 关键文件
+**存储位置**：
+- 运行期：`session.supervision_log`（内存列表）
+- 落盘：`advisor_out/arena/sessions/{session_id}.json` 的 `supervision_log` 字段
+- 索引：`session.supervision_state` 始终指向最新一条评估
+
+### 22.6 前端详细交互与条件展示
+
+#### DialogueProgressAnalysis（Chat 侧边栏）
+
+- **位置**：Chat 页面右侧可折叠面板，标题为「对话进展分析」。
+- **内容**：时间线式展示每轮评估卡片，按轮次倒序排列。
+- **条件展示**：
+  - `safety_boundary < 6` → 卡片边框变红，显示「⚠️ 安全边界预警」
+  - `attachment_signal < 6` → 显示「🧲 情感依赖提示：建议引入真人咨询师」
+  - `single_perspective_risk < 5` → 提示「🔄 单视角风险：点击 Arena 进行双镜对比」
+- **延迟刷新**：评估异步完成，前端采用 SSE `supervision_update` 事件触发面板刷新，避免轮询。
+
+#### CommunicationStatusPage（独立状态页）
+
+- **路由**：`/communication-status`
+- **布局**：最近 10 条会话的评估卡片网格（2 列瀑布流）。
+- **SessionOptions 集成**：每张卡片右上角弹出菜单，支持「重命名会话」「删除记录」「导出 JSON」。
+- **配色规则**：
+  - 安全维度（`safety_boundary`、`attachment_signal`）：红-黄-绿三色环
+  - 质量维度（`empathy_specificity`、`single_perspective_risk`）：蓝-紫渐变
+  - 进展维度（`dialogue_progress`）：阶段标签色块（探索=青、安抚=橙、行动=绿）
+
+### 22.7 下游消费与会话管理
+
+| 消费方 | 字段 | 用途 |
+|--------|------|------|
+| Arena 双镜对比 | `communication_status` | 将最新评估注入对比上下文，提示用户当前会话的健康度 |
+| Chat 系统消息 | `supervision_state` | 系统层根据依赖等级自动插入「建议寻求专业帮助」提示 |
+| 前端 SessionOptions | `session.supervision_log` | 重命名、删除时同步清理关联评估数据 |
+
+### 22.8 关键文件
 
 | 文件 | 行数约 | 职责 |
 |------|--------|------|
-| `scripts/advisor/api/supervision_agent.py` | ~323 | 后端核心 |
-| `configs/supervision.yaml` | ~34 | Judge 配置 |
-| `frontend/src/components/supervision/DialogueProgressAnalysis.tsx` | ~168 | 前端分析组件 |
-| `frontend/src/pages/CommunicationStatusPage.tsx` | ~118 | 前端状态页 |
+| `scripts/advisor/api/supervision_agent.py` | ~323 | 后端核心：组装对话上下文、构建 Judge Prompt、解析 JSON、降级链调用 |
+| `configs/supervision.yaml` | ~34 | Judge 配置：模型优先级、温度、max_tokens、系统提示片段 |
+| `frontend/src/components/supervision/DialogueProgressAnalysis.tsx` | ~168 | 前端分析组件：时间线卡片、条件渲染、SSE 刷新 |
+| `frontend/src/pages/CommunicationStatusPage.tsx` | ~118 | 前端状态页：网格布局、SessionOptions 菜单、配色规则 |
+| `frontend/src/components/supervision/SessionOptions.tsx` | ~45 | 会话操作菜单：重命名、删除、导出 |
 
 ---
 
@@ -2794,7 +2869,147 @@ def _graph_enhanced_rag(query: str, perspective: str) -> str:
 
 ---
 
-**文档版本**: v4.5  
-**创建时间**: 2026-01-15  
-**最后更新**: 2026-03-08  
-**整合来源**: agent_sft_final_pipeline.md, l1_l2_sft_pipeline.md, advisor_pipeline_overview.md, full_pipeline_overhaul_plan.md, pipeline_plan.md, supervision_pipeline_overview.md
+## 24. 圆桌讨论系统
+
+> 📖 **详细设计文档**：[圆桌讨论系统设计概览](../app/roundtable_discussion_overview.md) — 包含人格选择、三阶段多智能体编排、SSE 多路复用、多轮延续、跨轮记忆压缩、RAG 上下文注入、安全治理、持久化以及前后端契约的完整说明。
+>
+> **实现状态**：✅ 已完成（2026-06-13）
+>
+> **设计理念**：传统 AI 咨询返回单一顾问视角，圆桌讨论要求用户选择恰好三个人格，让不同理论立场的顾问就同一关系问题展开讨论——不是"哪个更好"，而是"不同视角看到不同面向"。
+
+### 24.1 核心架构
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    圆桌讨论系统架构                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  前端                                                          │
+│  ┌───────────────────────────────────────────────────────┐   │
+│  │  Setup Page → 选 3 人格 + 输入问题 + 可选 RAG 注入   │   │
+│  │  Session Page → SSE 流式订阅 → Phase 1/2/3 渲染     │   │
+│  │  History Page → 已归档 rounds[] 快照展示           │   │
+│  └───────────────────────────────────────────────────────┘   │
+│                      │ POST /api/roundtable/start            │
+│                      │ POST /api/roundtable/{id}/continue  │
+│                      │ GET  /api/roundtable/{id}/stream (SSE)│
+│                      ▼                                      │
+│  后端                                                          │
+│  ┌───────────────────────────────────────────────────────┐   │
+│  │  RoundtableService                                      │   │
+│  │  ├─ setup_session() → 创建 session，分配 persona 缓冲 │   │
+│  │  ├─ run_pipeline() → 三阶段编排：                     │   │
+│  │  │   Phase 1: 各 persona 独立回应（并行 LLM 调用）    │   │
+│  │  │   Phase 2: 各 persona 交叉回应（读他人 phase1）   │   │
+│  │  │   Phase 3: Moderator 综合（seen/limit/angles/lens）│   │
+│  │  ├─ continue_session() → 归档当前轮 → 重置 → 新 question│  │
+│  │  └─ _build_prior_context_block() → 跨轮记忆 + RAG 注入│   │
+│  └───────────────────────────────────────────────────────┘   │
+│                      │                                      │
+│                      ▼                                      │
+│  持久化                                                        │
+│  ┌───────────────────────────────────────────────────────┐   │
+│  │  advisor_out/roundtable/sessions/{session_id}.json   │   │
+│  │  ├─ RoundtableSession（当前轮状态）                  │   │
+│  │  └─ rounds[]: RoundtableRoundSnapshot（已归档轮）    │   │
+│  └───────────────────────────────────────────────────────┘   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 24.2 人格模型
+
+| 人格 | agent_type | 理论框架 | 系统提示风格 |
+|------|-----------|----------|-------------|
+| 支持性 | `supportive` | 人本主义 · 无条件积极关注 | 温暖、简短、聚焦情绪 |
+| 精神分析 | `psychoanalytic` | 防御机制 · 移情 · 潜意识 | 探索深层模式、提出假设 |
+| EFT | `eft` | 依恋理论 · 情绪调节 · 追逃循环 | 识别依恋需求、追踪互动循环 |
+| Bowen | `bowen` | 自我分化 · 三角化 · 代际传递 | 家庭系统视角、个人与关系平衡 |
+| 社会学 | `sociology` | 布尔迪厄场域/资本/惯习 | 结构性分析、阶层与权力 |
+| 哲学 | `philosophy` | 存在主义 · 现象学 · 关怀伦理 | 意义建构、伦理反思 |
+| 博弈论 | `game_theory` | 纳什均衡 · 囚徒困境 · 信号理论 | 理性分析、策略互动 |
+| 文化 | `cultural` | 差序格局 · 面子/人情/报 · 仪式 | 文化脚本、集体与个体张力 |
+
+用户每次必须**恰好选择 3 个**人格（`personas` 字段），由 `RoundtableSession` 校验。
+
+### 24.3 三阶段讨论流程
+
+| 阶段 | 名称 | 动作 | 输出 | SSE 事件 |
+|------|------|------|------|----------|
+| **Phase 1** | 独立回应 | 每个 persona 并行调用 LLM，仅读取用户问题 + persona_core | `phase1: AgentBuffer[]` | `agent_status` → `agent_chunk` → `agent_done` |
+| **Phase 2** | 交叉回应 | 每个 persona 读取其他 persona 的 phase1 输出，进行回应 | `phase2: AgentBuffer[]` | `agent_status` → `agent_chunk` → `agent_done` |
+| **Phase 3** | Moderator 综合 | 以 Moderator persona 总结三视角，输出 `seen`/`limit`/`angles`/`lens` | `moderator: ModeratorContent` | `moderator_thinking` → `moderator` → `done` |
+
+**安全治理**：
+- Phase 1 与 Phase 2 均经过 `check_response_prohibited()` 扫描 18 个禁用词
+- Moderator 综合时通过规则模板过滤，避免立场强推
+- 危机检测（CrisisDetector）在 `setup_session` 阶段同步运行
+
+### 24.4 跨轮记忆压缩
+
+多轮延续时，`session.rounds[]` 会累积历史轮快照。为避免 prompt 过长，系统引入 **CrossRoundMemory** 三档压缩：
+
+| 档位 | 覆盖范围 | 字符预算 | 保留字段 |
+|------|----------|----------|----------|
+| **Tier-1** | 最近 1 轮 | ~1800 char | 用户问题 + persona 自身 phase2 要点 + Moderator seen/limit |
+| **Tier-2** | 次近 1 轮 | ~800 char | 用户问题 + persona 结论一句 + Moderator seen |
+| **Tier-3** | 更早 N 轮 | 每轮 ≤160 char | 极简一行摘要：「用户问 → Moderator 一句话结论」 |
+
+默认字符预算 `DEFAULT_CHAR_BUDGET = 3800`，超预算时从 Tier-3 尾部 LIFO 丢弃。
+
+详细实现见：[`scripts/advisor/api/services/roundtable_memory.py`](../../scripts/advisor/api/services/roundtable_memory.py)
+
+### 24.5 RAG 上下文注入
+
+用户在 Setup 页面可通过「注入抽屉」预览并选择上下文片段：
+
+| 模式 | 后端搜索 | 返回 DTO |
+|------|----------|----------|
+| `chat_history` | 富化时间线搜索 | `RoundtableChatHistoryHit` |
+| `knowledge` | FAQ / 知识库搜索 | `RoundtableKnowledgeHit` |
+
+选中的上下文通过 `inject_context` 字段随 `continue_session` 请求下发，存储在 `session.current_inject_context`，由 `_build_prior_context_block` 拼接进 prompt。
+
+### 24.6 多轮延续
+
+```
+当前轮 done
+   │
+   ├─ 深拷贝当前 buffer → RoundtableRoundSnapshot
+   ├─ 追加到 session.rounds[]
+   ├─ session.round_index += 1
+   ├─ 重置 phase1/phase2/moderator/moderator_thinking
+   ├─ session.question = 新问题
+   ├─ 重置 SSE Queue 与 Event
+   └─ 返回 updated session
+```
+
+前端通过 `streamNonce` 自增强制新建 EventSource 连接，避免复用旧流。
+
+### 24.7 监督评估覆盖状态
+
+| 模块 | 接入状态 | 说明 |
+|------|----------|------|
+| Chat 沉浸式互动 | ✅ 已接入 | 每轮异步触发 `run_supervision_async()` |
+| Arena 双镜对比 | ✅ 已接入 | 每轮异步触发 `run_supervision_arena_async()` |
+| **Roundtable 圆桌讨论** | ⏳ **未接入** | `RoundtableSession` 未含 `supervision_log` 字段；现有六维度 prompt 无法直接评估多 agent 协作质量 |
+
+> **演进方向**：若未来接入，需单独设计「多 agent 协作质量」评估维度（视角覆盖度、Moderator 中立性、Phase 2 互引充分性等），而非复用现有六维度体系。
+
+### 24.8 关键文件
+
+| 文件 | 职责 |
+|------|------|
+| [`scripts/advisor/api/services/roundtable_service.py`](../../scripts/advisor/api/services/roundtable_service.py) | 三阶段编排、SSE 事件发布、多轮延续、prompt 构造 |
+| [`scripts/advisor/api/services/roundtable_memory.py`](../../scripts/advisor/api/services/roundtable_memory.py) | CrossRoundMemory 三档压缩、预算装配、metrics |
+| [`frontend/src/stores/useRoundtableStore.ts`](../../frontend/src/stores/useRoundtableStore.ts) | 前端 Zustand 状态机 |
+| [`frontend/src/hooks/useRoundtableStream.ts`](../../frontend/src/hooks/useRoundtableStream.ts) | SSE 流订阅与事件分发 |
+| [`frontend/src/pages/RoundtableSessionPage.tsx`](../../frontend/src/pages/RoundtableSessionPage.tsx) | 圆桌讨论主页面 |
+| [`configs/roundtable_prompts.yaml`](../../configs/roundtable_prompts.yaml) | 各 persona 系统提示与 Moderator 模板 |
+
+---
+
+**文档版本**: v4.6
+**创建时间**: 2026-01-15
+**最后更新**: 2026-06-14
+**整合来源**: agent_sft_final_pipeline.md, l1_l2_sft_pipeline.md, advisor_pipeline_overview.md, full_pipeline_overhaul_plan.md, pipeline_plan.md, supervision_pipeline_overview.md, roundtable_discussion_overview.md, communication_status_overview.md

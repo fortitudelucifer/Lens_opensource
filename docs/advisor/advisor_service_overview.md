@@ -1,6 +1,6 @@
 # 在线对话服务与前端交互系统
 
-> 📌 **本文档定位**：这是 [多模态处理流水线文档](modality_fields_and_models.md) Sections 16-17 的详细设计文档，专注于在线对话服务（API 兼容层、长对话记忆、流式输出）和 React 前端交互系统。
+> 📌 **本文档定位**：这是 [多模态处理流水线文档](../pipelines/modality_fields_and_models.md) Sections 16-17 的详细设计文档，专注于在线对话服务（API 兼容层、长对话记忆、流式输出）和 React 前端交互系统。
 
 ## 1. 设计理念
 
@@ -440,6 +440,6 @@ curl http://localhost:8787/api/models/test -X POST -H 'Content-Type: application
 **文档版本**: v1.1
 **创建时间**: 2026-02-15
 **最后更新**: 2026-03-06（use_rag 开关、ME/OTHER 替换、thinking 扩展、参数调优）
-**关联主文档**: [modality_fields_and_models.md](modality_fields_and_models.md) Sections 16-17
+**关联主文档**: [modality_fields_and_models.md](../pipelines/modality_fields_and_models.md) Sections 16-17
 **核心脚本**: `api/server.py`, `streaming.py`, `key_rotator.py`
 **前端目录**: `frontend/src/`

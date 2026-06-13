@@ -1,6 +1,6 @@
 # 反匿名化与 QLoRA 训练工程实践
 
-> 📌 **本文档定位**：这是 [多模态处理流水线文档](modality_fields_and_models.md) Sections 13-14 的详细设计文档，专注于反匿名化数据工程和 16GB 显卡 QLoRA 训练的完整实践。
+> 📌 **本文档定位**：这是 [多模态处理流水线文档](../pipelines/modality_fields_and_models.md) Sections 13-14 的详细设计文档，专注于反匿名化数据工程和 16GB 显卡 QLoRA 训练的完整实践。
 
 ## 1. 设计理念
 
@@ -394,5 +394,5 @@ conda run -n wechatDHA python scripts/advisor/run_all/_07b_eval_compare.py \
 
 **文档版本**: v1.0
 **创建时间**: 2026-02-15
-**关联主文档**: [modality_fields_and_models.md](modality_fields_and_models.md) Sections 13-14
+**关联主文档**: [modality_fields_and_models.md](../pipelines/modality_fields_and_models.md) Sections 13-14
 **核心脚本**: `_05c_deanonymize_training.py`, `_05b_filter_split_training.py`, `_06_train_model.py`, `_07b_eval_compare.py`
