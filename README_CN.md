@@ -19,7 +19,7 @@
 
 Lens 是一个本地优先的私密关系与沟通数据处理系统，用于将 CHAT_APP 风格的聊天导出转化为隐私安全的多模态时间轴、Agent SFT 数据集，以及 AI 关系顾问应用所需的训练与检索资产。系统会归一化多来源聊天记录，富化图片、语音、视频、表情包、链接/文件消息，并在本地完成匿名化、PII 控制和数据边界管理。
 
-当前系统已经不再是单一转换脚本，而是模块化流水线栈：包括通用数据接入、多模态处理、Agent SFT 准备、关系顾问 MoA 分析、知识/Graph RAG、FastAPI + React 顾问应用、双镜 Arena 评测、安全/危机护栏，以及 LLM-as-Judge 监督评估。
+当前系统已经不再是单一转换脚本，而是模块化流水线栈：包括通用数据接入、多模态处理、Agent SFT 准备、关系顾问 MoA 分析、知识/Graph RAG、FastAPI + React 顾问应用、双镜 Arena 评测、多 Agent 圆桌讨论、交流状态监督、安全/危机护栏，以及 LLM-as-Judge 质量监控。
 
 Lens 面向研究、个人数据整理与关系反思工具场景，不是医疗、诊断、心理治疗、危机咨询或紧急响应系统。
 
@@ -811,7 +811,7 @@ cd frontend && npm run dev
 
 | 组件 | 最低 | 推荐 |
 |------|------|------|
-| GPU | 8GB 显存 | 16GB 显存（RTX 4070 Ti / 5070 Ti） |
+| GPU | 16GB 显存 | 16GB 显存（RTX 4070 Ti / 5070 Ti） |
 | 内存 | 16GB | 32GB |
 | 存储 | 50GB | 200GB+（取决于媒体量） |
 | CUDA | 12.0 | 12.8+ |
@@ -848,6 +848,19 @@ conda run -n CHAT_APP_DHA python -m pytest tests/ -v
 # 运行特定测试文件
 conda run -n CHAT_APP_DHA python -m pytest tests/test_advisor_analyzers_properties.py -v
 ```
+
+---
+
+## 功能展示
+
+<div align="center">
+  <img src="assets/13.png" alt="沉浸式互动" width="300">
+  <img src="assets/14.png" alt="双镜对比" width="300">
+  <img src="assets/15.png" alt="交流状态" width="300">
+  <br>
+  <img src="assets/16.png" alt="圆桌讨论" width="400">
+  <img src="assets/17.png" alt="圆桌追问" width="400">
+</div>
 
 ---
 

@@ -19,7 +19,7 @@
 
 Lens is an end-to-end, local-first pipeline for transforming private CHAT_APP-style communication exports into privacy-safe multi-modal timelines, Agent SFT datasets, and an AI relationship advisor application. It normalizes heterogeneous chat exports, enriches messages with image/voice/video/sticker/link-file analysis, applies anonymization and PII controls, and builds downstream training and retrieval assets.
 
-The current system is a modular pipeline stack rather than a single converter. It includes Universal Ingestion, multi-modal processing, Agent SFT preparation, Advisor MoA analysis, Knowledge/Graph RAG, a FastAPI + React advisor app, Dual-Mirror Arena evaluation, safety/crisis guardrails, and LLM-as-Judge supervision.
+The current system is a modular pipeline stack rather than a single converter. It includes Universal Ingestion, multi-modal processing, Agent SFT preparation, Advisor MoA analysis, Knowledge/Graph RAG, a FastAPI + React advisor app, Dual-Mirror Arena evaluation, multi-agent Roundtable discussion, communication-status supervision, safety/crisis guardrails, and LLM-as-Judge quality monitoring.
 
 Lens is designed for research, personal data organization, and relationship reflection tooling. It is not a medical, diagnostic, psychotherapy, crisis-counseling, or emergency-response system.
 
@@ -984,7 +984,7 @@ Modality-specific fields follow the common header. See `scripts/_common/schema_u
 
 | Component | Minimum | Recommended |
 |-----------|---------|-------------|
-| GPU | 8GB VRAM | 16GB VRAM (RTX 4070 Ti / 5070 Ti) |
+| GPU | 16GB VRAM | 16GB VRAM (RTX 4070 Ti / 5070 Ti) |
 | RAM | 16GB | 32GB |
 | Storage | 50GB | 200GB+ (depends on media volume) |
 | CUDA | 12.0 | 12.8+ |
@@ -1021,6 +1021,19 @@ conda run -n CHAT_APP_DHA python -m pytest tests/ -v
 # Run specific test file
 conda run -n CHAT_APP_DHA python -m pytest tests/test_advisor_analyzers_properties.py -v
 ```
+
+---
+
+## Feature Showcase
+
+<div align="center">
+  <img src="assets/13.png" alt="Immersive Chat" width="300">
+  <img src="assets/14.png" alt="Dual-Mirror Arena" width="300">
+  <img src="assets/15.png" alt="Communication Status" width="300">
+  <br>
+  <img src="assets/16.png" alt="Roundtable Discussion" width="400">
+  <img src="assets/17.png" alt="Roundtable Continuation" width="400">
+</div>
 
 ---
 
