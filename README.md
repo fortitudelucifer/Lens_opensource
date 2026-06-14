@@ -47,7 +47,7 @@ Lens is designed for research, personal data organization, and relationship refl
 - **Advisor MoA Pipeline**: Conversation extraction, multi-expert analysis, fusion, AI/human review, remediation, formatting, QLoRA training, inference, and augmentation.
 - **Knowledge-Augmented RAG**: Timeline retrieval, professional knowledge injection, assessment context injection, FAISS indexing, and hybrid graph/chunk retrieval.
 - **Knowledge Center**: Web-based index for active and planned knowledge bases, including interdisciplinary perspectives, communication methods, crisis resources, and EFT resources.
-- **Advisor Web Application**: React + Vite frontend and modular FastAPI backend for chat, dashboard, assessment, privacy, knowledge center, Arena, Roundtable, and supervision views.
+- **Advisor Web Application**: React + Vite frontend and modular FastAPI backend for chat, dashboard, assessment, privacy, knowledge center, Arena, Roundtable, and supervision views. Full i18n support with Chinese/English UI switching (react-i18next, 300+ translation keys, persisted locale preference).
 - **Dual-Mirror Arena**: Blind A/B comparison for models, advisor styles, and interdisciplinary perspectives with voting, multi-dimensional scoring, and ranking data.
 - **Roundtable Discussion**: Three-persona multi-agent discussion with SSE streaming, multi-round continuation, context injection, deep mode, and moderator synthesis.
 - **Safety and Supervision**: Four-level crisis detection, consent and disclaimers, red-line wording checks, fixed crisis-resource responses, and LLM-as-Judge quality monitoring.
