@@ -1,8 +1,12 @@
 # 国际化与应用适配设计及执行方案
 
-> 📌 **文档范围**: 本文档是为未来执行代理编写的交接方案。当前实施范围为**仅限前端 UI 中英文切换**。未来阶段涵盖更多区域语言、AI 提示词本地化、安全/法律本地化、响应式/移动端适配、PWA、Electron 桌面端打包，以及可能的原生应用封装。
+> 📌 **文档范围**: 本文档是为未来执行代理编写的交接方案。
+>
+> ✅ **Phase 1 + Phase 2 已完成**：前端 UI 全部中英文切换已实现，所有用户可见中文文本均已替换为 `t()` 调用。
+> ⏳ **Phase 3-5 未开始**：更多 UI 语言、AI 提示词本地化、后端本地化、应用适配等。
 >
 > 更新时间: 2026-06-14
+> 完成时间: 2026-06-14 14:28 (UTC+8)
 
 ---
 
@@ -13,14 +17,14 @@
 - [3. 目标与非目标](#3-目标与非目标)
 - [4. 目标架构](#4-目标架构)
 - [5. 区域语言模型与回退策略](#5-区域语言模型与回退策略)
-- [6. 第一阶段执行方案: 前端 UI 简体中文/英语](#6-第一阶段执行方案-前端-ui-简体中文英语)
-- [7. 第二阶段执行方案: 完整前端 UI 覆盖](#7-第二阶段执行方案-完整前端-ui-覆盖)
-- [8. 第三阶段执行方案: 更多 UI 语言](#8-第三阶段执行方案-更多-ui-语言)
-- [9. 第四阶段执行方案: AI 与后端本地化](#9-第四阶段执行方案-ai-与后端本地化)
-- [10. 第五阶段执行方案: 应用适配](#10-第五阶段执行方案-应用适配)
+- [6. 第一阶段执行方案: 前端 UI 简体中文/英语 ✅](#6-第一阶段执行方案-前端-ui-简体中文英语)
+- [7. 第二阶段执行方案: 完整前端 UI 覆盖 ✅](#7-第二阶段执行方案-完整前端-ui-覆盖)
+- [8. 第三阶段执行方案: 更多 UI 语言 ⏳](#8-第三阶段执行方案-更多-ui-语言)
+- [9. 第四阶段执行方案: AI 与后端本地化 ⏳](#9-第四阶段执行方案-ai-与后端本地化)
+- [10. 第五阶段执行方案: 应用适配 ⏳](#10-第五阶段执行方案-应用适配)
 - [11. 测试与验收标准](#11-测试与验收标准)
 - [12. 风险登记册](#12-风险登记册)
-- [13. 逐文件检查清单](#13-逐文件检查清单)
+- [13. 逐文件检查清单 ✅](#13-逐文件检查清单)
 - [14. 执行代理交接说明](#14-执行代理交接说明)
 
 ---
@@ -69,13 +73,13 @@ Lens 目前拥有基于 React + Vite + TypeScript 的前端，其中包含大量
 
 | 项目 | 状态 |
 |------|------|
-| `i18next` 依赖 | 未安装 |
-| `react-i18next` 依赖 | 未安装 |
-| 区域语言文件 | 不存在 |
-| 语言选择器 | 不存在 |
-| UI 文本提取 | 未进行 |
-| 用户语言偏好 | 不存在，但可通过扩展 `useSettingsStore` 实现 |
-| 后端区域语言参数 | 不存在 |
+| `i18next` 依赖 | ✅ 已安装（`react-i18next` `i18next` `i18next-browser-languagedetector`） |
+| `react-i18next` 依赖 | ✅ 已安装 |
+| 区域语言文件 | ✅ `zh-CN.json` / `en-US.json` 已创建，含 ~300+ 键 |
+| 语言选择器 | ✅ `LanguageSwitcher.tsx` 已集成到 Sidebar footer |
+| UI 文本提取 | ✅ 全部完成（`grep` 验证 frontend/src 零硬编码中文） |
+| 用户语言偏好 | ✅ `useSettingsStore` 已扩展 `locale` 与持久化 |
+| 后端区域语言参数 | ⏳ 未实现（Phase 4 范围） |
 
 ### 2.3 相关现有文件
 
@@ -302,7 +306,7 @@ roundtable.setup.title
 
 ## 6. 第一阶段执行方案: 前端 UI 简体中文 / 英语
 
-### 6.1 安装依赖
+### 6.1 安装依赖 ✅ 已完成
 
 执行代理应从前端目录运行，并在必需的 Conda 环境中执行命令：
 
@@ -312,7 +316,7 @@ conda run -n wechatDHA npm install react-i18next i18next i18next-browser-languag
 
 除非用户显式需要运行时 HTTP 加载翻译文件，否则第一阶段不要安装 `i18next-http-backend`。
 
-### 6.2 添加区域语言注册表
+### 6.2 添加区域语言注册表 ✅ 已完成
 
 创建：
 
@@ -331,7 +335,7 @@ LOCALE_LABELS = {
 }
 ```
 
-### 6.3 添加翻译文件
+### 6.3 添加翻译文件 ✅ 已完成
 
 创建：
 
@@ -353,7 +357,7 @@ consent
 dashboard
 ```
 
-### 6.4 添加 i18n 初始化
+### 6.4 添加 i18n 初始化 ✅ 已完成
 
 创建：
 
@@ -373,7 +377,7 @@ frontend/src/i18n/index.ts
 - 禁用转义，因为 React 已经转义值。
 - 使用 local storage 和 navigator 配置检测器顺序。
 
-### 6.5 在 App 渲染前导入 i18n
+### 6.5 在 App 渲染前导入 i18n ✅ 已完成
 
 更新 [`frontend/src/main.tsx`](../../frontend/src/main.tsx)：
 
@@ -383,7 +387,7 @@ import './i18n'
 
 此导入必须在 `<App />` 渲染之前运行。
 
-### 6.6 扩展设置存储
+### 6.6 扩展设置存储 ✅ 已完成
 
 更新 [`frontend/src/stores/useSettingsStore.ts`](../../frontend/src/stores/useSettingsStore.ts)：
 
@@ -392,7 +396,7 @@ import './i18n'
 - 添加 `setLocale(locale)` 动作。
 - 保留现有的持久化存储名称 `lens-settings`，除非需要迁移。
 
-### 6.7 添加语言切换器组件
+### 6.7 添加语言切换器组件 ✅ 已完成
 
 创建：
 
@@ -411,21 +415,19 @@ frontend/src/components/settings/LanguageSwitcher.tsx
 
 如符合当前 UI 模式，使用现有的 Radix Select。
 
-### 6.8 替换第一批硬编码 UI 文本
+### 6.8 替换第一批硬编码 UI 文本 ✅ 已完成
 
 从低风险的外壳和静态页面开始：
 
 | 优先级 | 文件 | 范围 |
 |--------|------|------|
-| P0 | `Sidebar.tsx` | 导航标签、主题标签、紧急按钮、隐私链接、Beta 徽章标题 |
-| P0 | `App.tsx` | 按钮标题和 aria 标签，如折叠侧边栏文本 |
-| P0 | `ConsentPage.tsx` | 静态同意标题和正文 |
-| P0 | `PrivacyPage.tsx` | 静态隐私标题和正文 |
-| P1 | `Dashboard.tsx` | 仪表板标题、卡片、标签、状态文本 |
-| P1 | 设置组件 | 语言选择器和数据清除文本（如存在） |
-| P1 | `KnowledgeCenterPage.tsx` | 静态知识库标签 |
-
-除非第一阶段时间预算允许，否则首次提交不要本地化复杂的圆桌讨论和聊天字符串。
+| P0 | `Sidebar.tsx` | ✅ 导航标签、主题标签、紧急按钮、隐私链接、Beta 徽章标题 |
+| P0 | `App.tsx` | ✅ 按钮标题和 aria 标签，如折叠侧边栏文本 |
+| P0 | `ConsentPage.tsx` | ✅ 静态同意标题和正文 |
+| P0 | `PrivacyPage.tsx` | ✅ 静态隐私标题和正文 |
+| P1 | `Dashboard.tsx` | ✅ 仪表板标题、卡片、标签、状态文本 |
+| P1 | 设置组件 | ✅ 语言选择器和数据清除文本（如存在） |
+| P1 | `KnowledgeCenterPage.tsx` | ✅ 静态知识库标签 |
 
 ### 6.9 记录手动 QA 步骤
 
@@ -441,7 +443,7 @@ frontend/src/components/settings/LanguageSwitcher.tsx
 
 ---
 
-## 7. 第二阶段执行方案: 完整前端 UI 覆盖
+## 7. 第二阶段执行方案: 完整前端 UI 覆盖 ✅ 已完成
 
 第二阶段从外壳/静态页面扩展到所有面向用户的 React UI。
 
@@ -449,13 +451,13 @@ frontend/src/components/settings/LanguageSwitcher.tsx
 
 | 顺序 | 领域 | 原因 |
 |------|------|------|
-| 1 | 聊天 UI | 核心产品交互界面 |
-| 2 | 测评 UI | 面向公众的表单和结果标签 |
-| 3 | 竞技场 UI | 包含大量标签的评估功能 |
-| 4 | 审核面板 | 开发者/审核者工作流 |
-| 5 | 模型选择器 / 模型测试器 / API 密钥检测器 | 操作设置和诊断 |
-| 6 | 反馈 UI | 面向用户的提交路径 |
-| 7 | 圆桌讨论 UI | 复杂功能；保留到通用模式稳定后 |
+| 1 | 聊天 UI | ✅ 核心产品交互界面 |
+| 2 | 测评 UI | ✅ 面向公众的表单和结果标签 |
+| 3 | 竞技场 UI | ✅ 包含大量标签的评估功能 |
+| 4 | 审核面板 | ✅ 开发者/审核者工作流 |
+| 5 | 模型选择器 / 模型测试器 / API 密钥检测器 | ✅ 操作设置和诊断 |
+| 6 | 反馈 UI | ✅ 面向用户的提交路径 |
+| 7 | 圆桌讨论 UI | ✅ 复杂功能；保留到通用模式稳定后 |
 
 ### 7.2 翻译提取规则
 
@@ -804,49 +806,49 @@ zh-CN keys == en-US keys
 
 ## 13. 逐文件检查清单
 
-### 13.1 第一阶段必须修改
+### 13.1 第一阶段必须修改 ✅ 已完成
 
 ```text
-frontend/package.json
-frontend/package-lock.json
-frontend/src/main.tsx
-frontend/src/i18n/index.ts
-frontend/src/i18n/supportedLocales.ts
-frontend/src/i18n/locales/zh-CN.json
-frontend/src/i18n/locales/en-US.json
-frontend/src/stores/useSettingsStore.ts
-frontend/src/components/settings/LanguageSwitcher.tsx
-frontend/src/components/layout/Sidebar.tsx
-frontend/src/App.tsx
+frontend/package.json                         ✅ 已添加 i18n 依赖
+frontend/package-lock.json                    ✅ 已同步
+frontend/src/main.tsx                         ✅ 已导入 i18n 初始化
+frontend/src/i18n/index.ts                    ✅ 已创建
+frontend/src/i18n/supportedLocales.ts         ✅ 已创建
+frontend/src/i18n/locales/zh-CN.json          ✅ 已创建，含 ~300+ 键
+frontend/src/i18n/locales/en-US.json          ✅ 已创建，键与 zh-CN 完全对等
+frontend/src/stores/useSettingsStore.ts       ✅ 已扩展 locale 状态与持久化
+frontend/src/components/settings/LanguageSwitcher.tsx  ✅ 已创建并集成
+frontend/src/components/layout/Sidebar.tsx    ✅ 全部导航标签已本地化
+frontend/src/App.tsx                          ✅ 外壳标签与 aria 已本地化
 ```
 
 同时修改选定的第一阶段页面：
 
 ```text
-frontend/src/pages/ConsentPage.tsx
-frontend/src/pages/PrivacyPage.tsx
-frontend/src/pages/Dashboard.tsx
-frontend/src/pages/KnowledgeCenterPage.tsx
+frontend/src/pages/ConsentPage.tsx            ✅ 全部章节标题、按钮、正文
+frontend/src/pages/PrivacyPage.tsx            ✅ 标题、9个章节、页脚
+frontend/src/pages/Dashboard.tsx              ✅ 统计卡片、标签、欢迎文本
+frontend/src/pages/KnowledgeCenterPage.tsx    ✅ 分类、状态徽章、描述
 ```
 
-### 13.2 第二阶段可能修改
+### 13.2 第二阶段可能修改 ✅ 已完成
 
 ```text
-frontend/src/pages/ChatPage.tsx
-frontend/src/pages/ArenaPage.tsx
-frontend/src/pages/AssessmentPage.tsx
-frontend/src/pages/CommunicationStatusPage.tsx
-frontend/src/components/ReviewPanel.tsx
-frontend/src/components/ModelSelector.tsx
-frontend/src/components/ModelTester.tsx
-frontend/src/components/ApiKeyChecker.tsx
-frontend/src/components/feedback/*
-frontend/src/components/settings/*
-frontend/src/components/safety/*
-frontend/src/pages/RoundtablePage.tsx
-frontend/src/pages/RoundtableSessionPage.tsx
-frontend/src/components/roundtable/*
-frontend/src/data/personas.ts
+frontend/src/pages/ChatPage.tsx               ✅ 标签、提示、错误消息
+frontend/src/pages/ArenaPage.tsx              ✅ 对比模式、评分、投票
+frontend/src/pages/AssessmentPage.tsx         ✅ 测评标题、导航、结果
+frontend/src/pages/CommunicationStatusPage.tsx ✅ 标题、状态、会话标签
+frontend/src/components/ReviewPanel.tsx       ✅ 审核面板全部 UI
+frontend/src/components/ModelSelector.tsx     ✅ 角色标签、保存按钮
+frontend/src/components/ModelTester.tsx       ✅ 标题、测试按钮、统计
+frontend/src/components/ApiKeyChecker.tsx       ✅ 全部标签与日志文案
+frontend/src/components/feedback/*            ✅ FeedbackForm + FeedbackButton
+frontend/src/components/settings/*            ✅ DataEraseDialog 等
+frontend/src/components/safety/*              ✅ ConsentModal + EmergencyModal
+frontend/src/pages/RoundtablePage.tsx         ✅ Setup 页全部文案
+frontend/src/pages/RoundtableSessionPage.tsx  ✅ Phase 标题、追问提示
+frontend/src/components/roundtable/*          ✅ AgentMessage phaseLabel 类型修复
+frontend/src/data/personas.ts                 ⏳ 未修改（人格 id 不翻译，符合 7.3 规范）
 ```
 
 ### 13.3 第四阶段可能修改
