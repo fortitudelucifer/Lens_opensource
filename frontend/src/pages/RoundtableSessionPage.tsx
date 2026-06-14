@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { ArrowLeft, Quote, Share2, Pencil, Radio, FlaskConical, ChevronDown, MessagesSquare, Archive, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -45,6 +46,7 @@ const STREAM_JITTER_MS = 8 // 错位让 3 列不同步完成，更像人在思�
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
+  const { t } = useTranslation()
   const sessionId = useRoundtableStore((s) => s.sessionId)
   const question = useRoundtableStore((s) => s.question)
   const currentPhase = useRoundtableStore((s) => s.currentPhase)
@@ -93,7 +95,7 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
     streamNonce,
     onError: (err) => {
       console.error('[Roundtable SSE]', err)
-      toast.error('圆桌讨论中断', { description: err.message.slice(0, 100) })
+      toast.error('Roundtable interrupted', { description: err.message.slice(0, 100) })
     },
     onDone: () => {
       // backend 发送 done 后滚动到 Moderator（reduced-motion 时直接跳，不滚动延迟）
@@ -171,7 +173,7 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
         streamOneAgent(
           'phase1',
           personaId,
-          PHASE1_TEXTS[personaId] ?? '（此流派暂无样例）',
+          PHASE1_TEXTS[personaId] ?? '(No sample for this school)',
           PHASE1_CONFIDENCE[personaId] ?? 0.75,
         ),
       ),
@@ -187,7 +189,7 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
         streamOneAgent(
           'phase2',
           personaId,
-          PHASE2_TEXTS[personaId] ?? '（暂无回应）',
+          PHASE2_TEXTS[personaId] ?? '(No response yet)',
           PHASE2_CONFIDENCE[personaId] ?? 0.78,
         ),
       ),
@@ -213,7 +215,7 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
         <div
           className="inline-flex items-center gap-2 text-4xl leading-none select-none mb-4"
           role="img"
-          aria-label="三位顾问的圆桌在等你"
+          aria-label="Three advisors are waiting for your roundtable"
         >
           <span>🧭</span>
           <span className="opacity-70">·</span>
@@ -222,11 +224,10 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
           <span>💗</span>
         </div>
         <h2 className="text-lg font-semibold text-foreground mb-2">
-          圆桌还没有开始
+          {t('roundtable.session.notStarted')}
         </h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          三位顾问正等着听你的问题 · 回到上一页挑 3 个你想对话的视角，<br className="hidden sm:inline" />
-          再写下想聊的事，就能开始一场只属于你的讨论。
+          {t('roundtable.session.notStartedDesc')}
         </p>
         {onBack && (
           <button
@@ -234,7 +235,7 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
             className="mt-6 inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/60 px-5 py-2 text-sm text-foreground hover:bg-card transition-colors"
           >
             <ArrowLeft className="h-4 w-4" strokeWidth={2} />
-            返回设置页
+            {t('roundtable.session.backToSetup')}
           </button>
         )}
       </div>
@@ -308,14 +309,14 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
             />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-                这是一场未完成的历史讨论 · 只读快照
+                This is an unfinished historical discussion · Read-only snapshot
               </p>
               <p className="mt-1 text-xs text-amber-800/90 dark:text-amber-200/80 leading-relaxed">
-                当前会话停留在 <code className="rounded bg-amber-500/10 px-1.5 py-0.5 font-mono text-[11px]">{currentPhase}</code> 阶段，backend 的讨论流程可能已结束或中断。
-                为避免事件重放把内容搞乱，这里不再接收实时更新。
+                Current session stopped at <code className="rounded bg-amber-500/10 px-1.5 py-0.5 font-mono text-[11px]">{currentPhase}</code> phase. The backend discussion may have ended or been interrupted.
+                No live updates to avoid content duplication.
                 <br />
                 <span className="text-amber-700/80 dark:text-amber-300/70">
-                  你可以继续阅读上方内容 · 想要接着问的话请开一局新讨论。
+                  Continue reading above · Start a new discussion to ask follow-up questions.
                 </span>
               </p>
               <button
@@ -331,7 +332,7 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
                 )}
               >
                 <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-                开一局新讨论
+                {t('roundtable.session.newDiscussion')}
               </button>
             </div>
           </div>
@@ -349,10 +350,10 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
           {question}
         </p>
         <p className="mt-4 text-xs text-muted-foreground pl-10 flex items-center gap-2">
-          <span>与 {personaNames} 讨论</span>
+          <span>Discussing with {personaNames}</span>
           {roundIndex > 0 && (
             <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary ring-1 ring-primary/20">
-              第 {roundIndex + 1} 轮
+              Round {roundIndex + 1}
             </span>
           )}
         </p>
@@ -362,7 +363,7 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
       <section className="mb-8 flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            第一阶段 · 独立分析
+            Phase 1 · Independent Analysis
           </h2>
           <span className="text-xs text-muted-foreground">
             {countDone(phase1Agents)} / {selectedPersonas.length}
@@ -379,7 +380,7 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
             <AgentMessage
               key={`p1-${agent.personaId}`}
               agent={agent}
-              phaseLabel="🧠 独立视角"
+              phaseLabel="🧠 Independent View"
               compact
             />
           ))}
@@ -409,13 +410,13 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
               'grid grid-cols-1 lg:grid-cols-3 gap-4 transition-all duration-700',
               phase2Faded && 'opacity-50 scale-[0.98] grayscale-[0.4]',
             )}
-            aria-label={phase2Faded ? '第二阶段已完成（已淑化）' : '第二阶段进行中'}
+            aria-label={phase2Faded ? 'Phase 2 completed' : 'Phase 2 in progress'}
           >
             {phase2Agents.map((agent) => (
               <AgentMessage
                 key={`p2-${agent.personaId}`}
                 agent={agent}
-                phaseLabel="🔄 看到同伴后的回应"
+                phaseLabel="🔄 Response after seeing peers"
                 compact
               />
             ))}
@@ -458,7 +459,7 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
           <div className="max-w-3xl mx-auto mt-8 mb-3 flex flex-col items-center text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-[12px] text-primary font-medium">
               <MessagesSquare className="w-3.5 h-3.5" />
-              本轮讨论已完成 · 可以接着问下去
+              Discussion completed · You can continue asking
             </div>
             <ChevronDown
               className={cn(
@@ -468,7 +469,7 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
               aria-hidden="true"
             />
             <p className="mt-1 text-[12px] text-muted-foreground">
-              在下面的输入框继续追问 · 3 位顾问会带着本轮的记忆回应你
+              Continue asking in the input below · The 3 advisors will respond with memory from this round
             </p>
           </div>
           <FollowUpComposer sessionId={sessionId} />

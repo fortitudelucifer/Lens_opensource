@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { BrainCircuit, ChevronDown, ChevronUp } from 'lucide-react'
 import { useState } from 'react'
 
@@ -7,6 +8,7 @@ interface ThinkingUIProps {
 }
 
 export function ThinkingUI({ content }: ThinkingUIProps) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
 
   if (!content) return null
@@ -18,7 +20,7 @@ export function ThinkingUI({ content }: ThinkingUIProps) {
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-[var(--text-secondary)] bg-[var(--bg-secondary)] border border-[var(--border-color)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-primary)] transition-all duration-200"
       >
         <BrainCircuit size={14} className="text-violet-500 animate-pulse" />
-        <span>模型思考过程</span>
+        <span>{t('chat.thinkingUI.modelThinking')}</span>
         {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
       </button>
 

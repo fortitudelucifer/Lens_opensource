@@ -10,9 +10,10 @@
  */
 
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
-  Sparkles, ArrowRight, HelpCircle, UsersRound, Info, Loader2,
+  Sparkles, ArrowRight, UsersRound, Info, Loader2,
   CheckCircle2, AlertCircle, MessageSquareText, Cpu,
   BookOpen, MessagesSquare, X,
 } from 'lucide-react'
@@ -60,6 +61,7 @@ interface RoundtablePageProps {
 }
 
 export function RoundtablePage({ onStart, onNavigateToChat }: RoundtablePageProps) {
+  const { t } = useTranslation()
   const selectedPersonas = useRoundtableStore((s) => s.selectedPersonas)
   const question = useRoundtableStore((s) => s.question)
   const deepMode = useRoundtableStore((s) => s.deepMode)
@@ -194,22 +196,11 @@ export function RoundtablePage({ onStart, onNavigateToChat }: RoundtablePageProp
           Roundtable · Beta
         </div>
         <h1 className="text-[28px] sm:text-[34px] font-semibold tracking-tight leading-tight">
-          选择 3 位顾问，
-          <br className="sm:hidden" />
-          展开一场圆桌讨论
+          {t('roundtable.setup.heading')}
         </h1>
         <p className="mt-4 text-[15px] sm:text-base text-muted-foreground leading-relaxed">
-          他们会先独立分析，再互相阅读彼此的视角，最后由主持人为你做综合总结。
-          <br className="hidden sm:block" />
-          我们不做诊断，也不替你决定——只帮你更清楚地看见自己。
+          {t('roundtable.setup.description')}
         </p>
-        <a
-          href="#help"
-          className="inline-flex items-center gap-1.5 mt-4 text-[13px] text-primary hover:underline underline-offset-4"
-        >
-          <HelpCircle className="w-3.5 h-3.5" />
-          如何使用圆桌讨论
-        </a>
       </div>
 
       {/* Layer 1 · 引导卡：什么时候开圆桌 vs 建议走沉浸式互动 */}
@@ -231,14 +222,14 @@ export function RoundtablePage({ onStart, onNavigateToChat }: RoundtablePageProp
       <div className="mt-10">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-[13px] font-semibold text-muted-foreground tracking-wide uppercase">
-            快速选择
+            {t('roundtable.setup.quickSelect')}
           </h2>
           {selectedPersonas.length > 0 && (
             <button
               onClick={() => setPersonas([])}
               className="text-[12px] text-muted-foreground hover:text-foreground transition"
             >
-              清空
+              {t('roundtable.setup.clear')}
             </button>
           )}
         </div>
@@ -275,7 +266,7 @@ export function RoundtablePage({ onStart, onNavigateToChat }: RoundtablePageProp
       {/* Grid groups */}
       <div className="mt-10 space-y-8">
         <PersonaGroup
-          title="心理学流派"
+          title={t('roundtable.setup.psychologyGroup')}
           subtitle="Psychology"
           personas={psychology}
           selected={selectedPersonas}
@@ -283,7 +274,7 @@ export function RoundtablePage({ onStart, onNavigateToChat }: RoundtablePageProp
           full={isFull}
         />
         <PersonaGroup
-          title="跨学科视角"
+          title={t('roundtable.setup.interdisciplinaryGroup')}
           subtitle="Interdisciplinary"
           personas={interdisc}
           selected={selectedPersonas}
@@ -310,15 +301,13 @@ export function RoundtablePage({ onStart, onNavigateToChat }: RoundtablePageProp
           ))}
         </div>
         <span className="text-muted-foreground">
-          已选{' '}
-          <span className="text-foreground font-semibold">{selectedPersonas.length}</span>{' '}
-          / {MAX_PERSONAS}
+          {t('roundtable.setup.selected', { count: selectedPersonas.length, max: MAX_PERSONAS })}
         </span>
       </div>
 
       {/* Question */}
       <div className="mt-10">
-        <label className="block text-sm font-medium mb-2">描述你想讨论的情境</label>
+        <label className="block text-sm font-medium mb-2">{t('roundtable.setup.questionLabel')}</label>
         <div
           className={cn(
             'rounded-2xl border bg-card transition-all',
@@ -328,7 +317,7 @@ export function RoundtablePage({ onStart, onNavigateToChat }: RoundtablePageProp
           <textarea
             value={question}
             onChange={(e) => setQuestion(e.target.value.slice(0, MAX_QUESTION_LEN))}
-            placeholder="例如：和伴侣吵架后冷战了三天，我不知道是我太敏感，还是 ta 确实没把我放在心上…越详细越好（建议 ≥ 100 字）。"
+            placeholder={t('roundtable.setup.questionPlaceholder')}
             rows={5}
             className="w-full resize-none bg-transparent p-4 text-[14.5px] leading-[1.75] outline-none placeholder:text-muted-foreground"
           />
@@ -414,11 +403,11 @@ export function RoundtablePage({ onStart, onNavigateToChat }: RoundtablePageProp
           {creating ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              正在创建...
+              Creating...
             </>
           ) : (
             <>
-              开启圆桌
+              {t('roundtable.setup.startButton')}
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </>
           )}

@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, type ChangeEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { ChatSidebar } from '../components/chat/ChatSidebar'
 import { ChatTopBar } from '../components/chat/ChatTopBar'
@@ -61,6 +62,7 @@ export function ChatPage({
   searchTargetSession,
   onSearchTargetConsumed,
 }: ChatPageProps) {
+  const { t } = useTranslation()
   const [currentPersona, setCurrentPersona] = useState<Persona>(initialPersona || PERSONAS[0])
   const [currentSessionId, setCurrentSessionId] = useState<number | null>(1)
   const [mode, setMode] = useState<ChatMode>('listen')
@@ -84,7 +86,7 @@ export function ChatPage({
         list.map((s) => ({
           id: parseInt(s.id, 16) || Math.abs(s.id.split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0)),
           backendSessionId: s.id,
-          title: s.title || '未命名会话',
+          title: s.title || t('chat.unnamedSession'),
           time: s.updated_at ? new Date(s.updated_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '',
           personaId: s.agent_type || 'neutral',
           active: false,
@@ -170,7 +172,7 @@ export function ChatPage({
             id: `public:${file}`,
             sessionId: 1000 + idx,
             title: file.replace(/\.json$/i, ''),
-            time: '样例',
+            time: t('chat.sampleTag'),
             source: 'public' as const,
             fileName: file,
           }))
@@ -258,7 +260,7 @@ export function ChatPage({
             id: `local:${file.name}:${now}:${idx}`,
             sessionId: 2000 + now + idx,
             title: file.name.replace(/\.json$/i, ''),
-            time: '本地导入',
+            time: t('chat.localTag'),
             source: 'local' as const,
             payload,
           } as SampleConversationEntry
@@ -284,7 +286,7 @@ export function ChatPage({
   const recentSessions = useMemo<Session[]>(() => {
     const importedSessions: Session[] = sampleConversations.map((entry) => ({
       id: entry.sessionId,
-      title: `[${entry.source === 'local' ? '本地' : '样例'}] ${entry.title}`,
+      title: `[${entry.source === 'local' ? t('chat.localTag') : t('chat.sampleTag')}] ${entry.title}`,
       time: entry.time,
       personaId: currentPersona.id,
       active: currentSessionId === entry.sessionId,
@@ -398,7 +400,7 @@ export function ChatPage({
       }
 
       if (!answerBuffer.trim()) {
-        updateAssistant({ content: '模型未返回内容，请切换模型后重试。' })
+        updateAssistant({ content: t('chat.noModelResponse') })
       }
     } catch (error) {
       const raw = error instanceof Error ? error.message : String(error)
@@ -565,7 +567,7 @@ export function ChatPage({
               <currentPersona.icon className="w-12 h-12" style={{ color: currentPersona.hex }} />
             </div>
             <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
-              我是你的{currentPersona.name}
+              {t('welcomeScreen.title', { appName: t('app.name') })} — {currentPersona.name}
             </h3>
             <p className="text-[var(--text-secondary)] max-w-md">
               {currentPersona.description}
@@ -573,10 +575,10 @@ export function ChatPage({
             <div className="mt-6 w-full max-w-2xl rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-4 text-left">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-                  导入真实交流 JSON
+                  {t('chat.importRealJSON')}
                 </p>
                 <label className="cursor-pointer rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-medium text-emerald-700 transition-colors hover:bg-emerald-500/20">
-                  上传本地 JSON
+                  {t('chat.uploadLocalJSON')}
                   <input
                     type="file"
                     accept=".json,application/json"
@@ -599,12 +601,12 @@ export function ChatPage({
                       className="rounded-xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 px-3 py-2 text-left text-xs text-[var(--text-primary)] transition-all hover:from-emerald-500/20 hover:to-teal-500/20 disabled:opacity-50"
                     >
                       <p className="truncate font-medium">{entry.title}</p>
-                      <p className="text-[10px] text-[var(--text-muted)]">{entry.source === 'local' ? '本地导入' : '来自 public/chat-samples'}</p>
+                      <p className="text-[10px] text-[var(--text-muted)]">{entry.source === 'local' ? t('chat.localTag') : t('chat.fromPublicSamples')}</p>
                     </button>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-[var(--text-muted)]">先上传本地 JSON，或在 public/chat-samples/manifest.json 中登记样例文件。</p>
+                <p className="text-xs text-[var(--text-muted)]">{t('chat.uploadHint')}</p>
               )}
             </div>
           </div>
@@ -647,7 +649,7 @@ export function ChatPage({
       <ExportDialog
         open={showExport}
         onClose={() => setShowExport(false)}
-        title="导出对话"
+        title={t('chat.exportDialogTitle')}
         getData={() => chatToExportData(
           messages.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp })),
           messages[0]?.content?.slice(0, 20),

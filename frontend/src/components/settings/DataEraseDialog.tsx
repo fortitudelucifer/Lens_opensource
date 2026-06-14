@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AlertTriangle, X, Trash2, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -20,6 +21,7 @@ interface DataEraseDialogProps {
  *   3. 成功后清空 localStorage 并 2s 后 reload（用户看到 toast）
  */
 export function DataEraseDialog({ open, onClose }: DataEraseDialogProps) {
+  const { t } = useTranslation()
   const [confirmInput, setConfirmInput] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -32,7 +34,7 @@ export function DataEraseDialog({ open, onClose }: DataEraseDialogProps) {
       const res = await api.eraseAllUserData(confirmInput.trim())
       const kb = Math.round(res.total_bytes_removed / 1024)
       toast.success(
-        `已删除 ${res.total_items_removed} 项用户数据（约 ${kb} KB），2 秒后刷新页面...`,
+        t('dataErase.deleteSuccess', { items: res.total_items_removed, kb }),
         { duration: 2000 },
       )
       // 清空本地偏好（主题 / 上次模型等）
@@ -45,8 +47,8 @@ export function DataEraseDialog({ open, onClose }: DataEraseDialogProps) {
         window.location.reload()
       }, 2000)
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '未知错误'
-      toast.error(`删除失败：${msg.replace(/^API \d+:\s*/, '')}`)
+      const msg = err instanceof Error ? err.message : 'Error'
+      toast.error(t('dataErase.deleteFailed', { msg: msg.replace(/^API \d+:\s*/, '') }))
       setIsDeleting(false)
     }
   }
@@ -79,7 +81,7 @@ export function DataEraseDialog({ open, onClose }: DataEraseDialogProps) {
                 <div className="w-8 h-8 rounded-full bg-red-500/15 flex items-center justify-center">
                   <AlertTriangle className="w-4 h-4 text-red-500" />
                 </div>
-                <h3 className="text-sm font-semibold">删除所有本地数据</h3>
+                <h3 className="text-sm font-semibold">{t('dataErase.title')}</h3>
               </div>
               <button
                 onClick={handleClose}
@@ -92,27 +94,27 @@ export function DataEraseDialog({ open, onClose }: DataEraseDialogProps) {
 
             <div className="p-5 space-y-4">
               <div className="text-sm text-[var(--text-secondary)] leading-relaxed space-y-2">
-                <p className="font-medium text-[var(--text-primary)]">此操作将<span className="text-red-500">永久删除</span>以下用户数据：</p>
+                <p className="font-medium text-[var(--text-primary)]">{t('dataErase.description')}</p>
                 <ul className="list-disc pl-5 space-y-0.5 text-xs">
-                  <li>全部沉浸式互动会话</li>
-                  <li>全部双镜对比会话（Arena 聚合 Elo 统计保留）</li>
-                  <li>全部交流测评记录</li>
-                  <li>危机干预归档记录</li>
-                  <li>UI 反馈 / RAG 评价记录</li>
-                  <li>浏览器本地偏好（主题 / 上次模型选择）</li>
+                  <li>{t('dataErase.items.chatSessions')}</li>
+                  <li>{t('dataErase.items.arenaSessions')}</li>
+                  <li>{t('dataErase.items.assessments')}</li>
+                  <li>{t('dataErase.items.crisisRecords')}</li>
+                  <li>{t('dataErase.items.feedback')}</li>
+                  <li>{t('dataErase.items.preferences')}</li>
                 </ul>
                 <p className="text-xs text-[var(--text-muted)] pt-1">
-                  <strong>保留</strong>：系统配置、模型、知识库、训练数据（非个人数据）。
+                  {t('dataErase.retained')}
                 </p>
               </div>
 
               <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/20 text-xs text-red-500">
-                此操作<strong>不可撤销</strong>。如需保留重要会话，请先使用「对话导出」功能备份。
+                {t('dataErase.warning')}
               </div>
 
               <div>
                 <label className="text-xs text-[var(--text-secondary)] block mb-1.5">
-                  确认短语：请精确输入 <code className="bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded text-red-500 font-mono">{CONFIRM_PHRASE}</code>
+                  {t('dataErase.confirmLabel')} <code className="bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded text-red-500 font-mono">{CONFIRM_PHRASE}</code>
                 </label>
                 <input
                   type="text"
@@ -131,7 +133,7 @@ export function DataEraseDialog({ open, onClose }: DataEraseDialogProps) {
                   disabled={isDeleting}
                   className="px-4 py-2 bg-[var(--bg-secondary)] hover:bg-[var(--bg-hover)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
                 >
-                  取消
+                  {t('dataErase.cancel')}
                 </button>
                 <motion.button
                   whileHover={canSubmit ? { scale: 1.02 } : {}}
@@ -141,9 +143,9 @@ export function DataEraseDialog({ open, onClose }: DataEraseDialogProps) {
                   className="flex items-center gap-1.5 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-red-500"
                 >
                   {isDeleting ? (
-                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /> 删除中...</>
+                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {t('dataErase.deleting')}</>
                   ) : (
-                    <><Trash2 className="w-3.5 h-3.5" /> 确认删除</>
+                    <><Trash2 className="w-3.5 h-3.5" /> {t('dataErase.confirmDelete')}</>
                   )}
                 </motion.button>
               </div>

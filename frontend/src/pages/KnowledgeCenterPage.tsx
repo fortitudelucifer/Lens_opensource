@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { BookOpen, Database, Brain, Shield, Heart, Microscope, Sparkles, ExternalLink, ChevronDown, ChevronRight, Globe, FlaskConical } from 'lucide-react'
 
 /* ─── Knowledge Category Type ─── */
@@ -71,6 +72,7 @@ const CATEGORIES: KnowledgeCategory[] = [
 
 /* ─── Component ─── */
 export function KnowledgeCenterPage() {
+  const { t } = useTranslation()
   const [expandedId, setExpandedId] = useState<string | null>('perspectives')
 
   const totalEntries = CATEGORIES.reduce((sum, c) => sum + c.items.reduce((s, i) => s + i.entries, 0), 0)
@@ -88,17 +90,17 @@ export function KnowledgeCenterPage() {
               <BookOpen size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>知识中心</h1>
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Knowledge Center — 所有专业知识库的索引与概览</p>
+              <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{t('knowledgeCenter.title')}</h1>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('knowledgeCenter.subtitle')}</p>
             </div>
           </div>
 
           {/* Stats bar */}
           <div className="flex gap-4 mt-4">
             {[
-              { label: '知识条目', value: totalEntries, icon: Database, color: '#8b5cf6' },
-              { label: '已激活领域', value: activeCount, icon: Sparkles, color: '#10b981' },
-              { label: '规划中', value: plannedCount, icon: FlaskConical, color: '#f59e0b' },
+              { label: t('knowledgeCenter.stats.entries'), value: totalEntries, icon: Database, color: '#8b5cf6' },
+              { label: t('knowledgeCenter.stats.activeDomains'), value: activeCount, icon: Sparkles, color: '#10b981' },
+              { label: t('knowledgeCenter.stats.planned'), value: plannedCount, icon: FlaskConical, color: '#f59e0b' },
             ].map(s => (
               <div key={s.label} className="flex items-center gap-2 px-4 py-2 rounded-xl border" style={{ borderColor: 'var(--border-color)', background: 'var(--bg-card)' }}>
                 <s.icon size={14} style={{ color: s.color }} />
@@ -127,19 +129,19 @@ export function KnowledgeCenterPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{cat.name}</span>
+                      <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{t(`knowledgeCenter.categories.${cat.id}.name`)}</span>
                       {cat.status === 'active' ? (
-                        <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">已激活</span>
+                        <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">{t('knowledgeCenter.status.active')}</span>
                       ) : (
-                        <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">规划中</span>
+                        <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">{t('knowledgeCenter.status.planned')}</span>
                       )}
                       {cat.items.length > 0 && (
                         <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>
-                          {cat.items.reduce((s, i) => s + i.entries, 0)} 条
+                          {cat.items.reduce((s, i) => s + i.entries, 0)} {t('knowledgeCenter.entriesSuffix')}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>{cat.description}</p>
+                    <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>{t(`knowledgeCenter.categories.${cat.id}.description`)}</p>
                   </div>
                   <Chevron size={16} style={{ color: 'var(--text-muted)' }} />
                 </button>
@@ -149,7 +151,7 @@ export function KnowledgeCenterPage() {
                   <div className="border-t px-5 py-3 space-y-2" style={{ borderColor: 'var(--border-color)', background: 'var(--bg-secondary)' }}>
                     {cat.items.length === 0 ? (
                       <p className="text-xs py-3 text-center" style={{ color: 'var(--text-muted)' }}>
-                        🔮 该领域知识库正在规划中，敬请期待
+                        {t('knowledgeCenter.emptyState')}
                       </p>
                     ) : (
                       cat.items.map(item => (
@@ -158,7 +160,7 @@ export function KnowledgeCenterPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <code className="text-[11px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'var(--bg-secondary)', color: cat.hex }}>{item.file}</code>
-                              <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{item.entries} 条</span>
+                              <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{item.entries} {t('knowledgeCenter.entriesSuffix')}</span>
                             </div>
                             <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>{item.description}</p>
                           </div>
@@ -170,7 +172,7 @@ export function KnowledgeCenterPage() {
                     {cat.status === 'active' && (
                       <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-[10px]" style={{ background: 'var(--bg-primary)', color: 'var(--text-muted)' }}>
                         <ExternalLink size={10} />
-                        <span>通过 <code className="font-mono px-1 rounded" style={{ background: 'var(--bg-secondary)' }}>_search_faq()</code> 自动注入对话上下文</span>
+                        <span>{t('knowledgeCenter.ragNote')}</span>
                       </div>
                     )}
                   </div>
@@ -182,11 +184,11 @@ export function KnowledgeCenterPage() {
 
         {/* Future roadmap */}
         <div className="mt-8 px-5 py-4 rounded-xl border" style={{ borderColor: 'var(--border-color)', background: 'var(--bg-card)' }}>
-          <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>📋 知识库扩展路线</h3>
+          <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>{t('knowledgeCenter.roadmap.title')}</h3>
           <div className="space-y-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
-            <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-emerald-500" /> 当前：{totalEntries} 条 FAQ 覆盖 {activeCount} 个领域（沟通/危机/EFT/跨学科视角）</div>
-            <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-amber-500" /> 近期：CBT/DBT/Gottman 治疗手册 FAQ</div>
-            <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-purple-500" /> 远期：GraphRAG 知识图谱（FAQ &gt; 200 条后，跨学科概念多跳推理）</div>
+            <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-emerald-500" /> {t('knowledgeCenter.roadmap.current', { totalEntries, activeCount })}</div>
+            <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-amber-500" /> {t('knowledgeCenter.roadmap.near')}</div>
+            <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-purple-500" /> {t('knowledgeCenter.roadmap.future')}</div>
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { ChevronRight } from 'lucide-react'
 import lensLogo from '../assets/lens_logo_high_precision.svg'
 import type { Persona } from '../types'
@@ -9,6 +10,7 @@ interface WelcomeScreenProps {
 }
 
 export function WelcomeScreen({ onSelect }: WelcomeScreenProps) {
+  const { t } = useTranslation()
   return (
     <div className="flex-1 overflow-y-auto w-full" style={{ background: 'var(--bg-primary)' }}>
       <div className="min-h-full flex flex-col p-4 sm:p-8 w-full max-w-[1600px] mx-auto">
@@ -23,13 +25,13 @@ export function WelcomeScreen({ onSelect }: WelcomeScreenProps) {
             className="text-center mb-8 sm:mb-12 max-w-2xl mx-auto px-4"
           >
             <div className="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-[var(--border-color)] mb-6 shadow-lg">
-              <img src={lensLogo} alt="Lens 聆诉" className="w-12 h-12 sm:w-16 sm:h-16 object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(1382%) hue-rotate(119deg) brightness(96%) contrast(92%) drop-shadow(0 0 4px rgba(16, 185, 129, 0.5))' }} />
+              <img src={lensLogo} alt={t('app.name')} className="w-12 h-12 sm:w-16 sm:h-16 object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(1382%) hue-rotate(119deg) brightness(96%) contrast(92%) drop-shadow(0 0 4px rgba(16, 185, 129, 0.5))' }} />
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 tracking-tight text-[var(--text-primary)]">
-              欢迎来到 Lens 聆诉
+              {t('welcomeScreen.title', { appName: t('app.name') })}
             </h1>
             <p className="text-base sm:text-lg lg:text-xl text-[var(--text-muted)] leading-relaxed">
-              这里有九位不同风格的专业 AI / 跨学科顾问。请选择最适合你当下需求的顾问开始互动。
+              {t('welcomeScreen.subtitle')}
             </p>
           </motion.div>
 
@@ -74,7 +76,7 @@ export function WelcomeScreen({ onSelect }: WelcomeScreenProps) {
               </p>
 
               <div className="flex justify-center items-center gap-2 text-xs sm:text-sm font-medium transition-colors w-full mt-auto" style={{ color: persona.hex }}>
-                <span>选择该顾问</span> <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform shrink-0" />
+                <span>{t('welcomeScreen.selectAdvisor')}</span> <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform shrink-0" />
               </div>
             </motion.button>
           )

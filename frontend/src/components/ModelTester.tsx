@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { Loader2, CheckCircle2, XCircle, Zap, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -10,6 +11,7 @@ interface TestState {
 }
 
 export default function ModelTester() {
+  const { t } = useTranslation()
   const [backends, setBackends] = useState<AvailableModel[]>([])
   const [testStates, setTestStates] = useState<Record<string, TestState>>({})
   const [testAllLoading, setTestAllLoading] = useState(false)
@@ -40,7 +42,7 @@ export default function ModelTester() {
             status: "error",
             backend,
             model: "(unknown)",
-            error: e instanceof Error ? e.message : "请求失败",
+            error: e instanceof Error ? e.message : t('modelTester.requestFailed'),
             latency_ms: 0,
           },
         },
@@ -69,10 +71,10 @@ export default function ModelTester() {
         <div>
           <h2 className="font-semibold text-sm flex items-center gap-2">
             <Zap className="w-4 h-4" />
-            模型连通性测试
+            {t('modelTester.title')}
           </h2>
           <p className="text-xs text-muted-foreground mt-1">
-            向每个后端发送简短测试消息，验证 API Key 和模型是否可用
+            {t('modelTester.description')}
           </p>
         </div>
         <Button
@@ -83,17 +85,17 @@ export default function ModelTester() {
           {testAllLoading ? (
             <>
               <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
-              测试中...
+              {t('modelTester.testing')}
             </>
           ) : (
-            "全部测试"
+            t('modelTester.testAll')
           )}
         </Button>
       </div>
 
       {backends.length === 0 && (
         <div className="text-xs text-muted-foreground text-center py-4">
-          未发现已配置的模型后端
+          {t('modelTester.noBackends')}
         </div>
       )}
 
@@ -143,7 +145,7 @@ export default function ModelTester() {
                     {state?.loading ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
                     ) : (
-                      "测试"
+                      t('modelTester.test')
                     )}
                   </Button>
                 </div>
@@ -154,7 +156,7 @@ export default function ModelTester() {
                 <div className="mt-2 pt-2 border-t border-border/50">
                   {result.status === "ok" ? (
                     <div className="text-xs text-green-700">
-                      <span className="font-medium">回复：</span>
+                      <span className="font-medium">{t('modelTester.response')}</span>
                       <span className="ml-1">
                         {(result.response || "")
                           .replace(/<think>[\s\S]*?<\/think>\s*/g, "")
@@ -165,7 +167,7 @@ export default function ModelTester() {
                     </div>
                   ) : (
                     <div className="text-xs text-red-700">
-                      <span className="font-medium">错误：</span>
+                      <span className="font-medium">{t('modelTester.error')}</span>
                       <span className="ml-1 break-all">{result.error?.slice(0, 300)}</span>
                     </div>
                   )}
@@ -181,11 +183,11 @@ export default function ModelTester() {
         <div className="flex items-center gap-4 pt-2 text-xs text-muted-foreground">
           <span>
             <CheckCircle2 className="w-3 h-3 inline mr-1 text-green-500" />
-            {Object.values(testStates).filter((s) => s.result?.status === "ok").length} 通过
+            {Object.values(testStates).filter((s) => s.result?.status === "ok").length} {t('modelTester.pass')}
           </span>
           <span>
             <XCircle className="w-3 h-3 inline mr-1 text-red-500" />
-            {Object.values(testStates).filter((s) => s.result?.status === "error").length} 失败
+            {Object.values(testStates).filter((s) => s.result?.status === "error").length} {t('modelTester.fail')}
           </span>
         </div>
       )}

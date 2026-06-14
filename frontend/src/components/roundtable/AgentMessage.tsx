@@ -19,8 +19,8 @@ import { TypingDots } from './TypingDots'
 
 interface AgentMessageProps {
   agent: AgentMessageData
-  /** phase 标签：'独立视角' / '看到同伴后的回应' */
-  phaseLabel?: '🧠 独立视角' | '🔄 看到同伴后的回应'
+  /** phase 标签 */
+  phaseLabel?: string
   /** 紧凑模式：三列并列布局下使用，卸载 phaseLabel、变小 padding */
   compact?: boolean
   className?: string

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { api, type AssessmentResult } from '../lib/api'
 import {
@@ -38,6 +39,7 @@ export function AssessmentPage() {
   const [conflictChoice, setConflictChoice] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<AssessmentResult | null>(null)
+  const { t } = useTranslation()
   const [injectEnabled, setInjectEnabled] = useState(false)
   const [togglingInject, setTogglingInject] = useState(false)
 
@@ -171,10 +173,10 @@ export function AssessmentPage() {
   const renderResult = () => {
     if (!result) return null
     const resultSections = [
-      { key: 'phq2', icon: Brain, color: 'violet', title: '抑郁筛查 (PHQ-2)', label: result.phq2.label, score: `${result.phq2.total}/6`, desc: result.phq2.suggestion, level: result.phq2.level },
-      { key: 'gad2', icon: Shield, color: 'amber', title: '焦虑筛查 (GAD-2)', label: result.gad2.label, score: `${result.gad2.total}/6`, desc: result.gad2.suggestion, level: result.gad2.level },
-      { key: 'att', icon: Heart, color: 'rose', title: '依恋风格', label: result.attachment.label, score: '', desc: result.attachment.description, level: result.attachment.dominant },
-      { key: 'conf', icon: Swords, color: 'sky', title: '冲突处理模式', label: result.conflict.label, score: '', desc: result.conflict.description, level: result.conflict.mode },
+      { key: 'phq2', icon: Brain, color: 'violet', title: t('assessment.phq2'), label: result.phq2.label, score: `${result.phq2.total}/6`, desc: result.phq2.suggestion, level: result.phq2.level },
+      { key: 'gad2', icon: Shield, color: 'amber', title: t('assessment.gad2'), label: result.gad2.label, score: `${result.gad2.total}/6`, desc: result.gad2.suggestion, level: result.gad2.level },
+      { key: 'att', icon: Heart, color: 'rose', title: t('assessment.attachment'), label: result.attachment.label, score: '', desc: result.attachment.description, level: result.attachment.dominant },
+      { key: 'conf', icon: Swords, color: 'sky', title: t('assessment.conflict'), label: result.conflict.label, score: '', desc: result.conflict.description, level: result.conflict.mode },
     ]
     return (
       <div className="space-y-4">
@@ -182,7 +184,7 @@ export function AssessmentPage() {
           <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-3">
             <Check className="w-8 h-8 text-emerald-500" />
           </div>
-          <h3 className="text-lg font-bold text-[var(--text-primary)]">测评完成</h3>
+          <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('assessment.completed')}</h3>
         </div>
 
         {/* Inject toggle */}
@@ -190,8 +192,8 @@ export function AssessmentPage() {
           <div className="flex items-start gap-3 min-w-0">
             <MessageSquareShare className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-[var(--text-primary)]">将测评结果注入对话</p>
-              <p className="text-[11px] text-[var(--text-muted)] mt-0.5">开启后，AI 顾问会参考你的筛查和风格信息来调整回复方式。关闭后对话不受测评结果影响。</p>
+              <p className="text-sm font-medium text-[var(--text-primary)]">{t('assessment.injectResults')}</p>
+              <p className="text-[11px] text-[var(--text-muted)] mt-0.5">{t('assessment.injectDesc')}</p>
             </div>
           </div>
           <button type="button" role="switch" aria-checked={injectEnabled}
@@ -220,7 +222,7 @@ export function AssessmentPage() {
         })}
         <button onClick={handleRetake}
           className="w-full flex items-center justify-center gap-2 mt-4 py-3 rounded-xl border border-[var(--border-color)] text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-colors">
-          <RotateCcw className="w-4 h-4" /> 重新测评
+          <RotateCcw className="w-4 h-4" /> {t('assessment.retake')}
         </button>
       </div>
     )
@@ -234,7 +236,7 @@ export function AssessmentPage() {
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-[12px] text-[var(--text-secondary)] flex items-start gap-3">
           <Info className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
-          <span>本测评仅供筛查参考，不构成诊断。筛查阳性建议进一步评估，必要时寻求专业帮助。</span>
+          <span>{t('assessment.disclaimer')}</span>
         </div>
 
         {step !== 'result' && sectionKeys.length > 0 && (
@@ -256,7 +258,7 @@ export function AssessmentPage() {
                   </div>
                   <div>
                     <h2 className="text-base font-bold text-[var(--text-primary)]">{currentSection.title}</h2>
-                    <p className="text-[11px] text-[var(--text-muted)]">第 {stepIdx + 1} / {sectionKeys.length} 步</p>
+                    <p className="text-[11px] text-[var(--text-muted)]">{t('assessment.step', { current: stepIdx + 1, total: sectionKeys.length })}</p>
                   </div>
                 </div>
                 {!isConflict && (
@@ -276,11 +278,11 @@ export function AssessmentPage() {
           <div className="flex items-center justify-between">
             <button onClick={handlePrev} disabled={stepIdx === 0}
               className="flex items-center gap-1 px-4 py-2 rounded-xl text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-30 transition-colors">
-              <ChevronLeft className="w-4 h-4" /> 上一步
+              <ChevronLeft className="w-4 h-4" /> {t('assessment.prev')}
             </button>
             <button onClick={handleNext} disabled={!canNext() || submitting}
               className="flex items-center gap-1 px-5 py-2.5 rounded-xl text-sm font-medium bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50 transition-colors shadow-sm">
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : isLastSection ? <><Check className="w-4 h-4" /> 提交测评</> : <>下一步 <ChevronRight className="w-4 h-4" /></>}
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : isLastSection ? <><Check className="w-4 h-4" /> {t('assessment.submit')}</> : <>{t('assessment.next')} <ChevronRight className="w-4 h-4" /></>}
             </button>
           </div>
         )}

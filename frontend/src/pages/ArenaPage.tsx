@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { defaultArenaScores, type ArenaVote, type ArenaScores } from '../stores/useArenaStore'
 import { api, type AvailableModel } from '../lib/api'
@@ -24,25 +25,25 @@ const mkKey = (m: AvailableModel) => `${m.backend}::${m.model}`
 // 2026-04-18：合并原「流派对比(agent_type)」与「视角碰撞(perspective)」为统一的「视角碰撞」
 // 'agent_type' 字面量保留在类型中仅为兼容历史会话 JSON
 type CompareMode = 'model' | 'perspective' | 'agent_type'
-const COMPARE_MODES: { value: Exclude<CompareMode, 'agent_type'>; label: string }[] = [
-  { value: 'model', label: '模型对决' },
-  { value: 'perspective', label: '视角碰撞' },
+const COMPARE_MODES: { value: Exclude<CompareMode, 'agent_type'>; labelKey: string }[] = [
+  { value: 'model', labelKey: 'arena.modeModel' },
+  { value: 'perspective', labelKey: 'arena.modePerspective' },
 ]
 
 const DIMENSIONS = [
-  { key: 'empathy', label: '共情', tip: '是否真正理解你的感受' },
-  { key: 'depth', label: '深度', tip: '分析是否有洞察力' },
-  { key: 'practicality', label: '实用', tip: '建议是否具体可执行' },
-  { key: 'professionalism', label: '专业', tip: '是否符合咨询专业规范' },
-  { key: 'fluency', label: '流畅', tip: '语言是否自然流畅' },
+  { key: 'empathy', labelKey: 'arena.dimensions.empathy' },
+  { key: 'depth', labelKey: 'arena.dimensions.depth' },
+  { key: 'practicality', labelKey: 'arena.dimensions.practicality' },
+  { key: 'professionalism', labelKey: 'arena.dimensions.professionalism' },
+  { key: 'fluency', labelKey: 'arena.dimensions.fluency' },
 ] as const
 
-const VOTE_OPTIONS: { value: ArenaVote; label: string }[] = [
-  { value: 'a_win', label: 'A 更好' },
-  { value: 'b_win', label: 'B 更好' },
-  { value: 'tie', label: '平局' },
-  { value: 'both_good', label: '都好' },
-  { value: 'both_bad', label: '都差' },
+const VOTE_OPTIONS: { value: ArenaVote; labelKey: string }[] = [
+  { value: 'a_win', labelKey: 'arena.voteOptions.aWin' },
+  { value: 'b_win', labelKey: 'arena.voteOptions.bWin' },
+  { value: 'tie', labelKey: 'arena.voteOptions.tie' },
+  { value: 'both_good', labelKey: 'arena.voteOptions.bothGood' },
+  { value: 'both_bad', labelKey: 'arena.voteOptions.bothBad' },
 ]
 
 interface Round {
@@ -64,6 +65,7 @@ interface ArenaSessionSummary { id: string; title: string; rounds: number; time:
 type SoloSide = null | 'a' | 'b'
 
 export function ArenaPage() {
+  const { t } = useTranslation()
   const [compareMode, setCompareMode] = useState<CompareMode>('model')
   const [personaA, setPersonaA] = useState<Persona>(PERSONAS[0])
   const [personaB, setPersonaB] = useState<Persona>(PERSONAS.length > 1 ? PERSONAS[1] : PERSONAS[0])
@@ -318,7 +320,7 @@ export function ArenaPage() {
             isRevealed ? (
               <span className="text-[11px] text-emerald-500">{sidePersona.name}</span>
             ) : (
-              <span className="text-[var(--text-muted)]">{isPerspectiveMode ? '匿名视角' : '匿名流派'}</span>
+              <span className="text-[var(--text-muted)]">{isPerspectiveMode ? t('arena.anonymousPerspective') : t('arena.anonymousSchool')}</span>
             )
           ) : isRevealed && contestants ? (
             <select
@@ -337,15 +339,15 @@ export function ArenaPage() {
               ))}
             </select>
           ) : (
-            <span className="text-[var(--text-muted)]">匿名模型</span>
+            <span className="text-[var(--text-muted)]">{t('arena.anonymousModel')}</span>
           )}
         </div>
         <div className="flex items-center gap-1 shrink-0">
           {rounds.length >= 1 && soloSide === null && (
             <button onClick={() => handleSoloSelect(side)}
               className="text-[10px] px-1.5 py-0.5 rounded border border-[var(--border-color)] hover:bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
-              title={`只保留 ${side.toUpperCase()}`}>
-              选择
+              title={`Keep ${side.toUpperCase()} only`}>
+              {t('arena.select')}
             </button>
           )}
         </div>
@@ -371,16 +373,16 @@ export function ArenaPage() {
             </div>
             <div className="max-w-[90%] min-w-0">
               <span className="text-xs font-semibold px-1 mb-1 block" style={{ color: persona.hex }}>
-                {soloSide ? persona.name : `回复 ${side.toUpperCase()}`}
+                {soloSide ? persona.name : t('arena.reply', { side: side.toUpperCase() })}
               </span>
               <div className="px-5 py-4 text-[15px] leading-relaxed bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-2xl rounded-tl-sm shadow-sm break-words">
                 <MarkdownContent content={side === 'a' ? rd.responseA : rd.responseB} isUser={false} />
               </div>
               {rd.crisisLevel === 'RED' && (
-                <span className="text-[10px] text-red-500 mt-1 block pl-1">已触发危机干预（本轮不参与评分）</span>
+                <span className="text-[10px] text-red-500 mt-1 block pl-1">{t('arena.crisisTriggered')}</span>
               )}
               {rd.remark && side === 'a' && (
-                <span className="text-[10px] text-[var(--text-muted)] mt-1 block pl-1">评分备注：{rd.remark}</span>
+                <span className="text-[10px] text-[var(--text-muted)] mt-1 block pl-1">{t('arena.voteRemark', { remark: rd.remark })}</span>
               )}
               {(revealToggle || rd.revealed) && contestants && (
                 <span className="text-[10px] text-emerald-500/70 mt-1 block pl-1">{side.toUpperCase()} = {lbl(side === 'a' ? contestants.a : contestants.b, '?')}</span>
@@ -398,11 +400,11 @@ export function ArenaPage() {
           </div>
           <div className="max-w-[85%] min-w-[80px]">
             <span className="text-[10px] font-semibold px-1 mb-1 block" style={{ color: persona.hex }}>
-              {soloSide ? persona.name : `等待 ${side.toUpperCase()} 响应`}
+              {soloSide ? persona.name : t('arena.waitingFor', { side: side.toUpperCase() })}
             </span>
             <div className="px-5 py-3 h-[52px] flex items-center bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl rounded-tl-sm shadow-sm">
               <TypingIndicator
-                text={side === 'a' ? '视点建构中...' : '深度对比中...'}
+                text={side === 'a' ? t('arena.viewpointConstructing') : t('arena.depthComparing')}
                 color={persona.hex}
                 compact
               />
@@ -421,7 +423,7 @@ export function ArenaPage() {
             <button onClick={() => setShowStats(false)}
               className="w-full flex items-center justify-center gap-2 border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-xl transition-all py-2.5 px-4 hover:bg-[var(--bg-secondary)]">
               <SplitSquareHorizontal className="w-4 h-4" />
-              <span className="text-sm font-medium">返回对比</span>
+              <span className="text-sm font-medium">{t('arena.returnToCompare')}</span>
             </button>
           </div>
         </div>
@@ -440,34 +442,34 @@ export function ArenaPage() {
           <button onClick={handleNewSession}
             className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20 border border-emerald-500/20 text-emerald-600 rounded-xl transition-all py-2.5 px-4 shadow-sm group">
             <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-            <span className="font-semibold text-sm">新建对比</span>
+            <span className="font-semibold text-sm">New Comparison</span>
           </button>
           <button onClick={() => setShowStats(true)}
             className="w-full flex items-center justify-center gap-2 border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-xl transition-all py-2 px-4 hover:bg-[var(--bg-secondary)]">
             <BarChart3 className="w-4 h-4" />
-            <span className="text-xs font-medium">Elo 排名</span>
+            <span className="text-xs font-medium">Elo Ranking</span>
           </button>
         </div>
         <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-1">
-          <div className="px-2 mb-3 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">对比历史</div>
-          {arenaSessions.length === 0 && <p className="text-xs text-[var(--text-muted)] px-2">暂无历史记录</p>}
+          <div className="px-2 mb-3 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Comparison History</div>
+          {arenaSessions.length === 0 && <p className="text-xs text-[var(--text-muted)] px-2">No history yet</p>}
           {arenaSessions.map(s => (
             <div key={s.id} onClick={() => handleLoadSession(s.id)}
               className={`group relative rounded-xl transition-all duration-300 cursor-pointer border p-3 flex items-start gap-3 ${arenaSessionId === s.id ? 'bg-emerald-500/5 border-emerald-500/20 shadow-sm' : 'bg-transparent border-transparent hover:bg-[var(--bg-secondary)]'}`}>
               <div className="mt-1.5 w-2 h-2 rounded-full shrink-0 bg-emerald-500" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between">
-                  <h3 className="text-sm font-medium truncate mb-1 pr-2 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]">{s.title || '未命名'}</h3>
+                  <h3 className="text-sm font-medium truncate mb-1 pr-2 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]">{s.title || t('topNav.unnamed')}</h3>
                   <SessionOptions 
                     sessionId={s.id}
-                    initialTitle={s.title || '未命名'}
+                    initialTitle={s.title || t('topNav.unnamed')}
                     onRename={async (id, title) => { await api.renameArenaSession(id, title); fetchArenaSessions(); }}
                     onDelete={async (id) => { await api.deleteArenaSession(id); fetchArenaSessions(); if (arenaSessionId === id) handleNewSession(); }}
                     className="-mt-1 -mr-1"
                   />
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-[10px] text-[var(--text-muted)]">{s.rounds} 轮</span>
+                  <span className="text-[10px] text-[var(--text-muted)]">{s.rounds} rounds</span>
                   <div className="flex items-center gap-1 text-[var(--text-muted)]"><Clock className="w-3 h-3" /><span>{s.time}</span></div>
                 </div>
               </div>
@@ -515,7 +517,7 @@ export function ArenaPage() {
                 }}
                   disabled={!!arenaSessionId}
                   className={`px-2.5 py-1 text-[10px] font-semibold rounded-md transition-colors ${compareMode === cm.value ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-muted)]'} ${arenaSessionId ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                  {cm.label}
+                  {t(cm.labelKey)}
                 </button>
               ))}
             </div>
@@ -690,14 +692,14 @@ export function ArenaPage() {
               className="shrink-0 mx-6 mb-1 rounded-2xl border border-emerald-500/20 bg-[var(--bg-card)] p-4 space-y-3 shadow-lg relative z-10">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-sm font-semibold text-[var(--text-primary)]">第 {pendingVoteIdx + 1} 轮打分</h4>
-                  <p className="text-[10px] text-[var(--text-muted)] mt-0.5">五维评分范围：1-10 分</p>
+                  <h4 className="text-sm font-semibold text-[var(--text-primary)]">Round {pendingVoteIdx + 1} Scoring</h4>
+                  <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Five-dimension range: 1-10</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={handleSkipVote} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]">跳过</button>
+                  <button onClick={handleSkipVote} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]">Skip</button>
                   <button onClick={handleSubmitVote}
                     className="flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-500 text-white text-xs font-medium hover:bg-emerald-600 transition-colors">
-                    <Check className="w-3 h-3" /> 提交评分
+                    <Check className="w-3 h-3" /> Submit Vote
                   </button>
                 </div>
               </div>
@@ -705,17 +707,17 @@ export function ArenaPage() {
                 {VOTE_OPTIONS.map(opt => (
                   <button key={opt.value} onClick={() => setSelectedVote(opt.value)}
                     className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${selectedVote === opt.value ? 'border-emerald-500 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'border-[var(--border-color)] hover:bg-[var(--bg-secondary)] text-[var(--text-secondary)]'}`}>
-                    {opt.label}
+                    {t(opt.labelKey)}
                   </button>
                 ))}
               </div>
               <div className={soloSide ? '' : 'grid grid-cols-2 gap-4'}>
                 {(soloSide ? [soloSide] : ['a', 'b'] as const).map(side => (
                   <div key={side}>
-                    <p className="text-xs text-[var(--text-muted)] mb-1">{side.toUpperCase()} 的评分 <span className="text-[10px]">（1-10）</span></p>
+                    <p className="text-xs text-[var(--text-muted)] mb-1">{side.toUpperCase()} Scoring <span className="text-[10px]">(1-10)</span></p>
                     {DIMENSIONS.map(d => (
                       <div key={d.key} className="flex items-center gap-2 mb-1">
-                        <span className="w-8 text-[11px] text-[var(--text-secondary)]" title={d.tip}>{d.label}</span>
+                        <span className="w-8 text-[11px] text-[var(--text-secondary)]">{t(d.labelKey)}</span>
                         <input type="range" min={1} max={10} value={(side === 'a' ? curA : curB)[d.key]}
                           onChange={e => handleScoreChange(side as 'a' | 'b', d.key, parseInt(e.target.value, 10))}
                           className="flex-1 h-1.5 rounded-full appearance-none bg-[var(--border-color)] accent-emerald-500" />

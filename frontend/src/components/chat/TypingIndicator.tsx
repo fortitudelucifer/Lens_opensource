@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 
 interface TypingIndicatorProps {
   /** 顾问名字；传入时文案为 `{personaName} 正在思考中...` */
@@ -24,7 +25,8 @@ export function TypingIndicator({
   color = '#10b981', // emerald-500
   compact = false,
 }: TypingIndicatorProps) {
-  const label = text ?? (personaName ? `${personaName} 正在思考中...` : '正在思考中...')
+  const { t } = useTranslation()
+  const label = text ?? (personaName ? t('chat.typingIndicator.advisorThinking', { name: personaName }) : t('chat.typingIndicator.thinking'))
   const dotColor = `${color}99` // ~60% alpha
   const dotSize = compact ? 'w-1.5 h-1.5' : 'w-2 h-2'
 

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Send, Paperclip } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 
@@ -9,6 +10,7 @@ interface BottomInputProps {
 }
 
 export function BottomInput({ onSend, disabled, isThinking }: BottomInputProps) {
+  const { t } = useTranslation()
   const [content, setContent] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -51,7 +53,7 @@ export function BottomInput({ onSend, disabled, isThinking }: BottomInputProps) 
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={disabled}
-            placeholder={isThinking ? '顾问正在思考中...' : '输入你的问题或感受 (Enter 发送, Shift+Enter 换行)'}
+            placeholder={isThinking ? t('chat.bottomInput.thinkingPlaceholder') : t('chat.bottomInput.placeholder')}
             className="w-full max-h-[200px] min-h-[56px] py-4 pl-5 pr-14 bg-transparent resize-none outline-none text-[var(--text-primary)] placeholder-[var(--text-muted)] scrollbar-thin disabled:opacity-50"
             rows={1}
           />
@@ -68,7 +70,7 @@ export function BottomInput({ onSend, disabled, isThinking }: BottomInputProps) 
         </div>
       </div>
       <p className="text-center text-[10px] text-[var(--text-muted)] mt-3 hidden md:block">
-        内容仅供参考，AI 顾问不能替代专业医疗建议。
+        {t('chat.bottomInput.disclaimer')}
       </p>
     </div>
   )

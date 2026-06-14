@@ -1,4 +1,5 @@
 import { Plus, Clock } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import type { Session } from '../../types'
 
 type SessionWithStatus = Session & { communication_status?: string }
@@ -15,6 +16,7 @@ interface ChatSidebarProps {
 }
 
 export function ChatSidebar({ sessions, currentSessionId, onSessionSelect, onNewChat, onRenameSession, onDeleteSession }: ChatSidebarProps) {
+  const { t } = useTranslation()
   return (
     <div className="w-72 border-r border-[var(--border-color)] bg-[var(--bg-card)] flex flex-col h-full z-10 hidden lg:flex">
       {/* New Chat Button */}
@@ -24,14 +26,14 @@ export function ChatSidebar({ sessions, currentSessionId, onSessionSelect, onNew
           className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20 border border-emerald-500/20 text-emerald-600 rounded-xl transition-all py-3 px-4 shadow-sm group"
         >
           <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-          <span className="font-semibold text-sm">开始新互动</span>
+          <span className="font-semibold text-sm">{t('chat.sidebar.newChat')}</span>
         </button>
       </div>
 
       {/* Session List */}
       <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-1">
         <div className="px-2 mb-3 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
-          近期会话
+          {t('chat.sidebar.recentSessions')}
         </div>
 
         {sessions.map((session) => {
@@ -78,7 +80,7 @@ export function ChatSidebar({ sessions, currentSessionId, onSessionSelect, onNew
                 </div>
                 {(session as SessionWithStatus).communication_status && (
                   <p className="text-[10px] text-[var(--text-muted)] mt-1">
-                    交流状态：{(session as SessionWithStatus).communication_status}
+                    {t('chat.sidebar.commStatus', { status: (session as SessionWithStatus).communication_status })}
                   </p>
                 )}
               </div>

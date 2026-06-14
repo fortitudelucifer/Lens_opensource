@@ -72,11 +72,36 @@
   },
   "consent": {
     "title": "Informed Consent",
-    "agreeButton": "I have read and agree"
+    "agreeButton": "I have read and agree",
+    "productPosition": "Product Positioning",
+    "productPositionContent": "Lens is an AI-powered relationship pattern analysis and emotional support tool.\n\n⚠️ This tool is not a medical device and does not provide psychological diagnosis, treatment, or prescription advice.\n⚠️ If you are experiencing severe psychological distress, please seek help from a licensed counselor or psychiatrist.",
+    "aiBoundaries": "AI Capabilities & Limits",
+    "aiBoundariesContent": "· AI analysis is based on limited text input and cannot replace face-to-face professional assessment.\n· AI may produce inaccurate or inappropriate responses; please use your own judgment.\n· All suggestions are for reference only and do not constitute professional psychological counseling advice.",
+    "privacy": "Privacy Protection",
+    "privacyContent": "· Your conversation content is stored only on your local device and will not be uploaded to any server.\n· You can delete all conversation records at any time.\n· Anonymization ensures that real identity information in original chat records will not be leaked.",
+    "usageCommitment": "Usage Commitment",
+    "usageCommitmentContent": "By continuing to use, you confirm that you:\n✓ Understand the non-medical positioning of this tool\n✓ Understand that AI analysis is for reference only and does not replace professional services\n✓ Agree to call professional hotlines in case of emergency psychological crisis\n✓ Are at least 18 years old (or have obtained guardian consent)",
+    "userStatus": "User Acknowledgment",
+    "userStatusContent": "Since this platform adopts a fully local private deployment strategy, your continued use of advisor services on this device constitutes your reading, understanding, and acceptance of the Terms of Use and Informed Consent listed on this page. The platform will not send your consent record logs to the cloud.",
+    "localStorageStatus": "Local storage status:"
   },
   "privacy": {
     "title": "Privacy Policy",
-    "backToSettings": "Back to Settings"
+    "backToSettings": "Back to Settings",
+    "description": "Lens is a research-oriented AI counseling assistant in the mental health field. We treat your privacy as a product baseline; this page details data flow, storage methods, and your rights.",
+    "lastUpdated": "Last updated: 2026-04-18",
+    "disclaimerTitle": "Usage Disclaimer (Important)",
+    "dataLifecycleTitle": "Data Lifecycle",
+    "collectTitle": "2.1 Collection",
+    "processTitle": "2.2 Processing",
+    "storeTitle": "2.3 Storage",
+    "deleteTitle": "2.4 Deletion",
+    "aiTransparencyTitle": "AI Transparency Statement",
+    "userRightsTitle": "Your Rights",
+    "footer": {
+      "line1": "Lens · Research-oriented Mental Health AI Assistant",
+      "line2": "Privacy contact: Leave a message via the Feedback section"
+    }
   },
   "dashboard": {
     "title": "Overview",
@@ -89,7 +114,260 @@
       "totalChunks": "Total Chunks"
     }
   },
+  "knowledgeCenter": {
+    "title": "Knowledge Center",
+    "subtitle": "Knowledge Center — Index and overview of all professional knowledge bases",
+    "stats": {
+      "entries": "Knowledge Entries",
+      "activeDomains": "Active Domains",
+      "planned": "Planned"
+    },
+    "status": {
+      "active": "Active",
+      "planned": "Planned"
+    },
+    "entriesSuffix": "entries",
+    "emptyState": "🔮 Knowledge base for this domain is under planning. Stay tuned.",
+    "ragNote": "Automatically injected into dialogue context via _search_faq()",
+    "roadmap": {
+      "title": "📋 Knowledge Base Roadmap",
+      "current": "Current: {{totalEntries}} FAQ entries covering {{activeCount}} domains (Communication/Crisis/EFT/Interdisciplinary)",
+      "near": "Near term: CBT/DBT/Gottman therapy manual FAQ",
+      "future": "Long term: GraphRAG knowledge graph (after FAQ > 200, multi-hop reasoning across disciplines)"
+    },
+    "categories": {
+      "perspectives": { "name": "S6 Interdisciplinary Perspectives", "description": "Sociology, philosophy, game theory, and cultural studies — four disciplinary lenses for relationship issues" },
+      "communication": { "name": "Communication Skills", "description": "Core communication methodologies including Nonviolent Communication" },
+      "crisis": { "name": "Crisis Intervention", "description": "Crisis response resources including grounding techniques and stabilization" },
+      "eftResources": { "name": "EFT Emotion Focused", "description": "Sue Johnson Emotion Focused Therapy Tango nine-step process" },
+      "therapyManuals": { "name": "Therapy Manuals", "description": "Systematic therapy method manuals (CBT, DBT, etc.)" },
+      "graphrag": { "name": "GraphRAG Knowledge Graph", "description": "Multi-hop reasoning knowledge graph for interdisciplinary concept associations (NetworkX → Neo4j)" }
+    }
+  },
+  "welcomeScreen": {
+    "title": "Welcome to {{appName}}",
+    "subtitle": "Nine professional AI / interdisciplinary advisors with different styles. Choose the one that best fits your current needs to start the conversation.",
+    "selectAdvisor": "Select this advisor"
+  },
+  "topNav": {
+    "searchPlaceholder": "Search records, contacts...",
+    "searching": "Searching...",
+    "noResults": "No matching sessions found (supports title and full-text matching)",
+    "unnamed": "Unnamed",
+    "communicationStatus": "Comm Status: {{status}}",
+    "matchType": {
+      "title": "Title",
+      "fulltext": "Full-text",
+      "both": "Title+Full-text"
+    },
+    "source": {
+      "chat": "Immersive Chat",
+      "arena": "Dual Mirror",
+      "sample": "Sample Data"
+    },
+    "statusFilters": {
+      "all": "All",
+      "inProgress": "In Progress",
+      "pendingScore": "Pending Score",
+      "scored": "Scored",
+      "pendingReply": "Pending Reply",
+      "crisisIntervention": "Crisis Intervention"
+    }
+  },
+  "consentModal": {
+    "modalTitle": "Terms of Use & Informed Consent",
+    "modalSubtitle": "Please read the following carefully before continuing",
+    "assessmentPrompt": {
+      "title": "We recommend completing the communication assessment first",
+      "subtitle": "About 1 minute to help AI understand you better",
+      "description": "After completing the brief PHQ-2 + GAD-2 screening and attachment/conflict pattern self-assessment, the AI advisor will adjust its response style based on your profile. You can skip or complete it later at any time.",
+      "skip": "Later",
+      "startNow": "Start Now"
+    },
+    "decline": "Decline",
+    "accept": "I have read and understood the above"
+  },
+  "chat": {
+    "unnamedSession": "Unnamed Session",
+    "sampleTag": "Sample",
+    "localTag": "Local",
+    "fromPublicSamples": "From public/chat-samples",
+    "importRealJSON": "Import real conversation JSON",
+    "uploadLocalJSON": "Upload local JSON",
+    "uploadHint": "Upload a local JSON first, or register sample files in public/chat-samples/manifest.json.",
+    "noModelResponse": "Model returned no content. Please switch models and retry.",
+    "modelCallFailed": "Model call failed",
+    "networkError": "Network error. Please check the backend service.",
+    "systemError": "System error",
+    "exportDialogTitle": "Export Conversation",
+    "bottomInput": {
+      "placeholder": "Type your question or feelings (Enter to send, Shift+Enter for new line)",
+      "thinkingPlaceholder": "Advisor is thinking...",
+      "disclaimer": "Content is for reference only. AI advisors cannot replace professional medical advice."
+    },
+    "sidebar": {
+      "newChat": "Start New Chat",
+      "recentSessions": "Recent Sessions",
+      "commStatus": "Comm Status: {{status}}"
+    },
+    "topBar": {
+      "model": "Model",
+      "localModels": "Local Models",
+      "cloudOfficial": "Cloud Official",
+      "cloudProxy": "Cloud Proxy",
+      "chatHistory": "Chat History",
+      "knowledge": "Knowledge",
+      "modeListen": "Listen Mode",
+      "modeDeep": "Deep Mode",
+      "clearChat": "Clear Current Chat",
+      "eftStages": {
+        "exploration": "Exploration",
+        "comforting": "Comforting",
+        "action": "Action"
+      }
+    },
+    "typingIndicator": {
+      "thinking": "Thinking...",
+      "advisorThinking": "{{name}} is thinking..."
+    },
+    "thinkingUI": {
+      "modelThinking": "Model Thinking Process"
+    }
+  },
+  "arena": {
+    "modeModel": "Model Duel",
+    "modePerspective": "Perspective Collision",
+    "dimensions": {
+      "empathy": "Empathy",
+      "depth": "Depth",
+      "practicality": "Practicality",
+      "professionalism": "Professionalism",
+      "fluency": "Fluency"
+    },
+    "voteOptions": {
+      "aWin": "A Better",
+      "bWin": "B Better",
+      "tie": "Tie",
+      "bothGood": "Both Good",
+      "bothBad": "Both Bad"
+    },
+    "anonymousPerspective": "Anonymous Perspective",
+    "anonymousSchool": "Anonymous School",
+    "anonymousModel": "Anonymous Model",
+    "select": "Select",
+    "reply": "Reply {{side}}",
+    "waitingFor": "Waiting for {{side}} response",
+    "viewpointConstructing": "Constructing viewpoint...",
+    "depthComparing": "Deep comparison...",
+    "returnToCompare": "Return to Compare",
+    "crisisTriggered": "Crisis intervention triggered (not scored this round)",
+    "voteRemark": "Remark: {{remark}}",
+    "safetyIntervention": "Safety intervention triggered, not scored this round",
+    "loadFailed": "Load failed"
+  },
+  "assessment": {
+    "phq2": "Depression Screening (PHQ-2)",
+    "gad2": "Anxiety Screening (GAD-2)",
+    "attachment": "Attachment Style",
+    "conflict": "Conflict Mode",
+    "completed": "Assessment Completed",
+    "injectResults": "Inject results into conversation",
+    "injectDesc": "When enabled, the AI advisor will reference your screening and style info to adjust responses. When disabled, conversation is unaffected.",
+    "retake": "Retake Assessment",
+    "disclaimer": "This assessment is for screening reference only and does not constitute a diagnosis. Positive screening suggests further evaluation; seek professional help if needed.",
+    "step": "Step {{current}} / {{total}}",
+    "prev": "Previous",
+    "next": "Next",
+    "submit": "Submit Assessment"
+  },
+  "communicationStatus": {
+    "title": "Communication Status & Progress",
+    "subtitle": "This page summarizes recent conversation nodes and supervision evaluations. Cross-reference multiple perspectives to observe communication pattern evolution.",
+    "loading": "Loading interaction logs...",
+    "noRecords": "No Communication Records",
+    "noRecordsDesc": "Go to Immersive Chat to start a conversation with the AI advisor. The supervision program will automatically generate progress analysis here.",
+    "status": "Status: {{status}}"
+  },
+  "feedback": {
+    "placeholder": "Enter bugs or product suggestions here...",
+    "submitSuccess": "Thank you for your feedback. We have received it and will follow up.",
+    "submitFailed": "Submit failed: {{msg}}",
+    "submitting": "Submitting...",
+    "submitButton": "Submit Feedback",
+    "charCount": "{{count}} chars"
+  },
+  "dataErase": {
+    "title": "Delete All Local Data",
+    "confirmPhrase": "Delete all my data",
+    "description": "This operation will permanently delete the following user data:",
+    "items": {
+      "chatSessions": "All immersive chat sessions",
+      "arenaSessions": "All arena comparison sessions (aggregated Elo stats retained)",
+      "assessments": "All assessment records",
+      "crisisRecords": "Crisis intervention archive records",
+      "feedback": "UI feedback / RAG evaluation records",
+      "preferences": "Browser local preferences (theme / last model selection)"
+    },
+    "retained": "Retained: system config, models, knowledge base, training data (non-personal).",
+    "warning": "This action cannot be undone. To keep important sessions, please use the Export Conversation feature first.",
+    "confirmLabel": "Confirm phrase: please type exactly",
+    "cancel": "Cancel",
+    "deleting": "Deleting...",
+    "confirmDelete": "Confirm Delete",
+    "deleteSuccess": "Deleted {{items}} user data items (~{{kb}} KB). Page will refresh in 2 seconds...",
+    "deleteFailed": "Delete failed: {{msg}}"
+  },
+  "emergency": {
+    "title": "Emergency Help & Support",
+    "subtitle": "If you feel overwhelmed or in crisis, please contact a professional immediately",
+    "hotlineTitle": "24/7 National Crisis Hotline",
+    "hotlineNumber": "400-161-9995",
+    "hotlineNote": "Hope 24/7 psychological crisis intervention hotline (for reference only; please call local professional services in your area, such as 120 for medical emergency / 110 for police)",
+    "guideTitle": "Help Guide",
+    "guideItems": [
+      "Stay safe and do not act on any impulsive harmful behavior.",
+      "Contact a trusted family member or friend and tell them how you feel.",
+      "If you feel you cannot control potential danger, please go to the nearest emergency room immediately."
+    ],
+    "closeButton": "I understand, close"
+  },
+  "modelTester": {
+    "title": "Model Connectivity Test",
+    "description": "Send a short test message to each backend to verify API Key and model availability",
+    "testAll": "Test All",
+    "testing": "Testing...",
+    "noBackends": "No configured model backends found",
+    "test": "Test",
+    "response": "Response: ",
+    "error": "Error: ",
+    "pass": "Pass",
+    "fail": "Fail",
+    "requestFailed": "Request failed"
+  },
   "roundtable": {
-    "title": "Roundtable Discussion"
+    "title": "Roundtable Discussion",
+    "setup": {
+      "heading": "Choose 3 Advisors for a Roundtable Discussion",
+      "description": "They will analyze independently, then read each other's perspectives, and finally the moderator will provide a comprehensive summary. We do not diagnose or decide for you—we only help you see yourself more clearly.",
+      "howToUse": "How to use Roundtable",
+      "quickSelect": "Quick Select",
+      "clear": "Clear",
+      "psychologyGroup": "Psychology Schools",
+      "interdisciplinaryGroup": "Interdisciplinary Perspectives",
+      "selected": "Selected {{count}} / {{max}}",
+      "questionLabel": "Describe the situation you want to discuss",
+      "questionPlaceholder": "For example: After arguing with my partner, we've been in a cold war for three days. I don't know if I'm too sensitive or if they really don't care about me... The more detailed, the better (suggest ≥ 100 words).",
+      "startButton": "Start Roundtable Discussion",
+      "historyTitle": "Roundtable History"
+    },
+    "session": {
+      "notStarted": "Roundtable has not started",
+      "notStartedDesc": "Three advisors are waiting to hear your question · Go back to the previous page to pick 3 perspectives you want to talk to,",
+      "backToSetup": "Back to Setup",
+      "moderatorSummary": "Moderator Summary",
+      "followUpPlaceholder": "Follow-up...",
+      "newDiscussion": "New Discussion",
+      "continueButton": "Continue"
+    }
   }
 }

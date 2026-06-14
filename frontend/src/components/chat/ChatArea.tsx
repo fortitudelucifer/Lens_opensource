@@ -88,7 +88,7 @@ export function ChatArea({ messages, currentPersona, onSendToArena }: ChatAreaPr
                     {isUser && onSendToArena && (
                       <button onClick={() => onSendToArena(msg.content)}
                         className="text-[10px] text-[var(--text-muted)] hover:text-emerald-500 flex items-center gap-0.5 transition-colors"
-                        title="发送到双镜对比">
+                        title="Send to Arena Compare">
                         <SplitSquareHorizontal className="w-3 h-3" />
                       </button>
                     )}

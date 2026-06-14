@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { X, PhoneCall, AlertCircle, HeartHandshake } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -7,6 +8,7 @@ interface EmergencyModalProps {
 }
 
 export function EmergencyModal({ isOpen, onClose }: EmergencyModalProps) {
+  const { t } = useTranslation()
   return (
     <AnimatePresence>
       {isOpen && (
@@ -30,8 +32,8 @@ export function EmergencyModal({ isOpen, onClose }: EmergencyModalProps) {
                   <AlertCircle className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-[var(--text-primary)]">紧急求助与支持</h2>
-                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">当您感到无法承受或有危机情况时，请立即联络专业人士</p>
+                  <h2 className="text-lg font-bold text-[var(--text-primary)]">{t('emergency.title')}</h2>
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">{t('emergency.subtitle')}</p>
                 </div>
               </div>
               <button
@@ -45,26 +47,26 @@ export function EmergencyModal({ isOpen, onClose }: EmergencyModalProps) {
             <div className="p-6 space-y-6">
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                  <PhoneCall className="w-4 h-4 text-emerald-500" /> 24小时全国干预热线
+                  <PhoneCall className="w-4 h-4 text-emerald-500" /> {t('emergency.hotlineTitle')}
                 </h3>
                 <div className="bg-[var(--bg-secondary)] rounded-xl p-4 border border-[var(--border-color)]">
                   <div className="text-2xl font-bold tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">
                     400-161-9995
                   </div>
                   <p className="text-xs text-[var(--text-muted)]">
-                    希望24小时心理危机干预热线（此号码仅供参考，请根据您所在的具体省市拨打当地专业机构电话，如 120 医疗急救 / 110 报警求助）
+                    {t('emergency.hotlineNote')}
                   </p>
                 </div>
               </div>
 
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                  <HeartHandshake className="w-4 h-4 text-violet-500" /> 获取帮助指南
+                  <HeartHandshake className="w-4 h-4 text-violet-500" /> {t('emergency.guideTitle')}
                 </h3>
                <ul className="text-sm text-[var(--text-secondary)] space-y-2 list-disc list-inside bg-[var(--bg-secondary)]/50 p-4 rounded-xl">
-                  <li>保持安全，不要做出任何冲动性伤害行为。</li>
-                  <li>联系身边可以信任的家人或朋友，告诉他们您现在的感受。</li>
-                  <li>如果您认为自己无法控制可能发生的危险，请立即前往最近的急诊室。</li>
+                  <li>{t('emergency.guideItems.0')}</li>
+                  <li>{t('emergency.guideItems.1')}</li>
+                  <li>{t('emergency.guideItems.2')}</li>
                 </ul>
               </div>
             </div>
@@ -74,7 +76,7 @@ export function EmergencyModal({ isOpen, onClose }: EmergencyModalProps) {
                 onClick={onClose}
                 className="px-6 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] rounded-xl text-sm font-semibold transition-colors"
               >
-                我已了解，关闭
+                {t('emergency.closeButton')}
               </button>
             </div>
           </motion.div>

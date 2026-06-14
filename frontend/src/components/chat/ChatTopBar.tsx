@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { MoreHorizontal, Trash2, ArrowLeft, Sparkles, Download } from 'lucide-react'
 import type { Persona, ChatMode } from '../../types'
@@ -49,11 +50,12 @@ export function ChatTopBar({
   hasMessages,
   eftStage,
 }: ChatTopBarProps) {
+  const { t } = useTranslation()
   const Icon = persona.icon
   const EFT_STAGE_LABELS: Record<string, string> = {
-    exploration: '探索阶段',
-    comforting: '安抚阶段',
-    action: '行动阶段',
+    exploration: t('chat.topBar.eftStages.exploration'),
+    comforting: t('chat.topBar.eftStages.comforting'),
+    action: t('chat.topBar.eftStages.action'),
   }
   const selectedModel = models.find((m) => m.key === selectedModelKey)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -112,7 +114,7 @@ export function ChatTopBar({
       <div className="flex items-center gap-4">
         <div className="hidden md:flex items-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-1.5">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-            模型
+            {t('chat.topBar.model')}
           </span>
           <select
             value={selectedModelKey}
@@ -120,7 +122,7 @@ export function ChatTopBar({
             className="h-7 rounded-md border border-transparent bg-transparent px-2 text-xs text-[var(--text-primary)] outline-none transition-colors hover:bg-[var(--bg-card)] focus:border-emerald-500/30"
           >
             {groupedModels.local.length > 0 && (
-              <optgroup label="本地模型">
+              <optgroup label={t('chat.topBar.localModels')}>
                 {groupedModels.local.map((m) => (
                   <option key={m.key} value={m.key}>
                     {m.backend} · {m.model}
@@ -129,7 +131,7 @@ export function ChatTopBar({
               </optgroup>
             )}
             {groupedModels.cloudOfficial.length > 0 && (
-              <optgroup label="云端官方">
+              <optgroup label={t('chat.topBar.cloudOfficial')}>
                 {groupedModels.cloudOfficial.map((m) => (
                   <option key={m.key} value={m.key}>
                     {m.backend} · {m.model}
@@ -138,7 +140,7 @@ export function ChatTopBar({
               </optgroup>
             )}
             {groupedModels.cloudProxy.length > 0 && (
-              <optgroup label="云端代理">
+              <optgroup label={t('chat.topBar.cloudProxy')}>
                 {groupedModels.cloudProxy.map((m) => (
                   <option key={m.key} value={m.key}>
                     {m.backend} · {m.model}
@@ -156,7 +158,7 @@ export function ChatTopBar({
 
         <div className="hidden md:flex items-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-1.5">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-            聊天记录
+            {t('chat.topBar.chatHistory')}
           </span>
           <button
             type="button"
@@ -176,7 +178,7 @@ export function ChatTopBar({
         </div>
         <div className="hidden md:flex items-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-1.5">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-            专业知识
+            {t('chat.topBar.knowledge')}
           </span>
           <button
             type="button"
@@ -209,7 +211,7 @@ export function ChatTopBar({
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
               />
             )}
-            倾听模式
+            {t('chat.topBar.modeListen')}
           </button>
           <button
             onClick={() => onModeChange('deep')}
@@ -224,7 +226,7 @@ export function ChatTopBar({
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
               />
             )}
-            深度互动
+            {t('chat.topBar.modeDeep')}
           </button>
         </div>
 
@@ -248,7 +250,7 @@ export function ChatTopBar({
                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)]"
               >
                 <Trash2 className="h-3.5 w-3.5" />
-                清空当前对话
+                {t('chat.topBar.clearChat')}
               </button>
               <button
                 onClick={() => {
@@ -258,7 +260,7 @@ export function ChatTopBar({
                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)]"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
-                返回顾问选择
+                Back to Advisors
               </button>
               {hasMessages && onExport && (
                 <button
@@ -266,11 +268,11 @@ export function ChatTopBar({
                   className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)]"
                 >
                   <Download className="h-3.5 w-3.5" />
-                  导出对话
+                  {t('chat.exportDialogTitle')}
                 </button>
               )}
               <div className="my-1 h-px bg-[var(--border-color)]" />
-              <p className="px-3 py-1 text-[10px] uppercase tracking-wider text-[var(--text-muted)]">切换顾问类型</p>
+              <p className="px-3 py-1 text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Switch Advisor</p>
               {personaOptions.map((p) => {
                 const PersonaIcon = p.icon
                 return (

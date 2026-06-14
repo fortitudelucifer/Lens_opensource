@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Activity, MessageSquare } from 'lucide-react'
 import { api } from '../lib/api'
 import type { ChatSession } from '../lib/api'
@@ -7,6 +8,7 @@ import { PERSONAS } from '../constants'
 import { SessionOptions } from '../components/shared/SessionOptions'
 
 export function CommunicationStatusPage() {
+  const { t } = useTranslation()
   const [sessions, setSessions] = useState<ChatSession[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -40,11 +42,11 @@ export function CommunicationStatusPage() {
                 <Activity className="w-6 h-6 text-blue-500" />
               </div>
               <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">
-                交流状态与进展分析
+                {t('communicationStatus.title')}
               </h1>
             </div>
             <p className="text-[var(--text-secondary)] text-lg max-w-3xl leading-relaxed">
-              这里汇总了你近期所有互动的对话节点与监督裁判的深度评估。你可以通过多视角的交叉比对，观察沟通模式的演变。
+              {t('communicationStatus.subtitle')}
             </p>
           </div>
         </div>
@@ -52,14 +54,14 @@ export function CommunicationStatusPage() {
         {/* Content */}
         {loading ? (
           <div className="flex justify-center items-center py-20 px-4 text-[var(--text-muted)] animate-pulse">
-            加载交互日志中...
+            {t('communicationStatus.loading')}
           </div>
         ) : sessions.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-16 text-center bg-[var(--bg-card)] rounded-2xl border border-dashed border-[var(--border-color)]">
             <MessageSquare className="w-12 h-12 text-[var(--text-muted)] mb-4 opacity-50" />
-            <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-2">暂无交流记录</h3>
+            <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-2">{t('communicationStatus.noRecords')}</h3>
             <p className="text-[var(--text-secondary)]">
-              请前往“沉浸式互动”开始与AI顾问交流，后台监督程序将自动在这里为你生成对应的进展分析。
+              {t('communicationStatus.noRecordsDesc')}
             </p>
           </div>
         ) : (
@@ -74,7 +76,7 @@ export function CommunicationStatusPage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
                         <h3 className="text-lg font-bold text-[var(--text-primary)] truncate mb-1">
-                          {session.title || '未命名会话'}
+                          {session.title || t('chat.unnamedSession')}
                         </h3>
                         <div className="flex items-center gap-3 text-xs text-[var(--text-muted)]">
                           <div className="flex items-center gap-1">
@@ -87,7 +89,7 @@ export function CommunicationStatusPage() {
                             <>
                               <span>·</span>
                               <span className="px-1.5 py-0.5 rounded bg-[var(--text-primary)]/5 font-medium">
-                                状态：{session.communication_status}
+                                {t('communicationStatus.status', { status: session.communication_status })}
                               </span>
                             </>
                           )}
@@ -95,7 +97,7 @@ export function CommunicationStatusPage() {
                       </div>
                       <SessionOptions
                         sessionId={session.id}
-                        initialTitle={session.title || '未命名会话'}
+                        initialTitle={session.title || t('chat.unnamedSession')}
                         onRename={async (id, title) => { await api.renameSession(id, title); fetchSessions(); }}
                         onDelete={async (id) => { await api.deleteSession(id); fetchSessions(); }}
                       />
