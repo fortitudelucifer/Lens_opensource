@@ -25,6 +25,14 @@ Lens 面向研究、个人数据整理与关系反思工具场景，不是医疗
 
 ### 核心能力
 
+<div align="center">
+  <img src="assets/4.png" alt="架构概览" width="400">
+  <img src="assets/7.png" alt="系统组件" width="400">
+  <br>
+  <img src="assets/8.png" alt="数据处理" width="400">
+  <img src="assets/10.png" alt="用户界面" width="400">
+</div>
+
 - **通用数据接入**：插件式适配器将 CHAT_APP、Telegram、WhatsApp、通用 CSV、通用 JSONL 导出归一化为 Canonical JSONL 时间轴。
 - **多模态处理**：图片、语音、视频、表情包、链接/文件流水线执行提取、分析、压缩、合并和时间轴回写。
 - **隐私优先设计**：本地匿名化、L1/L2 数据分支、两阶段 PII 检测、公开模板配置，以及运行时/私密数据 gitignore 边界。
@@ -41,6 +49,7 @@ Lens 面向研究、个人数据整理与关系反思工具场景，不是医疗
 
 <div align="center">
   <img src="assets/lens_data.png" alt="Lens Data Flow" width="800">
+  <img src="assets/2.png" alt="附加数据流" width="800">
 </div>
 
 

@@ -25,6 +25,14 @@ Lens is designed for research, personal data organization, and relationship refl
 
 ### Key Capabilities
 
+<div align="center">
+  <img src="assets/4.png" alt="Architecture Overview" width="400">
+  <img src="assets/7.png" alt="System Components" width="400">
+  <br>
+  <img src="assets/8.png" alt="Data Processing" width="400">
+  <img src="assets/10.png" alt="User Interface" width="400">
+</div>
+
 - **Universal Ingestion**: Plugin-based adapters normalize CHAT_APP, Telegram, WhatsApp, generic CSV, and generic JSONL exports into a canonical JSONL timeline.
 - **Multi-Modal Processing**: Dedicated Image, Voice, Video, Sticker, and Link/File pipelines extract, analyze, compress, merge, and update the shared timeline.
 - **Privacy-First Design**: Local anonymization, L1/L2 data branches, two-stage PII detection, public templates, and gitignored runtime/private data boundaries.
@@ -41,6 +49,7 @@ For detailed architecture and implementation details, see [modality_fields_and_m
 
 <div align="center">
   <img src="assets/lens_data.png" alt="Lens Data Flow" width="800">
+  <img src="assets/2.png" alt="Additional Data Flow" width="800">
 </div>
 
 
