@@ -31,6 +31,13 @@ Lens is designed for research, personal data organization, and relationship refl
   <br>
   <img src="assets/8.png" alt="Data Processing" width="400">
   <img src="assets/10.png" alt="User Interface" width="400">
+  <br>
+  <img src="assets/13.png" alt="Immersive Chat" width="300">
+  <img src="assets/14.png" alt="Dual-Mirror Arena" width="300">
+  <img src="assets/15.png" alt="Communication Status" width="300">
+  <br>
+  <img src="assets/16.png" alt="Roundtable Discussion" width="400">
+  <img src="assets/17.png" alt="Roundtable Continuation" width="400">
 </div>
 
 - **Universal Ingestion**: Plugin-based adapters normalize CHAT_APP, Telegram, WhatsApp, generic CSV, and generic JSONL exports into a canonical JSONL timeline.
@@ -163,7 +170,7 @@ graph TB
 | Advisor MoA | Extract conversations, generate multi-expert analyses, fuse/review/remediate | `scripts/advisor/run_all/_01*` to `_04*` | [MoA Fusion](docs/advisor/advisor_moa_fusion_overview.md) |
 | Training / Inference | QLoRA training, inference comparison, optional augmentation | `scripts/advisor/run_all/_06*` to `_10*` | [Advisor Training](docs/advisor/advisor_training_overview.md) |
 | Knowledge / Graph RAG | Build retrieval indexes and inject timeline/knowledge/assessment context | `scripts/advisor/run_all/_09_build_graph.py` | [Knowledge RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) |
-| Knowledge Center | Web index for active/planned knowledge bases and RAG-ready FAQ resources | `frontend/src/pages/KnowledgeCenterPage.tsx` | [Knowledge RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) |
+| Knowledge Center | Web index for active/planned knowledge bases and RAG-ready FAQ resources | `frontend/src/pages/KnowledgeCenterPage.tsx` | [Knowledge Center](docs/app/knowledge_center_overview.md), [Knowledge RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) |
 | Advisor API | Modular FastAPI backend for chat, RAG, review, models, safety, Arena, Roundtable | `scripts/advisor/api/main.py`, `scripts/advisor/api/routes/` | [Advisor Service](docs/advisor/advisor_service_overview.md) |
 | Web App | React pages for dashboard, chat, consent, privacy, assessment, knowledge, Arena, Roundtable | `frontend/src/pages/` | [Web App Design](docs/app/web_app_overview.md) |
 | Roundtable Discussion | Three-persona multi-agent discussion with SSE streaming, multi-round follow-up, context injection, and moderator synthesis | `frontend/src/pages/RoundtablePage.tsx`, `scripts/advisor/api/routes/roundtable.py` | [Roundtable Design](docs/app/roundtable_discussion_overview.md) |
@@ -1024,19 +1031,6 @@ conda run -n CHAT_APP_DHA python -m pytest tests/test_advisor_analyzers_properti
 
 ---
 
-## Feature Showcase
-
-<div align="center">
-  <img src="assets/13.png" alt="Immersive Chat" width="300">
-  <img src="assets/14.png" alt="Dual-Mirror Arena" width="300">
-  <img src="assets/15.png" alt="Communication Status" width="300">
-  <br>
-  <img src="assets/16.png" alt="Roundtable Discussion" width="400">
-  <img src="assets/17.png" alt="Roundtable Continuation" width="400">
-</div>
-
----
-
 ## Documentation
 
 Detailed documentation for each subsystem is available in the `docs/` directory. The top-level README keeps the public project overview; implementation details live in the dedicated documents below.
@@ -1069,7 +1063,7 @@ Detailed documentation for each subsystem is available in the `docs/` directory.
 - [Training System](docs/advisor/advisor_training_overview.md) - QLoRA fine-tuning and evaluation
 - [Step-by-Step Guide](docs/advisor/advisor_step_by_step.md) - Complete workflow guide
 - [Knowledge RAG Upgrade](docs/pipelines/knowledge_rag_upgrade_overview.md) - Knowledge injection and FAISS index upgrades
-- Knowledge Center - Frontend knowledge-base index at `frontend/src/pages/KnowledgeCenterPage.tsx`
+- [Knowledge Center](docs/app/knowledge_center_overview.md) - Structured FAQ assets, search/injection mechanism, and frontend index
 - [Advisor Web Application](docs/app/web_app_overview.md) - React application shell, pages, API client, state boundaries, safety surfaces, and operations UX
 - [Roundtable Discussion](docs/app/roundtable_discussion_overview.md) - Three-persona multi-agent discussion, SSE protocol, continuation, context injection, and Moderator synthesis
 

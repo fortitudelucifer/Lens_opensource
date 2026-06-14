@@ -31,6 +31,13 @@ Lens 面向研究、个人数据整理与关系反思工具场景，不是医疗
   <br>
   <img src="assets/8.png" alt="数据处理" width="400">
   <img src="assets/10.png" alt="用户界面" width="400">
+  <br>
+  <img src="assets/13.png" alt="沉浸式互动" width="300">
+  <img src="assets/14.png" alt="双镜对比" width="300">
+  <img src="assets/15.png" alt="交流状态" width="300">
+  <br>
+  <img src="assets/16.png" alt="圆桌讨论" width="400">
+  <img src="assets/17.png" alt="圆桌追问" width="400">
 </div>
 
 - **通用数据接入**：插件式适配器将 CHAT_APP、Telegram、WhatsApp、通用 CSV、通用 JSONL 导出归一化为 Canonical JSONL 时间轴。
@@ -163,7 +170,7 @@ graph TB
 | 关系顾问 MoA | 提取对话、生成多专家分析、融合/审核/补齐 | `scripts/advisor/run_all/_01*` 到 `_04*` | [MoA 融合](docs/advisor/advisor_moa_fusion_overview.md) |
 | 训练 / 推理 | QLoRA 训练、推理对比、可选数据增强 | `scripts/advisor/run_all/_06*` 到 `_10*` | [顾问训练](docs/advisor/advisor_training_overview.md) |
 | Knowledge / Graph RAG | 构建检索索引并注入时间轴/知识/测评上下文 | `scripts/advisor/run_all/_09_build_graph.py` | [知识增强 RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) |
-| 知识中心 | Web 端知识库索引，展示已激活/规划中的知识库与 RAG-ready FAQ 资源 | `frontend/src/pages/KnowledgeCenterPage.tsx` | [知识增强 RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) |
+| 知识中心 | Web 端知识库索引，展示已激活/规划中的知识库与 RAG-ready FAQ 资源 | `frontend/src/pages/KnowledgeCenterPage.tsx` | [知识中心](docs/app/knowledge_center_overview.md), [知识增强 RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) |
 | Advisor API | 模块化 FastAPI 后端，支持 chat、RAG、review、models、safety、Arena、Roundtable | `scripts/advisor/api/main.py`, `scripts/advisor/api/routes/` | [顾问服务](docs/advisor/advisor_service_overview.md) |
 | Web 应用 | Dashboard、Chat、Consent、Privacy、Assessment、Knowledge、Arena、Roundtable 页面 | `frontend/src/pages/` | [Web 应用设计](docs/app/web_app_overview.md) |
 | 圆桌讨论 | 三人格多 Agent 讨论，支持 SSE 流式输出、多轮追问、上下文注入和 Moderator 综合总结 | `frontend/src/pages/RoundtablePage.tsx`, `scripts/advisor/api/routes/roundtable.py` | [圆桌讨论设计](docs/app/roundtable_discussion_overview.md) |
@@ -851,19 +858,6 @@ conda run -n CHAT_APP_DHA python -m pytest tests/test_advisor_analyzers_properti
 
 ---
 
-## 功能展示
-
-<div align="center">
-  <img src="assets/13.png" alt="沉浸式互动" width="300">
-  <img src="assets/14.png" alt="双镜对比" width="300">
-  <img src="assets/15.png" alt="交流状态" width="300">
-  <br>
-  <img src="assets/16.png" alt="圆桌讨论" width="400">
-  <img src="assets/17.png" alt="圆桌追问" width="400">
-</div>
-
----
-
 ## 文档
 
 各子系统的详细文档位于 `docs/` 目录。README 保持公开首页级概览，具体实现细节下沉到对应专题文档。
@@ -896,7 +890,7 @@ conda run -n CHAT_APP_DHA python -m pytest tests/test_advisor_analyzers_properti
 - [训练系统](docs/advisor/advisor_training_overview.md) - QLoRA 微调与评估
 - [分步指南](docs/advisor/advisor_step_by_step.md) - 完整使用流程
 - [知识增强 RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) - 知识注入与 FAISS 索引升级
-- 知识中心 - 前端知识库索引页面 `frontend/src/pages/KnowledgeCenterPage.tsx`
+- [知识中心](docs/app/knowledge_center_overview.md) - 结构化 FAQ 资产、检索注入机制与前端索引
 - [Web 应用设计](docs/app/web_app_overview.md) - React 应用壳、页面结构、API 客户端、状态边界、安全入口与运维 UX
 - [圆桌讨论设计](docs/app/roundtable_discussion_overview.md) - 三人格多 Agent 讨论、SSE 协议、多轮追问、上下文注入与 Moderator 综合总结
 
