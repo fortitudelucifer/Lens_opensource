@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { MessageSquare, CheckCircle, Users, Zap } from 'lucide-react'
 import { StatsCard } from '../components/dashboard/StatsCard'
@@ -8,6 +9,7 @@ import { ActivityFeed } from '../components/dashboard/ActivityFeed'
 import { api, type DataStats } from '../lib/api'
 
 export function Dashboard() {
+  const { t } = useTranslation()
   const [stats, setStats] = useState<DataStats | null>(null)
   const [sessionCount, setSessionCount] = useState(0)
 
@@ -31,7 +33,7 @@ export function Dashboard() {
 
   const statsData = [
     {
-      title: '处理消息数',
+      title: t('dashboard.stats.processedMessages'),
       value: totalMessages,
       change: `L1: ${stats?.l1_lines ?? 0} / L2: ${stats?.l2_lines ?? 0}`,
       changeType: 'up' as const,
@@ -41,7 +43,7 @@ export function Dashboard() {
       sparkline: [40, 55, 48, 72, 65, 88, 95, 82, 91, 100],
     },
     {
-      title: '分析完成率',
+      title: t('dashboard.stats.completionRate'),
       value: completionRate,
       change: `${totalAnalyses} / ${stats?.chunks ?? 0} chunks`,
       changeType: 'up' as const,
@@ -52,7 +54,7 @@ export function Dashboard() {
       sparkline: [78, 82, 80, 85, 88, 87, 91, 90, 93, 94],
     },
     {
-      title: '活跃会话',
+      title: t('dashboard.stats.activeSessions'),
       value: sessionCount,
       change: `审核: ${totalReviews} 条`,
       changeType: 'up' as const,
@@ -63,7 +65,7 @@ export function Dashboard() {
       sparkline: [3, 4, 5, 4, 6, 7, 6, 8, 9, sessionCount || 1],
     },
     {
-      title: 'Chunks 总量',
+      title: t('dashboard.stats.totalChunks'),
       value: stats?.chunks ?? 0,
       change: `测试集: ${stats?.test_lines ?? 0}`,
       changeType: 'up' as const,
@@ -84,7 +86,7 @@ export function Dashboard() {
       >
         <div className="flex items-center gap-2 mb-1">
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">
-            系统总览
+            {t('dashboard.title')}
           </h1>
           <span
             className="text-xs font-medium px-2.5 py-1 rounded-full"
@@ -93,11 +95,11 @@ export function Dashboard() {
               color: '#059669',
             }}
           >
-            实时监控
+            {t('dashboard.realTimeMonitor')}
           </span>
         </div>
         <p className="text-sm text-[var(--text-muted)]">
-          欢迎回来，今天关系顾问系统运行状态良好
+          {t('dashboard.welcome')}
         </p>
       </motion.div>
 

@@ -1,0 +1,95 @@
+{
+  "app": {
+    "name": "Lens 聆诉",
+    "tagline": "您的 AI 情感顾问与伴侣"
+  },
+  "common": {
+    "ok": "确定",
+    "cancel": "取消",
+    "save": "保存",
+    "close": "关闭",
+    "back": "返回",
+    "loading": "加载中...",
+    "error": "错误",
+    "beta": "Beta"
+  },
+  "nav": {
+    "consent": "知情同意",
+    "dashboard": "总览",
+    "chat": "沉浸式互动",
+    "arena": "双镜对比",
+    "assessment": "交流测评",
+    "review": "审核",
+    "settings": "设置",
+    "communicationStatus": "交流状态",
+    "roundtable": "圆桌讨论",
+    "knowledgeCenter": "知识中心",
+    "privacy": "隐私政策"
+  },
+  "sidebar": {
+    "collapse": "收起侧边栏",
+    "expand": "展开侧边栏",
+    "emergency": "紧急求助",
+    "theme": "主题",
+    "betaTooltip": "圆桌讨论功能处于 Beta 阶段"
+  },
+  "settings": {
+    "title": "设置",
+    "subtitle": "API 密钥与模型配置 · 系统参数管理",
+    "language": {
+      "label": "语言",
+      "switchTo": "切换语言"
+    },
+    "modelSelection": "模型选择",
+    "connectionTest": "连接测试",
+    "apiKeyManagement": "API 密钥管理",
+    "configPaths": "配置文件路径",
+    "apiKeyConfig": "API Key 配置",
+    "modelConfig": "模型配置",
+    "l1TrainingData": "L1 训练数据",
+    "l2AnonymizedData": "L2 匿名数据",
+    "envHint": "提示：编辑 .env.advisor 后运行 source .env.advisor 加载到环境。",
+    "feedbackTitle": "问题与建议反馈",
+    "feedbackDesc": "遇到 Bug、AI 回答异常、产品体验问题，或有任何改进建议？在此留言，我们会及时跟进处理。",
+    "feedbackPath": "反馈将写入 advisor_out/feedback/ui_feedback.jsonl，包含当前页面与浏览器信息。",
+    "feedbackPlaceholder": "例如：XXX 顾问在谈到 YYY 时出现幻觉 / 希望增加 ZZZ 功能 / 夜间模式下 XXX 组件对比度偏低...",
+    "dataErase": {
+      "title": "数据清除",
+      "description": "您拥有对自己数据的完整主权。点击下方按钮可永久删除本机存储的全部对话会话、测评记录、危机归档、UI 反馈及浏览器本地偏好。",
+      "note": "系统配置、模型、知识库等非个人数据将被保留。详细政策见隐私政策。",
+      "button": "删除所有本地数据"
+    },
+    "privacyPolicy": "隐私策略",
+    "phase2Cloud": "Phase 2 云端分析",
+    "phase2Desc": "使用 L2（匿名化）数据，云端只看到 ME/OTHER",
+    "phase6Local": "Phase 6 本地训练",
+    "phase6Desc": "使用 L1（真实姓名）数据，数据不离开本机",
+    "safetyLayerP0": "SafetyLayer P0",
+    "safetyLayerDesc": "云端 rationale_private 不注入本地上下文"
+  },
+  "safety": {
+    "crisisBanner": "您并不孤单。全国心理援助热线：12356 · 北京危机干预中心：010-82951332"
+  },
+  "consent": {
+    "title": "知情同意",
+    "agreeButton": "我已阅读并同意"
+  },
+  "privacy": {
+    "title": "隐私政策",
+    "backToSettings": "返回设置"
+  },
+  "dashboard": {
+    "title": "总览",
+    "welcome": "欢迎使用 Lens 聆诉",
+    "realTimeMonitor": "实时监控",
+    "stats": {
+      "processedMessages": "处理消息数",
+      "completionRate": "分析完成率",
+      "activeSessions": "活跃会话",
+      "totalChunks": "Chunks 总量"
+    }
+  },
+  "roundtable": {
+    "title": "圆桌讨论"
+  }
+}

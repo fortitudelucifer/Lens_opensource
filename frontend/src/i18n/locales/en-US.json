@@ -1,0 +1,95 @@
+{
+  "app": {
+    "name": "Lens",
+    "tagline": "Your AI Emotional Advisor & Companion"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "back": "Back",
+    "loading": "Loading...",
+    "error": "Error",
+    "beta": "Beta"
+  },
+  "nav": {
+    "consent": "Informed Consent",
+    "dashboard": "Overview",
+    "chat": "Immersive Chat",
+    "arena": "Dual Mirror",
+    "assessment": "Assessment",
+    "review": "Review",
+    "settings": "Settings",
+    "communicationStatus": "Comm Status",
+    "roundtable": "Roundtable",
+    "knowledgeCenter": "Knowledge",
+    "privacy": "Privacy Policy"
+  },
+  "sidebar": {
+    "collapse": "Collapse Sidebar",
+    "expand": "Expand Sidebar",
+    "emergency": "Emergency Help",
+    "theme": "Theme",
+    "betaTooltip": "Roundtable is in Beta"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "API Keys & Model Config · System Parameters",
+    "language": {
+      "label": "Language",
+      "switchTo": "Switch Language"
+    },
+    "modelSelection": "Model Selection",
+    "connectionTest": "Connection Test",
+    "apiKeyManagement": "API Key Management",
+    "configPaths": "Config File Paths",
+    "apiKeyConfig": "API Key Config",
+    "modelConfig": "Model Config",
+    "l1TrainingData": "L1 Training Data",
+    "l2AnonymizedData": "L2 Anonymized Data",
+    "envHint": "Hint: edit .env.advisor then run source .env.advisor to load into environment.",
+    "feedbackTitle": "Feedback & Suggestions",
+    "feedbackDesc": "Found a bug, AI hallucination, UX issue, or have any improvement suggestions? Leave a message here and we'll follow up.",
+    "feedbackPath": "Feedback will be written to advisor_out/feedback/ui_feedback.jsonl, including current page and browser info.",
+    "feedbackPlaceholder": "e.g., advisor XXX hallucinated on YYY / wish to add ZZZ feature / contrast too low in dark mode...",
+    "dataErase": {
+      "title": "Data Erase",
+      "description": "You have full sovereignty over your data. Click below to permanently delete all locally stored chat sessions, assessment records, crisis archives, UI feedback, and browser preferences.",
+      "note": "System configs, models, knowledge bases, and other non-personal data will be preserved. See Privacy Policy for details.",
+      "button": "Delete All Local Data"
+    },
+    "privacyPolicy": "Privacy Policy",
+    "phase2Cloud": "Phase 2 Cloud Analysis",
+    "phase2Desc": "Uses L2 (anonymized) data; cloud only sees ME/OTHER",
+    "phase6Local": "Phase 6 Local Training",
+    "phase6Desc": "Uses L1 (real name) data; data never leaves this machine",
+    "safetyLayerP0": "SafetyLayer P0",
+    "safetyLayerDesc": "Cloud rationale_private is not injected into local context"
+  },
+  "safety": {
+    "crisisBanner": "You are not alone. National Mental Health Hotline: 12356 · Beijing Crisis Intervention: 010-82951332"
+  },
+  "consent": {
+    "title": "Informed Consent",
+    "agreeButton": "I have read and agree"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "backToSettings": "Back to Settings"
+  },
+  "dashboard": {
+    "title": "Overview",
+    "welcome": "Welcome to Lens",
+    "realTimeMonitor": "Real-time Monitor",
+    "stats": {
+      "processedMessages": "Processed Messages",
+      "completionRate": "Completion Rate",
+      "activeSessions": "Active Sessions",
+      "totalChunks": "Total Chunks"
+    }
+  },
+  "roundtable": {
+    "title": "Roundtable Discussion"
+  }
+}

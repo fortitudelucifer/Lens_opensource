@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { ShieldCheck, Lock, Server, Trash2, Sparkles, ArrowLeft } from 'lucide-react'
 
 interface PrivacyPageProps {
@@ -15,6 +16,7 @@ interface PrivacyPageProps {
  *   - 本页为完整版，可直接分享 URL，对接合规审查
  */
 export function PrivacyPage({ onBack }: PrivacyPageProps) {
+  const { t } = useTranslation()
   return (
     <div className="flex-1 overflow-y-auto scrollbar-fade">
       <div className="max-w-3xl mx-auto px-6 py-10 space-y-8">
@@ -23,7 +25,7 @@ export function PrivacyPage({ onBack }: PrivacyPageProps) {
             onClick={onBack}
             className="flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" /> 返回
+            <ArrowLeft className="w-4 h-4" /> {t('privacy.backToSettings')}
           </button>
         )}
 
@@ -35,7 +37,7 @@ export function PrivacyPage({ onBack }: PrivacyPageProps) {
               <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
                 <ShieldCheck className="w-5 h-5 text-emerald-500" />
               </div>
-              <h1 className="text-3xl font-bold tracking-tight">隐私政策</h1>
+              <h1 className="text-3xl font-bold tracking-tight">{t('privacy.title')}</h1>
             </div>
             <p className="text-sm text-[var(--text-secondary)] leading-relaxed max-w-2xl">
               Lens 聆诉（下称"本系统"）是心理健康领域的研究性质 AI 咨询助手。我们将您的隐私视为产品底线，本页详细说明数据流向、存储方式与您的权利。

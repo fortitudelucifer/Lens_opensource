@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Toaster } from 'sonner'
 import { Sidebar } from './components/layout/Sidebar'
 import { TopNav } from './components/layout/TopNav'
@@ -55,6 +56,7 @@ function RoundtableRouter({ onNavigateToChat }: { onNavigateToChat: () => void }
 export { RoundtableRouter as _RoundtableRouter }
 
 export function App() {
+  const { t } = useTranslation()
   const normalizePath = (path: string) => {
     if (path === '/') return '/dashboard'
     return path
@@ -187,8 +189,8 @@ export function App() {
         <button
           onClick={() => setSidebarCollapsed(false)}
           className="fixed left-4 top-4 z-50 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-2.5 text-[var(--text-secondary)] shadow-sm transition-colors hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]"
-          title="展开侧边栏"
-          aria-label="展开侧边栏"
+          title={t('sidebar.expand')}
+          aria-label={t('sidebar.expand')}
         >
           <PanelLeftOpen className="h-4 w-4" />
         </button>
@@ -238,10 +240,10 @@ export function App() {
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-2xl" />
                 <div className="relative p-6">
                   <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">
-                    设置
+                    {t('settings.title')}
                   </h1>
                   <p className="text-sm text-[var(--text-muted)] mt-2 max-w-2xl">
-                    API 密钥与模型配置 • 系统参数管理
+                    {t('settings.subtitle')}
                   </p>
                 </div>
               </div>
@@ -251,7 +253,7 @@ export function App() {
                 <div className="space-y-6">
                   <div className="flex items-center gap-2">
                     <div className="w-1 h-6 bg-blue-500 rounded-full" />
-                    <h2 className="text-lg font-semibold">模型选择</h2>
+                    <h2 className="text-lg font-semibold">{t('settings.modelSelection')}</h2>
                   </div>
                   <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-sm p-1">
                     <ModelSelector />
@@ -261,7 +263,7 @@ export function App() {
                 <div className="space-y-6">
                   <div className="flex items-center gap-2">
                     <div className="w-1 h-6 bg-green-500 rounded-full" />
-                    <h2 className="text-lg font-semibold">连接测试</h2>
+                    <h2 className="text-lg font-semibold">{t('settings.connectionTest')}</h2>
                   </div>
                   <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-sm p-1">
                     <ModelTester />
@@ -272,7 +274,7 @@ export function App() {
               <div className="space-y-6">
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-6 bg-purple-500 rounded-full" />
-                  <h2 className="text-lg font-semibold">API 密钥管理</h2>
+                  <h2 className="text-lg font-semibold">{t('settings.apiKeyManagement')}</h2>
                 </div>
                 <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-sm p-1">
                   <ApiKeyChecker />
@@ -283,14 +285,14 @@ export function App() {
               <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 space-y-6 shadow-sm">
                 <h2 className="font-semibold text-sm flex items-center gap-2">
                   <div className="w-1 h-4 bg-gray-500 rounded-full" />
-                  配置文件路径
+                  {t('settings.configPaths')}
                 </h2>
                 <div className="space-y-3 text-sm">
                   {[
-                    { label: "API Key 配置", path: "local_secrets/.env.advisor", color: "text-blue-500" },
-                    { label: "模型配置", path: "configs/advisor.yaml", color: "text-emerald-500" },
-                    { label: "L1 训练数据", path: "timeline_out/agent_sft_l1.jsonl", color: "text-purple-500" },
-                    { label: "L2 匿名数据", path: "timeline_out/agent_sft_l2.jsonl", color: "text-orange-500" },
+                    { label: t('settings.apiKeyConfig'), path: "local_secrets/.env.advisor", color: "text-blue-500" },
+                    { label: t('settings.modelConfig'), path: "configs/advisor.yaml", color: "text-emerald-500" },
+                    { label: t('settings.l1TrainingData'), path: "timeline_out/agent_sft_l1.jsonl", color: "text-purple-500" },
+                    { label: t('settings.l2AnonymizedData'), path: "timeline_out/agent_sft_l2.jsonl", color: "text-orange-500" },
                   ].map((item, index) => (
                     <div key={index} className="flex justify-between items-center py-3 border-b border-[var(--border-color)] last:border-0">
                       <span className="text-[var(--text-secondary)] font-medium">{item.label}</span>
@@ -302,8 +304,7 @@ export function App() {
                 </div>
                 <div className="pt-4 p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
                   <p className="text-xs text-blue-600 dark:text-blue-400">
-                    <strong className="font-semibold">提示：</strong> 编辑 <code className="bg-blue-500/20 px-1 rounded">.env.advisor</code> 后运行{" "}
-                    <code className="bg-blue-500/20 px-1 rounded">source .env.advisor</code> 加载到环境。
+                    <strong className="font-semibold">{t('settings.envHint')}</strong>
                   </p>
                 </div>
               </div>
@@ -312,19 +313,19 @@ export function App() {
               <div className="space-y-6">
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-6 bg-pink-500 rounded-full" />
-                  <h2 className="text-lg font-semibold">问题与建议反馈</h2>
+                  <h2 className="text-lg font-semibold">{t('settings.feedbackTitle')}</h2>
                 </div>
                 <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 space-y-4 shadow-sm">
                   <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                    遇到 Bug、AI 回答异常、产品体验问题，或有任何改进建议？在此留言，我们会及时跟进处理。
+                    {t('settings.feedbackDesc')}
                     <br />
                     <span className="text-xs text-[var(--text-muted)]">
-                      反馈将写入 <code className="bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded text-pink-500">advisor_out/feedback/ui_feedback.jsonl</code>，包含当前页面与浏览器信息。
+                      {t('settings.feedbackPath')}
                     </span>
                   </p>
                   <FeedbackForm
                     textareaClassName="h-40"
-                    placeholder="例如：XXX 顾问在谈到 YYY 时出现幻觉 / 希望增加 ZZZ 功能 / 夜间模式下 XXX 组件对比度偏低..."
+                    placeholder={t('settings.feedbackPlaceholder')}
                     alignRight={false}
                   />
                 </div>
@@ -334,20 +335,20 @@ export function App() {
               <div className="space-y-6">
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-6 bg-red-500 rounded-full" />
-                  <h2 className="text-lg font-semibold">数据清除</h2>
+                  <h2 className="text-lg font-semibold">{t('settings.dataErase.title')}</h2>
                 </div>
                 <div className="rounded-2xl border border-red-500/20 bg-[var(--bg-card)] p-6 space-y-4 shadow-sm">
                   <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                    您拥有对自己数据的完整主权。点击下方按钮可<strong className="text-red-500">永久删除</strong>本机存储的全部对话会话、测评记录、危机归档、UI 反馈及浏览器本地偏好。
+                    {t('settings.dataErase.description')}
                   </p>
                   <p className="text-xs text-[var(--text-muted)]">
-                    系统配置、模型、知识库等非个人数据将被保留。详细政策见 <button onClick={() => navigate('/privacy')} className="text-emerald-500 hover:underline">隐私政策</button>。
+                    {t('settings.dataErase.note')}
                   </p>
                   <button
                     onClick={() => setShowDataErase(true)}
                     className="flex items-center gap-1.5 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-500 text-xs font-semibold rounded-lg transition-colors"
                   >
-                    删除所有本地数据
+                    {t('settings.dataErase.button')}
                   </button>
                 </div>
               </div>
@@ -356,28 +357,28 @@ export function App() {
               <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 space-y-4 shadow-sm">
                 <h2 className="font-semibold text-sm flex items-center gap-2">
                   <div className="w-1 h-4 bg-emerald-500 rounded-full" />
-                  隐私策略
+                  {t('settings.privacyPolicy')}
                 </h2>
                 <div className="text-sm space-y-3">
                   <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                     <div className="w-2 h-2 bg-emerald-500 rounded-full mt-1.5 shrink-0" />
                     <div>
-                      <strong className="text-emerald-600 dark:text-emerald-400">Phase 2 云端分析</strong>
-                      <p className="text-[var(--text-secondary)] mt-1">使用 L2（匿名化）数据，云端只看到 ME/OTHER</p>
+                      <strong className="text-emerald-600 dark:text-emerald-400">{t('settings.phase2Cloud')}</strong>
+                      <p className="text-[var(--text-secondary)] mt-1">{t('settings.phase2Desc')}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
                     <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 shrink-0" />
                     <div>
-                      <strong className="text-blue-600 dark:text-blue-400">Phase 6 本地训练</strong>
-                      <p className="text-[var(--text-secondary)] mt-1">使用 L1（真实姓名）数据，数据不离开本机</p>
+                      <strong className="text-blue-600 dark:text-blue-400">{t('settings.phase6Local')}</strong>
+                      <p className="text-[var(--text-secondary)] mt-1">{t('settings.phase6Desc')}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
                     <div className="w-2 h-2 bg-purple-500 rounded-full mt-1.5 shrink-0" />
                     <div>
-                      <strong className="text-purple-600 dark:text-purple-400">SafetyLayer P0</strong>
-                      <p className="text-[var(--text-secondary)] mt-1">云端 rationale_private 不注入本地上下文</p>
+                      <strong className="text-purple-600 dark:text-purple-400">{t('settings.safetyLayerP0')}</strong>
+                      <p className="text-[var(--text-secondary)] mt-1">{t('settings.safetyLayerDesc')}</p>
                     </div>
                   </div>
                 </div>

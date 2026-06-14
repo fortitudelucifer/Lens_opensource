@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import {
   LayoutDashboard,
@@ -19,6 +20,7 @@ import {
 import lensLogo from '../../assets/lens_logo_high_precision.svg'
 import type { NavItem } from '../../types'
 import { EmergencyModal } from '../safety/EmergencyModal'
+import { LanguageSwitcher } from '../settings/LanguageSwitcher'
 
 interface SidebarProps {
   active: string
@@ -27,6 +29,20 @@ interface SidebarProps {
   toggleTheme: () => void
   collapsed: boolean
   onToggleCollapsed: () => void
+}
+
+const NAV_T_KEYS: Record<string, string> = {
+  consent: 'nav.consent',
+  dashboard: 'nav.dashboard',
+  chat: 'nav.chat',
+  arena: 'nav.arena',
+  assessment: 'nav.assessment',
+  review: 'nav.review',
+  settings: 'nav.settings',
+  'communication-status': 'nav.communicationStatus',
+  roundtable: 'nav.roundtable',
+  'knowledge-center': 'nav.knowledgeCenter',
+  privacy: 'nav.privacy',
 }
 
 const navItems: NavItem[] = [
@@ -43,7 +59,16 @@ const navItems: NavItem[] = [
 ]
 
 export function Sidebar({ active, setActive, theme, toggleTheme, collapsed, onToggleCollapsed }: SidebarProps) {
+  const { t } = useTranslation()
   const [showEmergency, setShowEmergency] = useState(false)
+
+  const translatedNavItems = useMemo(() =>
+    navItems.map((item) => ({
+      ...item,
+      label: t(NAV_T_KEYS[item.id] || item.id),
+    })),
+    [t]
+  )
 
   return (
     <>
@@ -56,15 +81,15 @@ export function Sidebar({ active, setActive, theme, toggleTheme, collapsed, onTo
       <div className="h-16 flex items-center justify-between px-6 border-b border-[var(--border-color)]">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center border border-[var(--border-color)]">
-            <img src={lensLogo} alt="Lens 聆诉" className="w-7 h-7 object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(1382%) hue-rotate(119deg) brightness(96%) contrast(92%) drop-shadow(0 0 2px rgba(16, 185, 129, 0.4))' }} />
+            <img src={lensLogo} alt={t('app.name')} className="w-7 h-7 object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(1382%) hue-rotate(119deg) brightness(96%) contrast(92%) drop-shadow(0 0 2px rgba(16, 185, 129, 0.4))' }} />
           </div>
-          <span className="font-bold tracking-wide truncate">Lens 聆诉</span>
+          <span className="font-bold tracking-wide truncate">{t('app.name')}</span>
         </div>
         <button
           onClick={onToggleCollapsed}
           className="ml-2 rounded-lg p-2 text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)]"
-          title="收起侧边栏"
-          aria-label="收起侧边栏"
+          title={t('sidebar.collapse')}
+          aria-label={t('sidebar.collapse')}
         >
           <PanelLeftClose className="h-4 w-4" />
         </button>
@@ -72,7 +97,7 @@ export function Sidebar({ active, setActive, theme, toggleTheme, collapsed, onTo
 
       {/* Navigation */}
       <div className="flex-1 py-6 px-4 space-y-2">
-        {navItems.map((item) => {
+        {translatedNavItems.map((item) => {
           const Icon = item.icon
           const isActive = active === item.id
 
@@ -97,7 +122,7 @@ export function Sidebar({ active, setActive, theme, toggleTheme, collapsed, onTo
               {item.id === 'roundtable' && (
                 <span
                   className="relative z-10 ml-auto inline-flex items-center rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-300 ring-1 ring-amber-500/30"
-                  title="圆桌讨论功能处于 Beta 阶段"
+                  title={t('sidebar.betaTooltip')}
                 >
                   Beta
                 </span>
@@ -111,15 +136,16 @@ export function Sidebar({ active, setActive, theme, toggleTheme, collapsed, onTo
       <div className="p-4 border-t border-[var(--border-color)] space-y-2">
         <button onClick={() => setShowEmergency(true)}
           className="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-medium hover:bg-red-500/20 transition-colors">
-          <Phone className="w-3.5 h-3.5" /> 紧急求助
+          <Phone className="w-3.5 h-3.5" /> {t('sidebar.emergency')}
         </button>
         <button
           onClick={toggleTheme}
           className="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-[var(--bg-secondary)] transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         >
-          <span className="font-medium">主题</span>
+          <span className="font-medium">{t('sidebar.theme')}</span>
           {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
         </button>
+        <LanguageSwitcher />
         <button
           onClick={() => setActive('privacy')}
           className={`w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] text-[var(--text-muted)] hover:text-emerald-500 transition-colors ${
@@ -127,7 +153,7 @@ export function Sidebar({ active, setActive, theme, toggleTheme, collapsed, onTo
           }`}
         >
           <ShieldCheck className="w-3 h-3" />
-          <span>隐私政策</span>
+          <span>{t('nav.privacy')}</span>
         </button>
       </div>
     </div>

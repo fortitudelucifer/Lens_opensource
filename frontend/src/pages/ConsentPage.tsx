@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { ShieldCheck, AlertTriangle, Lock, UserCheck, CheckCircle2 } from 'lucide-react'
 
 const SECTIONS = [
@@ -42,6 +43,7 @@ const SECTIONS = [
 ]
 
 export function ConsentPage() {
+  const { t } = useTranslation()
   return (
     <div className="flex-1 overflow-y-auto w-full p-6 sm:p-10" style={{ background: 'var(--bg-primary)' }}>
       <div className="max-w-4xl mx-auto space-y-8">
@@ -52,8 +54,8 @@ export function ConsentPage() {
             <ShieldCheck className="w-7 h-7 text-emerald-500 drop-shadow-sm" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>知情同意与使用须知</h1>
-            <p className="text-sm mt-1.5" style={{ color: 'var(--text-muted)' }}>Lens 聆诉 — 专注于关系模式与情感支持的多模态 AI 联合分析平台</p>
+            <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>{t('consent.title')}</h1>
+            <p className="text-sm mt-1.5" style={{ color: 'var(--text-muted)' }}>{t('app.name')} — {t('app.tagline')}</p>
           </div>
         </div>
 
