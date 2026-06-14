@@ -31,7 +31,8 @@
     "expand": "Expand Sidebar",
     "emergency": "Emergency Help",
     "theme": "Theme",
-    "betaTooltip": "Roundtable is in Beta"
+    "betaTooltip": "Roundtable is in Beta",
+    "switchToLang": "Switch to {{lang}}"
   },
   "settings": {
     "title": "Settings",
@@ -324,11 +325,11 @@
     "hotlineNumber": "400-161-9995",
     "hotlineNote": "Hope 24/7 psychological crisis intervention hotline (for reference only; please call local professional services in your area, such as 120 for medical emergency / 110 for police)",
     "guideTitle": "Help Guide",
-    "guideItems": [
-      "Stay safe and do not act on any impulsive harmful behavior.",
-      "Contact a trusted family member or friend and tell them how you feel.",
-      "If you feel you cannot control potential danger, please go to the nearest emergency room immediately."
-    ],
+    "guideItems": {
+      "keepSafe": "Stay safe and do not act on any impulsive harmful behavior.",
+      "contactTrusted": "Contact a trusted family member or friend and tell them how you feel.",
+      "goEmergency": "If you feel you cannot control potential danger, please go to the nearest emergency room immediately."
+    },
     "closeButton": "I understand, close"
   },
   "apiKeyChecker": {
@@ -418,7 +419,8 @@
     "save": "Save",
     "noBackend": "No backend available",
     "official": "Official",
-    "proxy": "Proxy"
+    "proxy": "Proxy",
+    "modelLabel": "Model"
   },
   "modelTester": {
     "title": "Model Connectivity Test",

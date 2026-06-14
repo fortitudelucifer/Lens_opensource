@@ -115,8 +115,7 @@ describe('D5.7 · Mobile 375px 视口 + 暗色模式', () => {
     document.documentElement.classList.add('dark')
     const { container } = render(<RoundtableSessionPage />)
 
-    expect(screen.getByText(/只读快照|未完成的历史讨论/)).toBeInTheDocument()
-    // banner 容器用了 dark: 变体
+    // banner 容器存在且用了 dark: 变体（语言无关断言）
     const banner = container.querySelector('[role="status"]')
     expect(banner).not.toBeNull()
     expect((banner as HTMLElement).className).toMatch(/dark:/)
@@ -125,7 +124,7 @@ describe('D5.7 · Mobile 375px 视口 + 暗色模式', () => {
   it('narrow 视口下 · 顶部 nav 按钮可渲染（responsive 无 crash）', () => {
     mockViewport(320) // 极小屏压测
     render(<RoundtableSessionPage />)
-    // 返回按钮文案稳定
-    expect(screen.getByText('返回')).toBeInTheDocument()
+    // 返回按钮存在（语言无关断言）
+    expect(screen.getByRole('button', { name: /Back|Setup|回到/ })).toBeInTheDocument()
   })
 })

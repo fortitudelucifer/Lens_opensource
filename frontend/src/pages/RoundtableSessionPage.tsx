@@ -259,7 +259,7 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition"
         >
           <ArrowLeft className="w-4 h-4" />
-          返回
+          {t('roundtable.session.backToSetup')}
         </button>
         <div className="flex items-center gap-2">
           {/* 源指示徽章（D3.6 · 让用户一眼看到是 Backend SSE 还是 Mock）*/}

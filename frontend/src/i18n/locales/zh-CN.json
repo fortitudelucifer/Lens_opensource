@@ -31,7 +31,8 @@
     "expand": "展开侧边栏",
     "emergency": "紧急求助",
     "theme": "主题",
-    "betaTooltip": "圆桌讨论功能处于 Beta 阶段"
+    "betaTooltip": "圆桌讨论功能处于 Beta 阶段",
+    "switchToLang": "切换为 {{lang}}"
   },
   "settings": {
     "title": "设置",
@@ -324,11 +325,11 @@
     "hotlineNumber": "400-161-9995",
     "hotlineNote": "希望24小时心理危机干预热线（此号码仅供参考，请根据您所在的具体省市拨打当地专业机构电话，如 120 医疗急救 / 110 报警求助）",
     "guideTitle": "获取帮助指南",
-    "guideItems": [
-      "保持安全，不要做出任何冲动性伤害行为。",
-      "联系身边可以信任的家人或朋友，告诉他们您现在的感受。",
-      "如果您认为自己无法控制可能发生的危险，请立即前往最近的急诊室。"
-    ],
+    "guideItems": {
+      "keepSafe": "保持安全，不要做出任何冲动性伤害行为。",
+      "contactTrusted": "联系身边可以信任的家人或朋友，告诉他们您现在的感受。",
+      "goEmergency": "如果您认为自己无法控制可能发生的危险，请立即前往最近的急诊室。"
+    },
     "closeButton": "我已了解，关闭"
   },
   "apiKeyChecker": {
@@ -418,7 +419,8 @@
     "save": "保存",
     "noBackend": "无可用后端",
     "official": "官方",
-    "proxy": "代理"
+    "proxy": "代理",
+    "modelLabel": "模型"
   },
   "modelTester": {
     "title": "模型连通性测试",

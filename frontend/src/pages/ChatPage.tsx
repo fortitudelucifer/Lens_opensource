@@ -94,7 +94,7 @@ export function ChatPage({
         } as Session & { backendSessionId: string; communication_status?: string }))
       )
     }).catch(() => {})
-  }, [])
+  }, [t])
 
   useEffect(() => {
     fetchRemoteSessions()
@@ -189,7 +189,7 @@ export function ChatPage({
     return () => {
       mounted = false
     }
-  }, [])
+  }, [t])
 
   const selectedModel = useMemo(
     () => chatModels.find((m) => modelKey(m) === selectedModelKey) || chatModels[0],
@@ -281,7 +281,7 @@ export function ChatPage({
     }
 
     event.target.value = ''
-  }, [])
+  }, [t])
 
   const recentSessions = useMemo<Session[]>(() => {
     const importedSessions: Session[] = sampleConversations.map((entry) => ({
@@ -298,7 +298,7 @@ export function ChatPage({
     }))
 
     return [...importedSessions, ...backendSessions]
-  }, [currentPersona.id, currentSessionId, sampleConversations, remoteSessions])
+  }, [currentPersona.id, currentSessionId, sampleConversations, remoteSessions, t])
 
   const handleSessionSelect = useCallback((id: number) => {
     setCurrentSessionId(id)
@@ -434,7 +434,7 @@ export function ChatPage({
         api.getSession(backendSessionId).then(s => setEftStage(s.eft_stage ?? null)).catch(() => {})
       }
     }
-  }, [backendSessionId, currentPersona, mode, selectedModel, useRag, useKnowledge, fetchRemoteSessions])
+  }, [backendSessionId, currentPersona, mode, selectedModel, useRag, useKnowledge, fetchRemoteSessions, t])
 
   const handleClearMessages = useCallback(() => {
     setMessages([])

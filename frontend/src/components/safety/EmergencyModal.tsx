@@ -64,9 +64,9 @@ export function EmergencyModal({ isOpen, onClose }: EmergencyModalProps) {
                   <HeartHandshake className="w-4 h-4 text-violet-500" /> {t('emergency.guideTitle')}
                 </h3>
                <ul className="text-sm text-[var(--text-secondary)] space-y-2 list-disc list-inside bg-[var(--bg-secondary)]/50 p-4 rounded-xl">
-                  <li>{t('emergency.guideItems.0')}</li>
-                  <li>{t('emergency.guideItems.1')}</li>
-                  <li>{t('emergency.guideItems.2')}</li>
+                  <li>{t('emergency.guideItems.keepSafe')}</li>
+                  <li>{t('emergency.guideItems.contactTrusted')}</li>
+                  <li>{t('emergency.guideItems.goEmergency')}</li>
                 </ul>
               </div>
             </div>

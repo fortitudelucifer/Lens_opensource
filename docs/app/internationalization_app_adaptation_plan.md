@@ -1897,3 +1897,337 @@ Out of scope not changed:
 **Created**: 2026-06-14  
 **Immediate implementation scope**: Frontend UI zh-CN / en-US switching only  
 **Related documents**: [Advisor Web Application System Design](web_app_overview.md), [Roundtable Discussion System Design](roundtable_discussion_overview.md), [Electron Build](../ELECTRON_BUILD.md)
+
+---
+
+## 15. Current Quality Review and Closure Recommendations
+
+> Review time: 2026-06-14 15:00 UTC+8
+> Review scope: current frontend language-switching implementation, translation resources, runtime hard-coded text residue, build/test/lint status, and documentation accuracy.
+
+### 15.1 Overall Verdict
+
+The current implementation has a correct and usable i18n foundation. The selected stack is appropriate for the Lens frontend:
+
+```text
+i18next
+react-i18next
+i18next-browser-languagedetector
+```
+
+The application can be built successfully, and the basic Chinese/English switching framework is in place. However, the implementation is not fully closed yet and should not be described as complete full-frontend UI localization.
+
+Recommended status wording:
+
+```text
+Phase 1 i18n infrastructure: mostly complete
+Phase 2 full frontend UI coverage: in progress, not yet complete
+```
+
+Avoid claiming:
+
+```text
+All user-visible Chinese UI text has been replaced by t() calls.
+```
+
+because runtime source scanning still finds many Chinese UI strings outside locale files.
+
+### 15.2 What Is Working Well
+
+| Area | Result | Notes |
+|------|--------|-------|
+| Technology choice | Good | `i18next` + `react-i18next` matches the recommended React/Vite approach. |
+| Initialization order | Good | `frontend/src/main.tsx` imports `./i18n` before rendering `App`. |
+| Locale registry | Good | `zh-CN` and `en-US` are registered through `supportedLocales.ts`. |
+| Translation file parity | Good | `zh-CN.json` and `en-US.json` currently have equal flattened key sets. |
+| Production build | Good | `npm --prefix frontend run build` passes. |
+| Diff hygiene | Good | `git diff --check` passes for the reviewed scope. |
+
+Measured translation-resource parity:
+
+```text
+zh_keys = 366
+en_keys = 366
+missing_in_en = 0
+missing_in_zh = 0
+type_mismatch = 0
+```
+
+This means the two locale files are structurally aligned.
+
+### 15.3 Main Quality Gaps
+
+#### 15.3.1 Runtime Chinese Hard-Coded Text Remains
+
+After excluding tests, comments, and locale JSON files, runtime source scanning still found Chinese text in many frontend files.
+
+Observed result:
+
+```text
+runtime_chinese_files = 39
+```
+
+High-priority residue areas include:
+
+| Area | Example Files |
+|------|---------------|
+| Dashboard subcomponents | `components/dashboard/ActivityFeed.tsx`, `ModelConfig.tsx`, `PipelinePanel.tsx`, `StatsCard.tsx` |
+| Error boundary | `components/error/ErrorBoundary.tsx` |
+| Roundtable components | `AgentMessage.tsx`, `FollowUpComposer.tsx`, `InjectionDrawer.tsx`, `ModeratorCard.tsx`, `ModeratorThinking.tsx`, `PhaseBanner.tsx`, `RoundHistoryCard.tsx`, `SessionHistoryList.tsx`, `TypingDots.tsx` |
+| Shared components | `components/shared/ExportDialog.tsx`, `SessionOptions.tsx` |
+| Safety components | `components/safety/SafetyDisclaimer.tsx` |
+| Supervision components | `components/supervision/DialogueProgressAnalysis.tsx`, `SupervisionStatePanel.tsx` |
+
+Implication:
+
+```text
+The language switcher can demonstrate partial UI switching, but users will still encounter Chinese text in complex pages and subcomponents.
+```
+
+#### 15.3.2 Missing or Fragile Translation Key Usage
+
+Literal `t('...')` scan found:
+
+```text
+literal_t_calls = 315
+unique_literal_t_keys = 290
+missing_literal_t_keys = 4
+```
+
+Detected items:
+
+```text
+components/ModelSelector.tsx modelSelector.modelLabel
+components/safety/EmergencyModal.tsx emergency.guideItems.0
+components/safety/EmergencyModal.tsx emergency.guideItems.1
+components/safety/EmergencyModal.tsx emergency.guideItems.2
+```
+
+Assessment:
+
+- `modelSelector.modelLabel` is a real missing key and should be added to both locale files.
+- `emergency.guideItems.0/1/2` may work depending on i18next array-index handling, but it is fragile for long-term multilingual maintenance.
+
+Recommended replacement:
+
+```json
+"guideItems": {
+  "keepSafe": "...",
+  "contactTrusted": "...",
+  "goEmergency": "..."
+}
+```
+
+Then use stable semantic keys:
+
+```tsx
+t('emergency.guideItems.keepSafe')
+t('emergency.guideItems.contactTrusted')
+t('emergency.guideItems.goEmergency')
+```
+
+#### 15.3.3 Potential Language State Desynchronization
+
+There are currently two persistence surfaces:
+
+```text
+i18next detector localStorage key: lens-locale
+Zustand persisted settings key: lens-settings
+```
+
+`LanguageSwitcher` reads:
+
+```text
+useSettingsStore((s) => s.locale)
+```
+
+but rendered translations follow:
+
+```text
+i18n.language
+```
+
+Risk:
+
+```text
+If lens-settings.locale and lens-locale diverge, the switcher may display one language while the page renders another.
+```
+
+Recommended rule:
+
+```text
+Use one authoritative locale source.
+```
+
+Preferred implementation options:
+
+1. Use i18next as the runtime source of truth and keep Zustand synchronized only as user preference metadata.
+2. Or use Zustand/localStorage as the sole persisted preference and initialize i18next explicitly from it.
+
+Do not let both persistence layers independently decide the active language.
+
+#### 15.3.4 Tests Are Not Fully Updated for i18n
+
+Current test result:
+
+```text
+npm --prefix frontend run test: failed
+```
+
+Observed failure:
+
+```text
+roundtable_mobile_viewport.test.tsx
+```
+
+The failure is mainly due to tests still searching for previous Chinese UI strings, and some rendered components do not receive an initialized i18next instance in test setup.
+
+Observed warning:
+
+```text
+react-i18next:: useTranslation:
+You will need to pass in an i18next instance by using initReactI18next
+```
+
+Recommended fixes:
+
+- Import `src/i18n/index.ts` in `frontend/src/test/setup.ts`.
+- Or provide a dedicated i18n test mock.
+- Replace brittle Chinese text assertions with:
+  - stable `data-testid`,
+  - translated text generated through test i18n,
+  - or language-agnostic structural assertions.
+
+#### 15.3.5 Lint Is Not Passing
+
+Current lint result:
+
+```text
+npm --prefix frontend run lint: failed
+```
+
+Some failures appear to be pre-existing React/lint rule issues. However, i18n work also introduces or exposes hook dependency warnings, especially where `t` is used inside `useCallback`, `useMemo`, or `useEffect`.
+
+Example category:
+
+```text
+React Hook useCallback/useMemo/useEffect has a missing dependency: 't'
+```
+
+Risk:
+
+```text
+Some memoized or callback-generated text may not update immediately after language switching.
+```
+
+Recommended fix:
+
+```text
+Add `t` to dependency arrays where translated text is computed inside hooks.
+```
+
+### 15.4 Quality Score
+
+| Dimension | Score | Rationale |
+|-----------|------:|-----------|
+| Technology selection | 9/10 | Correct mainstream stack for React/Vite. |
+| i18n initialization | 8/10 | Functional, but locale source-of-truth needs cleanup. |
+| Locale file structure | 8/10 | Key parity is good; array-index keys should be avoided. |
+| Build readiness | 8/10 | Production build passes. |
+| UI coverage completeness | 4/10 | Many runtime Chinese strings remain. |
+| Test synchronization | 4/10 | Unit/integration tests not fully adapted to i18n. |
+| Lint health | 5/10 | Existing issues plus i18n hook dependency warnings. |
+| Demo readiness | 6.5/10 | Good enough for partial demo, not for full localization claim. |
+| Merge readiness | 5.5/10 | Needs closure pass before being marked complete. |
+
+Overall:
+
+```text
+Usable foundation, not yet complete closure.
+```
+
+### 15.5 Required Closure Work Before Marking Complete
+
+#### P0: Correctness Fixes
+
+- Add `modelSelector.modelLabel` to `zh-CN.json` and `en-US.json`.
+- Replace `emergency.guideItems.0/1/2` with semantic object keys.
+- Initialize i18n in test setup or add a test-safe i18n mock.
+- Update tests that assert old Chinese strings.
+- Revise README and this plan if they claim full UI localization is already complete.
+
+#### P1: Real UI Coverage
+
+- Continue extracting runtime Chinese strings from the 39 detected source files.
+- Prioritize user-visible surfaces:
+  - Roundtable components,
+  - Dashboard subcomponents,
+  - ErrorBoundary,
+  - ExportDialog,
+  - SessionOptions,
+  - SafetyDisclaimer,
+  - Supervision panels.
+- Add `t` to hook dependency arrays where required.
+- Resolve locale source-of-truth desynchronization between `lens-locale` and `lens-settings`.
+
+#### P2: UX and Maintainability
+
+- Localize `LanguageSwitcher` aria labels.
+- Consider displaying compact labels such as `中` / `EN` or full localized labels instead of raw locale codes.
+- Add an official locale key parity script.
+- Add a runtime hard-coded text scan script for future PR checks.
+- Test English layout at mobile and desktop widths.
+
+### 15.6 Recommended Next Execution Task
+
+Recommended task name:
+
+```text
+i18n closure pass for frontend Chinese/English UI switching
+```
+
+Recommended execution order:
+
+1. Fix missing and fragile locale keys.
+2. Add i18n initialization to test setup.
+3. Update failing Roundtable viewport test.
+4. Fix i18n-related hook dependency warnings.
+5. Generate a hard-coded Chinese residue list.
+6. Localize the highest-priority residue files.
+7. Re-run:
+
+```bash
+conda run -n wechatDHA npm --prefix frontend run build
+conda run -n wechatDHA npm --prefix frontend run test
+conda run -n wechatDHA npm --prefix frontend run lint
+```
+
+8. Only then update documentation status from “in progress” to “complete”.
+
+### 15.7 Acceptance Criteria for Complete Status
+
+The frontend UI localization should only be marked complete when all of the following are true:
+
+```text
+1. zh-CN/en-US locale key parity passes.
+2. Literal t() calls resolve to existing keys.
+3. Runtime hard-coded Chinese scan is either zero or has an approved allowlist.
+4. npm --prefix frontend run build passes.
+5. npm --prefix frontend run test passes.
+6. npm --prefix frontend run lint has no new i18n-related warnings.
+7. LanguageSwitcher state matches the actual i18next runtime language.
+8. Manual QA confirms Chinese -> English -> Chinese switching without refresh.
+9. Manual QA confirms refresh preserves the selected language.
+10. Manual QA confirms AI output language and backend prompt behavior are unchanged.
+```
+
+### 15.8 Current User-Facing Summary
+
+If reporting to a non-technical reviewer, use:
+
+```text
+The language-switching foundation is implemented and the app builds successfully.
+Chinese/English switching works for the core shell and part of the UI, but full frontend coverage is not complete yet.
+Several complex components still contain Chinese hard-coded text, and tests need to be updated for i18n.
+The next step should be an i18n closure pass before marking the feature complete.
+```
