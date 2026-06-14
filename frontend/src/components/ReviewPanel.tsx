@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react"
+import { useTranslation } from "react-i18next"
 import {
   CheckCircle2, XCircle, Edit3, ChevronLeft, ChevronRight,
   AlertTriangle, Star, Loader2, Eye,
@@ -13,6 +14,7 @@ import { api, type ReviewItemSummary, type ReviewItemDetail, type ReviewListResp
 type FilterType = "all" | "pending" | "passed" | "failed"
 
 export default function ReviewPanel() {
+  const { t } = useTranslation()
   const [list, setList] = useState<ReviewListResponse | null>(null)
   const [filter, setFilter] = useState<FilterType>("all")
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -93,8 +95,8 @@ export default function ReviewPanel() {
     const scores = review?.scores || {}
     const dims = ["accuracy", "depth", "balance", "safety", "structure"]
     const dimLabels: Record<string, string> = {
-      accuracy: "准确性", depth: "深度", balance: "平衡性",
-      safety: "安全性", structure: "结构化",
+      accuracy: t('reviewPanel.accuracy'), depth: t('reviewPanel.depth'), balance: t('reviewPanel.balance'),
+      safety: t('reviewPanel.safety'), structure: t('reviewPanel.structure'),
     }
 
     return (
@@ -102,13 +104,13 @@ export default function ReviewPanel() {
         {/* Header */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
           <Button variant="ghost" size="sm" onClick={() => { setSelectedId(null); setDetail(null) }}>
-            <ChevronLeft className="w-4 h-4 mr-1" /> 返回列表
+            <ChevronLeft className="w-4 h-4 mr-1" /> {t('reviewPanel.backToList')}
           </Button>
           <span className="text-sm text-muted-foreground">ID: {detail.chunk_id}</span>
           <div className="flex-1" />
           {detail.human_decision && (
             <Badge variant={detail.human_decision === "approve" ? "success" : "destructive"}>
-              {detail.human_decision === "approve" ? "已批准" : detail.human_decision === "reject" ? "已拒绝" : "已编辑"}
+              {detail.human_decision === "approve" ? t('reviewPanel.approved') : detail.human_decision === "reject" ? t('reviewPanel.rejected') : t('reviewPanel.edited')}
             </Badge>
           )}
         </div>
@@ -119,9 +121,9 @@ export default function ReviewPanel() {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Star className="w-4 h-4 text-amber-500" />
-                AI 审核评分
+                {t('reviewPanel.aiReviewScore')}
                 <Badge variant={review?.passed ? "success" : "destructive"} className="ml-auto text-xs">
-                  {review?.total_score ?? 0}/50 · {review?.passed ? "通过" : "不通过"}
+                  {review?.total_score ?? 0}/50 · {review?.passed ? t('reviewPanel.pass') : t('reviewPanel.fail')}
                 </Badge>
               </CardTitle>
             </CardHeader>
@@ -155,7 +157,7 @@ export default function ReviewPanel() {
               )}
               {review?.issues && review.issues.length > 0 && (
                 <div className="mt-3 space-y-2">
-                  <div className="text-xs font-medium text-muted-foreground">发现的问题：</div>
+                  <div className="text-xs font-medium text-muted-foreground">{t('reviewPanel.issuesFound')}</div>
                   {review.issues.map((issue, i) => (
                     <div key={i} className="flex items-start gap-2 text-xs p-2 rounded bg-muted/50">
                       <AlertTriangle className={cn(
@@ -167,7 +169,7 @@ export default function ReviewPanel() {
                         <span className="font-medium">[{dimLabels[issue.dimension] || issue.dimension}]</span>{" "}
                         {issue.description}
                         {issue.suggestion && (
-                          <div className="text-muted-foreground mt-0.5">建议：{issue.suggestion}</div>
+                          <div className="text-muted-foreground mt-0.5">{t('reviewPanel.suggestion', { text: issue.suggestion })}</div>
                         )}
                       </div>
                     </div>
@@ -180,11 +182,11 @@ export default function ReviewPanel() {
           {/* Conversation */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">原始对话</CardTitle>
+              <CardTitle className="text-sm">{t('reviewPanel.originalConversation')}</CardTitle>
             </CardHeader>
             <CardContent>
               <pre className="text-xs whitespace-pre-wrap max-h-60 overflow-auto bg-muted/30 rounded p-3 font-mono">
-                {detail.conversation || "(无对话文本)"}
+                {detail.conversation || t('reviewPanel.noConversation')}
               </pre>
             </CardContent>
           </Card>
@@ -193,7 +195,7 @@ export default function ReviewPanel() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                LLM 分析结果
+                {t('reviewPanel.llmAnalysis')}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -201,7 +203,7 @@ export default function ReviewPanel() {
                   onClick={() => setIsEditing(!isEditing)}
                 >
                   <Edit3 className="w-3 h-3 mr-1" />
-                  {isEditing ? "预览" : "编辑"}
+                  {isEditing ? t('reviewPanel.preview') : t('reviewPanel.edit')}
                 </Button>
               </CardTitle>
             </CardHeader>
@@ -223,11 +225,11 @@ export default function ReviewPanel() {
           {/* Notes */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">审核备注</CardTitle>
+              <CardTitle className="text-sm">{t('reviewPanel.reviewNotes')}</CardTitle>
             </CardHeader>
             <CardContent>
               <Textarea
-                placeholder="可选：添加审核备注..."
+                placeholder={t('reviewPanel.notesPlaceholder')}
                 className="text-sm min-h-[60px]"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -244,7 +246,7 @@ export default function ReviewPanel() {
             onClick={() => submitDecision("approve")}
           >
             {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
-            批准
+            {t('reviewPanel.approve')}
           </Button>
           <Button
             variant="outline"
@@ -253,7 +255,7 @@ export default function ReviewPanel() {
             onClick={() => submitDecision("edit")}
           >
             <Edit3 className="w-4 h-4 mr-1" />
-            保存编辑
+            {t('reviewPanel.saveEdit')}
           </Button>
           <Button
             variant="destructive"
@@ -262,7 +264,7 @@ export default function ReviewPanel() {
             onClick={() => submitDecision("reject")}
           >
             <XCircle className="w-4 h-4 mr-1" />
-            拒绝
+            {t('reviewPanel.reject')}
           </Button>
         </div>
       </div>
@@ -274,14 +276,14 @@ export default function ReviewPanel() {
     <div className="flex flex-col h-full">
       {/* Header + stats */}
       <div className="px-4 py-3 border-b border-border space-y-3">
-        <h2 className="text-base font-semibold">人工审核</h2>
+        <h2 className="text-base font-semibold">{t('reviewPanel.title')}</h2>
         {stats && (
           <div className="flex gap-3 text-xs">
-            <span className="px-2 py-1 rounded bg-muted">总计 {stats.total}</span>
-            <span className="px-2 py-1 rounded bg-emerald-50 text-emerald-700">AI通过 {stats.ai_passed}</span>
-            <span className="px-2 py-1 rounded bg-red-50 text-red-700">AI不通过 {stats.ai_failed}</span>
-            <span className="px-2 py-1 rounded bg-blue-50 text-blue-700">已批准 {stats.human_approved}</span>
-            <span className="px-2 py-1 rounded bg-amber-50 text-amber-700">待审核 {stats.pending}</span>
+            <span className="px-2 py-1 rounded bg-muted">{t('reviewPanel.total', { count: stats.total })}</span>
+            <span className="px-2 py-1 rounded bg-emerald-50 text-emerald-700">{t('reviewPanel.aiPassed', { count: stats.ai_passed })}</span>
+            <span className="px-2 py-1 rounded bg-red-50 text-red-700">{t('reviewPanel.aiFailed', { count: stats.ai_failed })}</span>
+            <span className="px-2 py-1 rounded bg-blue-50 text-blue-700">{t('reviewPanel.humanApproved', { count: stats.human_approved })}</span>
+            <span className="px-2 py-1 rounded bg-amber-50 text-amber-700">{t('reviewPanel.pending', { count: stats.pending })}</span>
           </div>
         )}
         <div className="flex gap-1">
@@ -293,7 +295,7 @@ export default function ReviewPanel() {
               className="h-7 text-xs"
               onClick={() => setFilter(f)}
             >
-              {{ all: "全部", pending: "待审核", passed: "已通过", failed: "未通过" }[f]}
+              {{ all: t('reviewPanel.filterAll'), pending: t('reviewPanel.filterPending'), passed: t('reviewPanel.filterPassed'), failed: t('reviewPanel.filterFailed') }[f]}
             </Button>
           ))}
         </div>
@@ -304,7 +306,7 @@ export default function ReviewPanel() {
         {!list || list.items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm">
             <Eye className="w-8 h-8 mb-2 opacity-40" />
-            {!list ? "加载中..." : "暂无审核条目。请先运行 Phase 1→2→3 生成分析数据。"}
+            {!list ? t('reviewPanel.loading') : t('reviewPanel.noItems')}
           </div>
         ) : (
           <div className="divide-y divide-border">
@@ -323,6 +325,7 @@ export default function ReviewPanel() {
 }
 
 function ReviewItemRow({ item, onClick }: { item: ReviewItemSummary; onClick: () => void }) {
+  const { t } = useTranslation()
   return (
     <div
       className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 cursor-pointer transition-colors"
@@ -342,14 +345,14 @@ function ReviewItemRow({ item, onClick }: { item: ReviewItemSummary; onClick: ()
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">{item.chunk_id || "—"}</span>
           <Badge variant={item.ai_passed ? "success" : "destructive"} className="text-[10px]">
-            AI: {item.ai_passed ? "通过" : "不通过"}
+            {t('reviewPanel.aiLabel', { status: item.ai_passed ? t('reviewPanel.pass') : t('reviewPanel.fail') })}
           </Badge>
           {item.human_decision && (
             <Badge
               variant={item.human_decision === "approve" ? "success" : item.human_decision === "reject" ? "destructive" : "secondary"}
               className="text-[10px]"
             >
-              人工: {item.human_decision === "approve" ? "已批准" : item.human_decision === "reject" ? "已拒绝" : "已编辑"}
+              {t('reviewPanel.humanLabel', { status: item.human_decision === "approve" ? t('reviewPanel.approved') : item.human_decision === "reject" ? t('reviewPanel.rejected') : t('reviewPanel.edited') })}
             </Badge>
           )}
         </div>

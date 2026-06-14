@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react"
+import { useTranslation } from "react-i18next"
 import { Save, Check, Loader2, Brain, ShieldCheck, MessageCircle, RefreshCw } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -17,24 +18,24 @@ interface RoleConfig {
 const ROLES: RoleConfig[] = [
   {
     key: "analysis",
-    label: "Phase 2 分析",
-    description: "对话片段 → 云端深度分析",
+    label: "Phase 2 Analysis",
+    description: "Dialogue fragments → Cloud deep analysis",
     icon: Brain,
     color: "text-violet-600",
     filterRole: "analysis",
   },
   {
     key: "review",
-    label: "Phase 3 审核",
-    description: "AI 辅助质量审核",
+    label: "Phase 3 Review",
+    description: "AI-assisted quality review",
     icon: ShieldCheck,
     color: "text-sky-600",
     filterRole: "review",
   },
   {
     key: "chat",
-    label: "实时对话",
-    description: "前端聊天使用的模型",
+    label: "Real-time Chat",
+    description: "Model used for frontend chat",
     icon: MessageCircle,
     color: "text-emerald-600",
     filterRole: "chat",
@@ -48,12 +49,13 @@ const backendLabels: Record<string, string> = {
   kimi: "Kimi",
   grok: "Grok",
   deepseek: "DeepSeek",
-  qwen_local: "Qwen 本地",
-  qwen_cloud: "Qwen 云端",
+  qwen_local: "Qwen Local",
+  qwen_cloud: "Qwen Cloud",
   glm: "GLM",
 }
 
 export default function ModelSelector() {
+  const { t } = useTranslation()
   const [prefs, setPrefs] = useState<ModelPreferences | null>(null)
   const [available, setAvailable] = useState<AvailableModel[]>([])
   const [saving, setSaving] = useState(false)
@@ -108,7 +110,7 @@ export default function ModelSelector() {
       <Card>
         <CardContent className="flex items-center justify-center py-12">
           <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-          <span className="ml-2 text-sm text-muted-foreground">加载模型偏好...</span>
+          <span className="ml-2 text-sm text-muted-foreground">{t('modelSelector.loading')}</span>
         </CardContent>
       </Card>
     )
@@ -119,9 +121,9 @@ export default function ModelSelector() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-base">模型偏好设置</CardTitle>
+            <CardTitle className="text-base">{t('modelSelector.title')}</CardTitle>
             <p className="text-xs text-muted-foreground mt-1">
-              为不同用途选择首选模型后端
+              {t('modelSelector.description')}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -141,7 +143,7 @@ export default function ModelSelector() {
               ) : (
                 <Save className="w-3.5 h-3.5" />
               )}
-              <span className="text-xs">{saved ? "已保存" : "保存"}</span>
+              <span className="text-xs">{saved ? t('modelSelector.saved') : t('modelSelector.save')}</span>
             </Button>
           </div>
         </div>
@@ -174,7 +176,7 @@ export default function ModelSelector() {
                   className="flex-1 h-9 rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 transition-colors"
                 >
                   {candidates.length === 0 && (
-                    <option value="">无可用后端</option>
+                    <option value="">{t('modelSelector.noBackend')}</option>
                   )}
                   {candidates.map((m) => (
                     <option key={m.backend} value={m.backend}>
@@ -185,14 +187,14 @@ export default function ModelSelector() {
 
                 {currentModel && (
                   <Badge variant="secondary" className="text-[10px] shrink-0">
-                    {currentModel.base_url === "(默认)" ? "官方" : "代理"}
+                    {currentModel.base_url === "(默认)" ? t('modelSelector.official') : t('modelSelector.proxy')}
                   </Badge>
                 )}
               </div>
 
               {currentModel && (
                 <div className="text-[11px] text-muted-foreground pl-1">
-                  模型: <code className="bg-muted px-1 py-0.5 rounded">{currentModel.model}</code>
+                  {t('modelSelector.modelLabel')} <code className="bg-muted px-1 py-0.5 rounded">{currentModel.model}</code>
                   {currentModel.base_url !== "(默认)" && (
                     <span className="ml-2">
                       via <code className="bg-muted px-1 py-0.5 rounded">{currentModel.base_url}</code>

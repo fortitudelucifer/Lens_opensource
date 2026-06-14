@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { api } from "@/lib/api"
 import type { KeyCheckerModel } from "@/lib/api"
 import { Button } from "@/components/ui/button"
@@ -36,6 +37,7 @@ function groupByPrefix(models: KeyCheckerModel[]) {
 }
 
 export default function ApiKeyChecker() {
+  const { t } = useTranslation()
   const [baseUrl, setBaseUrl] = useState("https://api.deepseek.com")
   const [apiKey, setApiKey] = useState("")
   const [manualModel, setManualModel] = useState("deepseek-chat")
@@ -57,21 +59,21 @@ export default function ApiKeyChecker() {
   }
 
   const fetchModels = async () => {
-    if (!apiKey) { addLog("请先输入 API Key"); return }
+    if (!apiKey) { addLog(t('apiKeyChecker.enterApiKey')); return }
     setLoadingModels(true)
-    addLog("开始获取模型列表...")
+    addLog(t('apiKeyChecker.fetchingModels'))
     try {
       const data = await api.keysFetchModels(baseUrl, apiKey)
       if (data.success && data.models) {
         setDiscoveredModels(data.models)
         setSelectedModels(new Set())
         setResults({})
-        addLog(`获取到 ${data.models.length} 个模型 (${data.duration}ms)`)
+        addLog(t('apiKeyChecker.fetchedModels', { count: data.models.length, duration: data.duration }))
       } else {
-        addLog(`获取失败: ${data.error || "未知错误"}`)
+        addLog(t('apiKeyChecker.fetchFailed', { error: data.error || 'Unknown error' }))
       }
     } catch (e: unknown) {
-      addLog(`请求失败: ${e instanceof Error ? e.message : String(e)}`)
+      addLog(t('apiKeyChecker.requestFailed', { msg: e instanceof Error ? e.message : String(e) }))
     } finally {
       setLoadingModels(false)
     }
@@ -96,30 +98,30 @@ export default function ApiKeyChecker() {
 
   const createCustomGroup = () => {
     const name = customGroupName.trim()
-    if (!name) { addLog("请输入分组名称"); return }
+    if (!name) { addLog(t('apiKeyChecker.enterGroupName')); return }
     const list = Array.from(selectedModels)
-    if (list.length === 0) { addLog("请先选择模型"); return }
+    if (list.length === 0) { addLog(t('apiKeyChecker.selectModelsFirst')); return }
     setCustomGroups((prev) => ({ ...prev, [name]: list }))
     setCustomGroupName("")
-    addLog(`已创建分组「${name}」(${list.length} 个模型)`)
+    addLog(t('apiKeyChecker.groupCreated', { name, count: list.length }))
   }
 
   const runTests = async () => {
-    if (!apiKey) { addLog("请先输入 API Key"); return }
+    if (!apiKey) { addLog(t('apiKeyChecker.enterApiKey')); return }
     const targets = selectedModels.size > 0 ? Array.from(selectedModels) : manualModel ? [manualModel] : []
-    if (targets.length === 0) { addLog("未选择任何模型"); return }
+    if (targets.length === 0) { addLog(t('apiKeyChecker.noModelsSelected')); return }
 
     stopRef.current = false
     const dId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     detectionIdRef.current = dId
     setIsTesting(true)
-    addLog(`开始检测 ${targets.length} 个模型`)
+    addLog(t('apiKeyChecker.startTesting', { count: targets.length }))
 
     for (let i = 0; i < targets.length; i++) {
       if (stopRef.current) break
       const model = targets[i]
       setResults((prev) => ({ ...prev, [model]: { checkStatus: "loading" } }))
-      addLog(`[${i + 1}/${targets.length}] 检测 ${model}`)
+      addLog(t('apiKeyChecker.testingModel', { current: i + 1, total: targets.length, model }))
 
       try {
         const res = await api.keysCheck(baseUrl, apiKey, model, dId)
@@ -134,7 +136,7 @@ export default function ApiKeyChecker() {
             ...prev,
             [model]: { checkStatus: "error", error: res.error, httpStatus: res.status },
           }))
-          addLog(`  ❌ ${model}: ${res.error || "失败"}${res.status ? ` (${res.status})` : ""}`)
+          addLog(t('apiKeyChecker.testFailed', { model, error: res.error || 'Failed' }) + (res.status ? ` (${res.status})` : ''))
         }
       } catch (e: unknown) {
         setResults((prev) => ({
@@ -145,18 +147,18 @@ export default function ApiKeyChecker() {
 
       // Wait between requests (server rate limits, but also UI delay)
       if (i < targets.length - 1 && !stopRef.current) {
-        addLog("  等待 5s...")
+        addLog(t('apiKeyChecker.wait5s'))
         await new Promise((r) => setTimeout(r, 5200))
       }
     }
 
-    addLog(stopRef.current ? "检测已终止" : "检测完成")
+    addLog(stopRef.current ? t('apiKeyChecker.testTerminated') : t('apiKeyChecker.testComplete'))
     setIsTesting(false)
   }
 
   const stopTests = async () => {
     stopRef.current = true
-    addLog("正在终止...")
+    addLog(t('apiKeyChecker.stopping'))
     try {
       await api.keysStop(detectionIdRef.current)
     } catch { /* ignore */ }
@@ -169,16 +171,16 @@ export default function ApiKeyChecker() {
   return (
     <Card className="p-6 space-y-5">
       <div>
-        <h2 className="font-semibold text-sm">API Key 可用性检查</h2>
+        <h2 className="font-semibold text-sm">{t('apiKeyChecker.title')}</h2>
         <p className="text-xs text-muted-foreground mt-1">
-          输入代理地址和 Key，获取模型列表并批量检测连通性
+          {t('apiKeyChecker.description')}
         </p>
       </div>
 
       {/* Input row */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
         <div className="lg:col-span-5">
-          <label className="text-xs font-medium text-muted-foreground">代理或官方地址</label>
+          <label className="text-xs font-medium text-muted-foreground">{t('apiKeyChecker.proxyLabel')}</label>
           <input
             className="mt-1 w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
             value={baseUrl}
@@ -199,7 +201,7 @@ export default function ApiKeyChecker() {
         <div className="lg:col-span-2 flex items-end">
           <Button onClick={fetchModels} disabled={loadingModels} className="w-full" size="sm">
             {loadingModels ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Search className="w-4 h-4 mr-1" />}
-            {loadingModels ? "获取中" : "获取模型"}
+            {loadingModels ? t('apiKeyChecker.fetching') : t('apiKeyChecker.fetchModels')}
           </Button>
         </div>
       </div>
@@ -209,22 +211,22 @@ export default function ApiKeyChecker() {
         {/* Left: model selection */}
         <div className="lg:col-span-1 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium">模型选择</span>
+            <span className="text-xs font-medium">{t('apiKeyChecker.modelSelection')}</span>
             <div className="flex gap-1">
               <Button variant="outline" size="sm" className="h-6 text-[10px] px-2"
                 onClick={() => setSelectedModels(new Set(discoveredModels.map((m) => m.id)))}>
-                全选
+                {t('apiKeyChecker.selectAll')}
               </Button>
               <Button variant="outline" size="sm" className="h-6 text-[10px] px-2"
                 onClick={() => setSelectedModels(new Set())}>
-                清空
+                {t('apiKeyChecker.clear')}
               </Button>
             </div>
           </div>
 
           {discoveredModels.length === 0 ? (
             <div className="border border-border rounded-lg p-3 bg-muted/30 space-y-2">
-              <p className="text-xs text-muted-foreground">暂无模型，手动输入或点击「获取模型」</p>
+              <p className="text-xs text-muted-foreground">{t('apiKeyChecker.noModels')}</p>
               <input
                 className="w-full border border-border rounded px-2 py-1.5 text-xs bg-background"
                 value={manualModel}
@@ -257,16 +259,16 @@ export default function ApiKeyChecker() {
 
               {/* Custom groups */}
               <div className="border border-border rounded-lg p-2 space-y-2">
-                <span className="text-xs font-medium text-muted-foreground">手动分组</span>
+                <span className="text-xs font-medium text-muted-foreground">{t('apiKeyChecker.customGroup')}</span>
                 <div className="flex gap-1">
                   <input
                     className="flex-1 border border-border rounded px-2 py-1 text-xs bg-background"
-                    placeholder="分组名"
+                    placeholder={t('apiKeyChecker.groupNamePlaceholder')}
                     value={customGroupName}
                     onChange={(e) => setCustomGroupName(e.target.value)}
                   />
                   <Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={createCustomGroup}>
-                    <FolderOpen className="w-3 h-3 mr-1" />创建
+                    <FolderOpen className="w-3 h-3 mr-1" />{t('apiKeyChecker.createGroup')}
                   </Button>
                 </div>
                 {Object.entries(customGroups).map(([name, ids]) => (
@@ -291,10 +293,10 @@ export default function ApiKeyChecker() {
           <div className="flex gap-2">
             <Button onClick={runTests} disabled={isTesting} className="flex-1" size="sm">
               {isTesting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Play className="w-4 h-4 mr-1" />}
-              {isTesting ? "检测中" : "开始检测"}
+              {isTesting ? t('apiKeyChecker.testing') : t('apiKeyChecker.startTest')}
             </Button>
             <Button onClick={stopTests} disabled={!isTesting} variant="destructive" size="sm" className="w-20">
-              <Square className="w-3 h-3 mr-1" />终止
+              <Square className="w-3 h-3 mr-1" />{t('apiKeyChecker.stop')}
             </Button>
           </div>
         </div>
@@ -304,15 +306,15 @@ export default function ApiKeyChecker() {
           {/* Results */}
           <div className="border border-border rounded-lg p-3 bg-muted/20 min-h-[280px] max-h-[360px] overflow-y-auto">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium">检测结果</span>
+              <span className="text-xs font-medium">{t('apiKeyChecker.testResults')}</span>
               {(successCount > 0 || errorCount > 0) && (
                 <span className="text-[10px] text-muted-foreground">
-                  ✅ {successCount} | ❌ {errorCount} | 共 {Object.keys(results).length}
+                  ✅ {successCount} | ❌ {errorCount} | {t('apiKeyChecker.total')} {Object.keys(results).length}
                 </span>
               )}
             </div>
             {Object.keys(results).length === 0 && (
-              <p className="text-xs text-muted-foreground">结果将在这里显示</p>
+              <p className="text-xs text-muted-foreground">Results will appear here</p>
             )}
             <div className="space-y-1">
               {Object.entries(results).map(([model, result]) => (
@@ -350,7 +352,7 @@ export default function ApiKeyChecker() {
 
           {/* Logs */}
           <div className="border border-border rounded-lg p-3 bg-slate-950 text-slate-100 min-h-[120px] max-h-[160px] overflow-y-auto">
-            <span className="text-[10px] text-slate-400">系统日志</span>
+            <span className="text-[10px] text-slate-400">{t('apiKeyChecker.systemLogs')}</span>
             <div className="mt-1 space-y-0.5 text-[11px] font-mono">
               {logs.map((log, i) => (
                 <div key={`${log}-${i}`} className="text-slate-300">{log}</div>
