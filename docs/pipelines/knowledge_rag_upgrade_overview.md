@@ -88,21 +88,31 @@ A: 吸气 4 秒 → 屏住 4 秒 → 呼气 6 秒...
 
 | index_type | 行为 | 适用场景 |
 |-----------|------|---------|
-| `"auto"` | N < 2000 → FlatIP，否则 → IVFFlat | 默认，自动选择 |
+| `"auto"` | N < 30,000 → FlatIP，否则 → HNSWFlat | 默认，按工业界共识自动选择 |
 | `"flat"` | 强制 FlatIP | 需要 100% 召回率时 |
-| `"ivf"` | 强制 IVFFlat（nlist=√N, nprobe=10） | 大数据集优化 |
-| `"hnsw"` | 预留，当前 fallback 到 FlatIP | 未来迁移到 Qdrant |
+| `"hnsw"` | 强制 HNSWFlat（M=32, efConstruction=200） | 30k-50M 向量，推荐 |
+| `"ivf"` | 强制 IVFFlat（nlist=√N, nprobe=10） | >50M 向量或内存极度受限时备选 |
 
-### 2.2 IVFFlat 参数
+### 2.2 HNSWFlat 参数（推荐）
+
+| 参数 | 值 | 说明 |
+|------|-----|------|
+| M | 32 | 每节点邻居数，越大 recall 越高，内存 ~2x Flat |
+| efConstruction | 200 | 构建时搜索深度，越大图质量越好 |
+| efSearch | 64 | 查询时搜索深度，生产推荐 64-128 |
+| 训练 | 无需 | 直接 add 即可，"set and forget" |
+
+### 2.3 IVFFlat 参数（备选，仅 >50M 向量或内存极度受限）
 
 | 参数 | 值 | 说明 |
 |------|-----|------|
 | nlist | √N | 聚类中心数，自动计算 |
 | nprobe | 10 | 查询时搜索的聚类数 |
 | METRIC | INNER_PRODUCT | 与 FlatIP 一致（L2 归一化后等价 cosine） |
-| 训练 | 自动 | `index.train(embeddings)` 在 `add()` 前调用 |
+| 训练 | 自动 | `index.train(embeddings)` 在 `add()` 前调用，需至少 nlist * 39 个向量 |
+| 维护 | 定期重建 | 数据漂移后 recall 下降 |
 
-### 2.3 蓝绿部署
+### 2.4 蓝绿部署
 
 `save_index()` 使用原子写入：
 
@@ -113,20 +123,20 @@ faiss.write_index(index, str(tmp_path))  # 先写临时文件
 tmp_path.rename(final_path)              # 原子 rename 替换
 ```
 
-### 2.4 构建脚本
+### 2.5 构建脚本
 
 ```bash
-# 默认（自动选择索引类型）
+# 默认（自动选择：N < 30k → FlatIP，否则 → HNSWFlat）
 python scripts/advisor/run_all/_09_build_graph.py
 
-# 强制 IVFFlat
-python scripts/advisor/run_all/_09_build_graph.py --index-type ivf
+# 强制 HNSWFlat（推荐，30k-50M 向量）
+python scripts/advisor/run_all/_09_build_graph.py --index-type hnsw
 
-# 强制 FlatIP（测试用）
+# 强制 FlatIP（测试用，<30k 向量）
 python scripts/advisor/run_all/_09_build_graph.py --index-type flat
 
-# HNSW（预留，当前 fallback）
-python scripts/advisor/run_all/_09_build_graph.py --index-type hnsw
+# 强制 IVFFlat（>50M 向量或内存受限时备选）
+python scripts/advisor/run_all/_09_build_graph.py --index-type ivf
 ```
 
 ---

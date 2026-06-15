@@ -428,10 +428,13 @@ frontend_refactor:
 
 ---
 
-### ✅ 1.10 RAG系统升级: IVFFlat + HNSW预留接口 — 已完成 (IVFFlat已启用，HNSW预留接口就绪)
+### ✅ 1.10 RAG系统升级: HNSWFlat + IVFFlat备选 — 已完成 (FlatIP当前，HNSW/IVFFlat接口就绪)
 
 #### 设计理念
-**渐进优化，改动最小，性能显著提升**：
+**渐进优化，按工业界共识选择最优索引**（2025-2026）：
+- **<< 30k 向量**: FlatIP 单毫秒级延迟完全可接受，无需切换
+- **30k-50M 向量**: HNSWFlat 是性能/维护成本最优解（O(log N)，set and forget）
+- **> 50M 向量或内存极度受限**: IVFFlat 作为备选（内存更小但需定期重建）
 
 #### 当前状态
 ```yaml
@@ -443,20 +446,25 @@ current_rag:
   performance:
     search_latency: "<50ms (500向量，可接受)"
     memory: "~2MB"
-    scalability: "线性增长，>5k向量后性能下降"
+    scalability: "线性增长，30k向量后延迟开始显著上升"
 ```
 
-#### IVFFlat升级方案 (Phase I)
+#### HNSWFlat升级方案 (Phase I，推荐)
 ```yaml
-IVFFlat_upgrade:
-  index_type: "FAISS IVFFlat"
-  nlist: 100  # 聚类中心数，sqrt(N)经验值
-  nprobe: 10  # 查询时搜索的聚类数
+HNSW_upgrade:
+  index_type: "FAISS IndexHNSWFlat"
+  trigger_condition: "chunks > 30,000"
+  
+  params:
+    M: 32  # 每节点邻居数，越大recall越高内存越多
+    efConstruction: 200  # 构建时搜索深度
+    efSearch: 64  # 查询时搜索深度（生产推荐64-128）
   
   benefits:
-    - 查询复杂度: O(N) → O(sqrt(N))
-    - 500向量场景: 延迟降低30-50%
-    - 支持扩展到5000向量而无明显性能下降
+    - 查询复杂度: O(N) → O(log N)
+    - 30k向量场景: 延迟降至亚毫秒级
+    - 无需训练，直接add即可（set and forget）
+    - 召回率 ≈95%+，优于IVFFlat
   
   migration:
     - 自动从FlatIP重建
@@ -464,21 +472,22 @@ IVFFlat_upgrade:
     - 无需修改chunk元数据结构
 ```
 
-#### HNSW预留接口 (Phase III启用)
+#### IVFFlat备选方案 (Phase III，仅大数据/内存受限)
 ```yaml
-HNSW_interface:
-  description: "预留HNSW接口，供未来大规模扩展使用"
-  trigger_condition: "chunks > 5000"
+IVFFlat_interface:
+  description: "IVFFlat备选，仅在50M+向量或内存极度受限时启用"
+  trigger_condition: "chunks > 50,000,000 或内存受限"
   
   interface_design:
     - 抽象IndexBackend类
-    - 支持IVFFlat/HNSW动态切换
+    - 支持FlatIP/HNSW/IVFFlat动态切换
     - 配置驱动，零代码修改切换
   
-  HNSW_params:
-    M: 16  # 每层最大连接数
-    efConstruction: 200  # 构建时搜索深度
-    efSearch: 128  # 查询时搜索深度
+  IVFFlat_params:
+    nlist: sqrt(N)  # 聚类中心数
+    nprobe: 10  # 查询时搜索的聚类数
+    training: "至少 nlist * 39 个向量"
+    maintenance: "定期重建（数据漂移后recall下降）"
 ```
 
 ---
