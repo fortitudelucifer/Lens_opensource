@@ -13,6 +13,7 @@
  */
 
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ChevronDown, History, RefreshCw, Loader2, AlertCircle,
   MessagesSquare,
@@ -34,6 +35,7 @@ export function SessionHistoryList({
   onOpenSession,
   limit = 10,
 }: SessionHistoryListProps) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const [sessions, setSessions] = useState<RoundtableSessionSummary[]>([])
   const [loading, setLoading] = useState(false)
@@ -161,7 +163,7 @@ export function SessionHistoryList({
 
           {totalCount > limit && (
             <p className="pt-2 text-[11px] text-muted-foreground text-center">
-              仅显示最近 {limit} 条 · 更多历史已在后台保留
+              {t('sessionHistory.showingRecent', { limit })}
             </p>
           )}
         </div>
@@ -183,6 +185,7 @@ function SessionRow({
   disabled: boolean
   onClick: () => void
 }) {
+  const { t } = useTranslation()
   const updatedAgo = formatRelative(summary.updated_at)
   const rounds = summary.rounds_count + 1 // 已归档 + 当前轮
   return (
@@ -199,12 +202,12 @@ function SessionRow({
       <div className="flex items-center gap-2 mb-1">
         <MessagesSquare className="w-3.5 h-3.5 text-primary/70 shrink-0" />
         <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-          {summary.phase === 'done' ? '已完成' : `进行中 · ${summary.phase}`}
+          {summary.phase === 'done' ? t('roundtable.session.completed') : `${t('roundtable.session.inProgress')} · ${summary.phase}`}
         </span>
         <span className="text-[10px] text-muted-foreground/70">·</span>
         <span className="text-[10px] text-muted-foreground/70">{updatedAgo}</span>
         <span className="ml-auto inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary ring-1 ring-primary/20">
-          {rounds} 轮
+          {rounds} {t('dashboard.rounds')}
         </span>
         {opening && <Loader2 className="w-3 h-3 animate-spin text-primary ml-1" />}
       </div>
@@ -218,14 +221,14 @@ function SessionRow({
             <span
               key={p}
               className="inline-flex items-center gap-1 rounded bg-muted/60 px-1.5 py-0.5 text-[10px] text-muted-foreground"
-              title={persona?.name ?? p}
+              title={persona ? t('persona.' + persona.id + '.name') : p}
             >
               {persona ? (
                 <>
                   <span role="img" aria-hidden="true" className="text-[12px] leading-none">
                     {persona.emoji}
                   </span>
-                  <span>{persona.name}</span>
+                  <span>{t('persona.' + persona.id + '.name')}</span>
                 </>
               ) : (
                 p

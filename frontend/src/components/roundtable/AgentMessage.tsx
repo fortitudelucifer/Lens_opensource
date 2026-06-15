@@ -10,6 +10,7 @@
  */
 
 import { Circle, Star } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { PERSONA_COLOR_CLASSES, getPersona } from '@/data/personas'
 import { getThinkingLabel, useElapsedSeconds } from '@/lib/thinking-ui'
@@ -27,11 +28,12 @@ interface AgentMessageProps {
 }
 
 export function AgentMessage({ agent, phaseLabel, compact = false, className }: AgentMessageProps) {
+  const { t } = useTranslation()
   const persona = getPersona(agent.personaId)
   if (!persona) {
     return (
       <div className="rounded-2xl border border-dashed border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground">
-        未知 persona: {agent.personaId}
+        {t('roundtable.session.unknownPersona')}: {agent.personaId}
       </div>
     )
   }
@@ -55,7 +57,7 @@ export function AgentMessage({ agent, phaseLabel, compact = false, className }: 
           cn('ring-1', colors.ring, 'ring-opacity-50'),
         className,
       )}
-      aria-label={`${persona.name} 发言`}
+      aria-label={`${t('persona.' + persona.id + '.name')} ${t('roundtable.session.speaking')}`}
     >
       {/* MP 融合：顶部彩色 accent 线（仅在 compact 三列布局显示，提供视觉分隔） */}
       {compact && agent.status !== 'error' && (
@@ -96,7 +98,7 @@ export function AgentMessage({ agent, phaseLabel, compact = false, className }: 
                   compact ? 'text-[17px]' : 'text-[19px]',
                 )}
                 role="img"
-                aria-label={`${persona.name} emoji`}
+                aria-label={`${t('persona.' + persona.id + '.name')} emoji`}
               >
                 {persona.emoji}
               </span>
@@ -122,10 +124,10 @@ export function AgentMessage({ agent, phaseLabel, compact = false, className }: 
               agent.status === 'error' ? 'text-muted-foreground' : colors.text,
             )}
           >
-            {persona.name}
+            {t('persona.' + persona.id + '.name')}
           </div>
           <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 truncate">
-            <span className="truncate">{persona.subtitle}</span>
+            <span className="truncate">{t('persona.' + persona.id + '.subtitle')}</span>
             {phaseLabel && !compact && (
               <>
                 <span aria-hidden="true">·</span>
@@ -162,13 +164,13 @@ export function AgentMessage({ agent, phaseLabel, compact = false, className }: 
                   ? 'bg-muted text-muted-foreground'
                   : cn(colors.bg, colors.text),
               )}
-              title={`${meta.label} · 自评 ${meta.percent}%`}
-              aria-label={`置信度 ${meta.label}，${meta.percent}%`}
+              title={`${t('confidence.' + meta.tier)} · ${t('arena.selfEval')} ${meta.percent}%`}
+              aria-label={`${t('arena.confidence')} ${t('confidence.' + meta.tier)}，${meta.percent}%`}
             >
               {iconEl}
               <span className="tabular-nums">{meta.percent}%</span>
               {(isHigh || isMedium) && (
-                <span className="opacity-70">· {meta.label}</span>
+                <span className="opacity-70">· {t('confidence.' + meta.tier)}</span>
               )}
             </span>
           )

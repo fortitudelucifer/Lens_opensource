@@ -7,6 +7,7 @@
  */
 
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ChevronDown, Quote, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getPersona } from '@/data/personas'
@@ -24,16 +25,20 @@ export function RoundHistoryCard({
   snapshot,
   defaultExpanded = false,
 }: RoundHistoryCardProps) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(defaultExpanded)
 
-  const roundLabel = `第 ${snapshot.roundIndex + 1} 轮`
+  const roundLabel = t('roundtable.session.roundLabel', { round: snapshot.roundIndex + 1 })
   const excerpt =
     snapshot.question.length > 72
       ? snapshot.question.slice(0, 72) + '…'
       : snapshot.question
 
   const personaNames = snapshot.phase2
-    .map((b) => getPersona(b.personaId)?.name ?? b.personaId)
+    .map((b) => {
+      const persona = getPersona(b.personaId)
+      return persona ? t('persona.' + persona.id + '.name') : b.personaId
+    })
     .join(' · ')
 
   return (
@@ -43,7 +48,7 @@ export function RoundHistoryCard({
         expanded ? 'bg-card/60 shadow-sm' : 'hover:bg-muted/50',
       )}
       aria-expanded={expanded}
-      aria-label={`${roundLabel}历史`}
+      aria-label={`${roundLabel} ${t('roundtable.session.history')}`}
     >
       {/* Header · 可点击折叠 */}
       <button

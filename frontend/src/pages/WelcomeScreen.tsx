@@ -68,11 +68,11 @@ export function WelcomeScreen({ onSelect }: WelcomeScreenProps) {
               </div>
 
               <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-[var(--text-primary)] transition-colors group-hover:text-emerald-600 break-words whitespace-normal px-2">
-                {persona.name}
+                {t('persona.' + persona.id + '.name')}
               </h3>
 
               <p className="text-xs sm:text-sm leading-relaxed text-[var(--text-secondary)] mb-6 sm:mb-8 flex-1 w-full break-words px-1">
-                {persona.description}
+                {t('persona.' + persona.id + '.description')}
               </p>
 
               <div className="flex justify-center items-center gap-2 text-xs sm:text-sm font-medium transition-colors w-full mt-auto" style={{ color: persona.hex }}>

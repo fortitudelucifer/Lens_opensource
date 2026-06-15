@@ -81,7 +81,7 @@ export function CommunicationStatusPage() {
                         <div className="flex items-center gap-3 text-xs text-[var(--text-muted)]">
                           <div className="flex items-center gap-1">
                             <persona.icon className="w-3.5 h-3.5" style={{ color: persona.hex }} />
-                            <span className="font-medium px-1" style={{ color: persona.hex }}>{persona.name}</span>
+                            <span className="font-medium px-1" style={{ color: persona.hex }}>{t('persona.' + persona.id + '.name')}</span>
                           </div>
                           <span>·</span>
                           <span>{new Date(session.updated_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>

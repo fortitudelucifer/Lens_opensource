@@ -235,7 +235,7 @@ export function ChatPage({
         applyConversationPayload(entry.payload)
       } else if (entry.fileName) {
         const res = await fetch(`/chat-samples/${entry.fileName}`)
-        if (!res.ok) throw new Error(`加载失败: ${entry.fileName}`)
+        if (!res.ok) throw new Error(t('chat.loadFailed', { fileName: entry.fileName }))
         const payload = await res.json() as RawConversationPayload
         applyConversationPayload(payload)
       }
@@ -414,16 +414,16 @@ export function ChatPage({
             available_backends?: string[]
           }
           const alternatives = (payload.available_backends || []).join(' / ')
-          message = payload.error || '模型调用失败'
+          message = payload.error || t('chat.modelCallFailed')
           if (alternatives) {
-            message += `\n可切换后端：${alternatives}`
+            message += `\n${t('chat.switchBackend')}: ${alternatives}`
           }
         } catch {
-          message = '模型调用失败，请稍后重试。'
+          message = t('chat.modelCallFailedRetry')
         }
       } else {
         // Fallback for native errors like NetworkError or 500
-        message = `系统异常: ${raw === 'Load failed' || raw === 'Failed to fetch' ? '网络连接异常，请检查后端服务' : raw}`
+        message = `${t('chat.systemError')}: ${raw === 'Load failed' || raw === 'Failed to fetch' ? t('chat.networkError') : raw}`
       }
 
       updateAssistant({ content: `**[System Error]** ${message}` })
@@ -567,10 +567,10 @@ export function ChatPage({
               <currentPersona.icon className="w-12 h-12" style={{ color: currentPersona.hex }} />
             </div>
             <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
-              {t('welcomeScreen.title', { appName: t('app.name') })} — {currentPersona.name}
+              {t('welcomeScreen.title', { appName: t('app.name') })} — {t('persona.' + currentPersona.id + '.name')}
             </h3>
             <p className="text-[var(--text-secondary)] max-w-md">
-              {currentPersona.description}
+              {t('persona.' + currentPersona.id + '.description')}
             </p>
             <div className="mt-6 w-full max-w-2xl rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-4 text-left">
               <div className="mb-3 flex items-center justify-between gap-3">

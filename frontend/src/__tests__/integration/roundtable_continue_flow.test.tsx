@@ -169,9 +169,9 @@ describe('D5.7 · 多轮 continue 流 · rounds 归档 + streamNonce bump + 历�
 
     // 挂载 SessionPage · 验证 amber banner 渲染
     render(<RoundtableSessionPage />)
-    expect(screen.getByText(/Moderator 已降级/)).toBeInTheDocument()
+    expect(screen.getByRole('status')).toBeInTheDocument()
     // 历史折叠区（rounds.length=1）
-    expect(screen.getByText(/已完成.*1.*轮/)).toBeInTheDocument()
+    expect(screen.getByText(/Completed.*1.*round/)).toBeInTheDocument()
   })
 
   it('连续 2 次 continue · rounds 正确堆叠 2 轮 · streamNonce=2', () => {

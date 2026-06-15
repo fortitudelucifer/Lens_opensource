@@ -71,7 +71,7 @@ export function ChatSidebar({ sessions, currentSessionId, onSessionSelect, onNew
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="truncate text-[10px] uppercase font-semibold" style={{ color: persona.hex }}>
-                    {persona.name}
+                    {t('persona.' + persona.id + '.name')}
                   </span>
                   <div className="flex items-center gap-1 text-[var(--text-muted)]">
                     <Clock className="w-3 h-3" />

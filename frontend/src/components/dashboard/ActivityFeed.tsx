@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { MessageSquare, CheckCircle, AlertTriangle, RefreshCw, Star, UserPlus } from 'lucide-react'
 import { api } from '@/lib/api'
@@ -101,6 +102,7 @@ const typeIcons = {
 }
 
 export function ActivityFeed() {
+  const { t } = useTranslation()
   const [activities, setActivities] = useState<Activity[]>(SAMPLE_ACTIVITIES)
 
   useEffect(() => {
@@ -109,10 +111,10 @@ export function ActivityFeed() {
     const timeAgo = (iso: string) => {
       const diffMs = Date.now() - new Date(iso).getTime()
       const mins = Math.max(1, Math.floor(diffMs / 60000))
-      if (mins < 60) return `${mins} 分钟前`
+      if (mins < 60) return t('time.minutesAgo', { count: mins })
       const hours = Math.floor(mins / 60)
-      if (hours < 24) return `${hours} 小时前`
-      return `${Math.floor(hours / 24)} 天前`
+      if (hours < 24) return t('time.hoursAgo', { count: hours })
+      return t('time.daysAgo', { count: Math.floor(hours / 24) })
     }
 
     const load = async () => {
@@ -136,10 +138,10 @@ export function ActivityFeed() {
               user: `Session ${s.id.slice(0, 6)}`,
               initials: 'CHT',
               avatarColor: 'linear-gradient(135deg,#10b981,#14b8a6)',
-              description: `${s.title || '未命名会话'} · ${s.message_count} 条消息 · ${s.backend}`,
+              description: `${s.title || t('chat.unnamedSession')} · ${s.message_count} ${t('dashboard.messages')} · ${s.backend}`,
               time: timeAgo(s.updated_at),
               badge: {
-                label: s.mode === 'consult' ? '深度互动' : '倾听模式',
+                label: s.mode === 'consult' ? t('chat.modeDeep') : t('chat.modeListen'),
                 color: '#059669',
                 bg: 'rgba(16,185,129,0.12)',
               },
@@ -159,10 +161,10 @@ export function ActivityFeed() {
                   p.status === 'error'
                     ? 'linear-gradient(135deg,#ef4444,#dc2626)'
                     : 'linear-gradient(135deg,#14b8a6,#0ea5e9)',
-                description: `${p.name} · ${p.detail || '处理中'}`,
-                time: '刚刚',
+                description: `${p.name} · ${p.detail || t('dashboard.processing')}`,
+                time: t('common.justNow'),
                 badge: {
-                  label: p.status === 'error' ? '异常' : '进行中',
+                  label: p.status === 'error' ? t('common.error') : t('dashboard.inProgress'),
                   color: p.status === 'error' ? '#dc2626' : '#0891b2',
                   bg: p.status === 'error' ? 'rgba(239,68,68,0.12)' : 'rgba(14,165,233,0.12)',
                 },
@@ -177,10 +179,10 @@ export function ActivityFeed() {
             user: 'Review Queue',
             initials: 'REV',
             avatarColor: 'linear-gradient(135deg,#3b82f6,#8b5cf6)',
-            description: `待审核 ${review.stats.pending} 条，AI 通过 ${review.stats.ai_passed} 条`,
-            time: '刚刚',
+            description: t('dashboard.reviewStats', { pending: review.stats.pending, aiPassed: review.stats.ai_passed }),
+            time: t('common.justNow'),
             badge: {
-              label: '审核状态',
+              label: t('dashboard.reviewStatus'),
               color: '#6366f1',
               bg: 'rgba(99,102,241,0.12)',
             },
@@ -214,16 +216,16 @@ export function ActivityFeed() {
       <div className="flex items-center justify-between mb-5">
         <div>
           <h2 className="text-base font-bold mb-1 text-[var(--text-primary)]">
-            实时活动流
+            {t('dashboard.activityFeed')}
           </h2>
           <p className="text-xs text-[var(--text-muted)]">
-            最近的系统事件与交互记录
+            {t('dashboard.activityFeedDesc')}
           </p>
         </div>
         <button
           className="text-xs font-medium px-3 py-1.5 rounded-xl transition-all hover:scale-105 bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border-color)]"
         >
-          查看全部
+          {t('dashboard.viewAll')}
         </button>
       </div>
 

@@ -11,7 +11,8 @@
     "back": "返回",
     "loading": "加载中...",
     "error": "错误",
-    "beta": "Beta"
+    "beta": "Beta",
+    "justNow": "刚刚"
   },
   "nav": {
     "consent": "知情同意",
@@ -113,7 +114,72 @@
       "completionRate": "分析完成率",
       "activeSessions": "活跃会话",
       "totalChunks": "Chunks 总量"
+    },
+    "messages": "条消息",
+    "processing": "处理中",
+    "inProgress": "进行中",
+    "reviewStats": "待审核 {{pending}} 条，AI 通过 {{aiPassed}} 条",
+    "reviewStatus": "审核状态",
+    "activityFeed": "实时活动流",
+    "activityFeedDesc": "最近的系统事件与交互记录",
+    "viewAll": "查看全部",
+    "statusActive": "运行中",
+    "statusStandby": "待命",
+    "primaryModel": "主模型",
+    "fusionModel": "融合模型",
+    "fromSettings": "来自设置页偏好",
+    "preference": "偏好",
+    "modelConfig": "模型配置",
+    "modelConfigDesc": "大语言模型与检索引擎参数",
+    "saveSettings": "保存设置",
+    "inferenceParams": "推理参数",
+    "viewAdvancedParams": "查看高级参数",
+    "pipelinePhase0": "数据导入 (Ingestion)",
+    "pipelinePhase1": "多模态处理 (Multimodal)",
+    "pipelinePhase2": "语义压缩 (Compression)",
+    "pipelinePhase3": "合并 & 时间轴 (Merge)",
+    "pipelinePhase4": "L1/L2 分支 & SFT",
+    "pipelinePhase5": "MoA 融合分析",
+    "pipelinePhase6": "QLoRA 训练",
+    "pipelinePhase7": "RAG 索引 (FAISS)",
+    "pipelineRunning": "进行中",
+    "pipelineCompleted": "完成",
+    "pipelineWaiting": "等待中",
+    "statusLabel": "状态",
+    "detailLabel": "详情",
+    "pipelineTitle": "Agent SFT & MoA 流水线",
+    "pipelineDesc": "实时监控多模态融合处理状态",
+    "rounds": "轮",
+    "reviewCount": "审核: {{count}} 条",
+    "testSet": "测试集: {{count}}"
+  },
+  "moderator": {
+    "ariaLabel": "圆桌讨论综合总结",
+    "title": "Lens 综合总结",
+    "subtitle": "来自 3 个流派视角的回声",
+    "memorySuffixMulti": "已基于上一轮 Moderator 综合自动承接。",
+    "memorySuffixFirst": "首轮·无历史轮可承接。",
+    "fallbackTitle": "Moderator 已降级 · 本轮走了规则模板",
+    "fallbackTitleDisabled": "Moderator 使用规则模板（LLM 已关闭）",
+    "fallbackDetailTimeout": "LLM 调用超时或返回为空 · 常见于 thinking 模型生成慢或代理限流 · 可尝试换用更快的 backend 或提高 ROUNDTABLE_MODERATOR_TIMEOUT。{{memorySuffix}}",
+    "fallbackDetailDisabled": "环境变量 ROUNDTABLE_MODERATOR_LLM=0 · 这是预期行为。{{memorySuffix}}",
+    "fallbackDetailException": "LLM 调用异常：{{reason}} · 本轮综合由规则模板生成。{{memorySuffix}}",
+    "fallbackDetailGeneric": "降级原因：{{reason}}。{{memorySuffix}}",
+    "section": {
+      "seen": "看到你",
+      "angles": "不同视角",
+      "tries": "你可以尝试",
+      "doubts": "仍然存疑",
+      "lens": "Lens 寄语"
     }
+  },
+  "sessionHistory": {
+    "showingRecent": "仅显示最近 {{limit}} 条 · 更多历史已在后台保留"
+  },
+  "time": {
+    "minutesAgo": "{{count}} 分钟前",
+    "hoursAgo": "{{count}} 小时前",
+    "daysAgo": "{{count}} 天前"
   },
   "knowledgeCenter": {
     "title": "知识中心",
@@ -200,6 +266,9 @@
     "modelCallFailed": "模型调用失败",
     "networkError": "网络连接异常，请检查后端服务",
     "systemError": "系统异常",
+    "loadFailed": "加载失败: {{fileName}}",
+    "switchBackend": "可切换后端",
+    "modelCallFailedRetry": "模型调用失败，请稍后重试。",
     "exportDialogTitle": "导出对话",
     "bottomInput": {
       "placeholder": "输入你的问题或感受 (Enter 发送, Shift+Enter 换行)",
@@ -264,7 +333,23 @@
     "crisisTriggered": "已触发危机干预（本轮不参与评分）",
     "voteRemark": "评分备注：{{remark}}",
     "safetyIntervention": "已触发安全干预，本轮不参与评分",
-    "loadFailed": "加载失败"
+    "loadFailed": "加载失败",
+    "establishingDualMirror": "正在为您建立双镜对比，生成需要较长时间，请耐心等待...",
+    "dualMirrorSolo": "双镜对比（单路模式）",
+    "dualMirror": "双镜对比",
+    "hideModelIdentity": "隐藏模型身份",
+    "revealModelIdentity": "揭示模型身份",
+    "exportDualMirror": "导出双镜对比",
+    "restoreDualMirror": "恢复双镜",
+    "medicalDisclaimer": "内容仅供参考，AI 顾问不能替代专业医疗建议。",
+    "selfEval": "自评",
+    "confidence": "置信度",
+    "placeholder": {
+      "generating": "正在并行生成中…",
+      "pendingVote": "请先完成打分或点击「跳过」",
+      "soloInput": "继续对话 (Enter 发送)",
+      "dualInput": "输入你的问题，左右同时回答 (Enter 发送)"
+    }
   },
   "assessment": {
     "phq2": "抑郁筛查 (PHQ-2)",
@@ -435,6 +520,81 @@
     "fail": "失败",
     "requestFailed": "请求失败"
   },
+  "persona": {
+    "neutral": {
+      "name": "中立顾问",
+      "subtitle": "客观 · 理性",
+      "philosophy": "让我们先看清楚正在发生什么",
+      "description": "客观理性，帮助你理清思绪，分析关系动态与沟通模式"
+    },
+    "supportive": {
+      "name": "支持性顾问",
+      "subtitle": "温暖 · 陪伴",
+      "philosophy": "先停在这里陪你一会",
+      "description": "温暖包容，给你情感支持，关注你的感受与情绪验证"
+    },
+    "psychoanalytic": {
+      "name": "精神分析顾问",
+      "subtitle": "潜意识 · 防御",
+      "philosophy": "你感受到的，可能指向更深处",
+      "description": "深度挖掘，探索潜意识防御机制与童年依附模式"
+    },
+    "eft": {
+      "name": "EFT 情绪聚焦",
+      "subtitle": "依恋 · 追逃",
+      "philosophy": "每个行为背后，都有一个想被看见的需求",
+      "description": "基于情绪聚焦疗法，探索依恋需求与追逃互动循环"
+    },
+    "bowen": {
+      "name": "家庭系统顾问",
+      "subtitle": "代际 · 边界",
+      "philosophy": "你不只是你自己 — 你携带着家族的剧本",
+      "description": "基于 Bowen 家庭系统理论，分析代际模式与三角关系"
+    },
+    "sociology": {
+      "name": "社会学视角",
+      "subtitle": "结构 · 权力",
+      "philosophy": "亲密关系也是一场社会剧",
+      "description": "从社会结构出发，洞察关系中的权力场域、印象管理与制度性约束"
+    },
+    "philosophy": {
+      "name": "哲学视角",
+      "subtitle": "存在 · 追问",
+      "philosophy": "为什么这件事让你这样？",
+      "description": "苏格拉底式追问，引导你用存在主义、现象学、实用主义反思关系"
+    },
+    "game_theory": {
+      "name": "博弈论视角",
+      "subtitle": "博弈 · 偏差",
+      "philosophy": "每一步选择都在影响下一步",
+      "description": "理性分析关系博弈结构，识别沉没成本、损失厌恶等认知偏差"
+    },
+    "cultural": {
+      "name": "文化视角",
+      "subtitle": "脚本 · 仪式",
+      "philosophy": "你以为是个人选择，其实是文化剧本",
+      "description": "关注文化脚本如何塑造关系期待，深入差序格局、代际责任与仪式象征"
+    }
+  },
+  "confidence": {
+    "high": "高度契合",
+    "medium": "稳定视角",
+    "low": "尝试性视角"
+  },
+  "preset": {
+    "breakthrough": {
+      "label": "🔥 破局行动组",
+      "description": "帮你在混乱中梳理对策、终止内耗"
+    },
+    "embrace": {
+      "label": "🫂 情绪拥抱组",
+      "description": "倾听你隐秘的委屈，接纳并陪你寻找意义"
+    },
+    "insight": {
+      "label": "🔍 深度觉察组",
+      "description": "追根溯源，看见原生家庭与文化剧本里的你"
+    }
+  },
   "roundtable": {
     "title": "圆桌讨论",
     "setup": {
@@ -449,7 +609,61 @@
       "questionLabel": "描述你想讨论的情境",
       "questionPlaceholder": "例如：和伴侣吵架后冷战了三天，我不知道是我太敏感，还是 ta 确实没把我放在心上…越详细越好（建议 ≥ 100 字）。",
       "startButton": "开始圆桌讨论",
-      "historyTitle": "历史圆桌会话"
+      "historyTitle": "历史圆桌会话",
+      "writeQuestionFirst": "请先写下你想讨论的问题（至少 2 个字），再调用检索",
+      "searchUsesQuestion": "检索会用你的问题作为关键词",
+      "backendUnavailableMock": "后端不可用，已降级到 mock 演示模式",
+      "disclaimerExplore": "内容仅供探索参考，不构成诊断或治疗",
+      "startDescription": "开启后将进入 2 轮讨论（独立分析 → 交叉回应 → 综合总结）",
+      "bypassQualityHint": "不推荐，但允许用户跳过质量门槛主动开启圆桌",
+      "bypassQuality": "仍要开启",
+      "selectNAdvisors": "请先选择 {{count}} 位顾问",
+      "enterQuestion": "请输入你想讨论的问题",
+      "questionTooShort": "问题太短（{{length}} 字），请补充背景或点左侧「仍要开启」绕过"
+    },
+    "guidance": {
+      "suitable": "适合开圆桌",
+      "suitable1": "复杂关系困境（涉及多人 / 多原因 / 反复纠结）",
+      "suitable2": "想被多个视角\"看见\"，而不是只听一种声音",
+      "suitable3": "有充分背景描述（建议 ≥ 100 字）",
+      "unsuitableTitle": "这些情况建议走沉浸式",
+      "unsuitable1": "一句话问答（信息片段化）",
+      "unsuitable2": "求快速建议（\"今晚约会穿什么\"）",
+      "unsuitable3": "只想要单一专业视角（如只想心理咨询）",
+      "chatTooltip": "跳转到沉浸式互动单 agent 对话",
+      "chatLink": "沉浸式互动"
+    },
+    "qualityHint": {
+      "shortTitle": "问题较短，圆桌讨论可能流于表面。",
+      "shortDesc": "建议补充背景细节（发生了什么 / 你的感受 / 期待的结果），或者",
+      "switchToChat": "转向沉浸式互动",
+      "ok": "问题清晰，可以开启圆桌。补充更多背景会让讨论更深入。",
+      "great": "问题信息充分，圆桌讨论将更有深度 ✨"
+    },
+    "backendPicker": {
+      "title": "讨论引擎 · 留空用服务器默认",
+      "default": "服务器默认"
+    },
+    "injection": {
+      "title": "注入参考资料",
+      "hint": "让 3 位顾问参考你过去的对话片段或专业知识",
+      "disabledTooltip": "请先写下至少 2 个字的问题作为检索关键词",
+      "chatHistoryTooltip": "检索过去聊天记录中与当前问题相关的片段",
+      "knowledgeTooltip": "检索专业知识手册中与当前问题相关的条目",
+      "chatHistory": "聊天记录",
+      "knowledge": "知识手册",
+      "selected": "已选 {{chat}} 片段 · {{kn}} 知识 · {{chars}} 字",
+      "clear": "清除已选",
+      "clearAria": "清除已选注入"
+    },
+    "depthMode": {
+      "title": "深度讨论模式",
+      "enabledSub": "每位顾问 500-900 字 · 带流派解释 + 落点动作",
+      "disabledSub": "默认：每位顾问 150-300 字的简短视角",
+      "description": "开启后每个 agent 的 max_tokens 翻倍（1024 → 2560），Moderator 也会输出更长的综合。生成速度会更慢，但分析更完整。",
+      "thinkingHint": "推荐配合「思考模型」使用 ·",
+      "thinkingExamples": "例如 claude-sonnet-think、qwen3-235B-thinking、gemini-think 等。",
+      "notThinkingBackend": "当前 backend {{backend}} 可能不是思考模型 · 建议切到 claude/qwen 的 thinking 变体以获得更好效果"
     },
     "session": {
       "notStarted": "圆桌还没有开始",
@@ -458,7 +672,21 @@
       "moderatorSummary": "Moderator 综合总结",
       "followUpPlaceholder": "追问...",
       "newDiscussion": "新讨论",
-      "continueButton": "继续"
+      "continueButton": "继续",
+      "unknownPersona": "未知顾问",
+      "speaking": "发言",
+      "roundLabel": "第 {{round}} 轮",
+      "history": "历史",
+      "completed": "已完成",
+      "inProgress": "进行中",
+      "shareTooltip": "V2 支持分享",
+      "share": "分享",
+      "editTooltip": "V2 支持修改",
+      "edit": "修改",
+      "completedRounds": "已完成 · {{count}} 轮讨论",
+      "phase1Completed": "第一阶段已完成",
+      "phase1InProgress": "第一阶段进行中",
+      "phase2Title": "第二阶段 · 交叉回应"
     }
   }
 }

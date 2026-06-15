@@ -173,8 +173,8 @@ describe('D5.7 · 正常流 · session 从 phase1 走到 done', () => {
     })
 
     expect(useRoundtableStore.getState().moderatorFallbackReason).toBe('llm_returned_none')
-    // amber 降级 banner 的文案关键词
-    expect(screen.getByText(/Moderator 已降级/)).toBeInTheDocument()
+    // amber 降级 banner
+    expect(screen.getByRole('status')).toBeInTheDocument()
   })
 
   it('整个 session 流程后 · phase3 阶段 phase1Faded=true · phase2Faded=true 样式生效', () => {
@@ -187,7 +187,7 @@ describe('D5.7 · 正常流 · session 从 phase1 走到 done', () => {
     })
 
     // phase1 grid 应该有淑化 class
-    const phase1Wrapper = within(container).queryByLabelText(/第一阶段已完成（已淑化）/)
+    const phase1Wrapper = within(container).queryByLabelText(/Phase 1 completed/)
     expect(phase1Wrapper).not.toBeNull()
   })
 })

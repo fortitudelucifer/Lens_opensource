@@ -267,18 +267,18 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
           <button
             className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition"
             disabled
-            title="V2 支持分享"
+            title={t('roundtable.session.shareTooltip')}
           >
             <Share2 className="w-3.5 h-3.5" />
-            分享
+            {t('roundtable.session.share')}
           </button>
           <button
             className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition"
             disabled
-            title="V2 支持修改"
+            title={t('roundtable.session.editTooltip')}
           >
             <Pencil className="w-3.5 h-3.5" />
-            修改
+            {t('roundtable.session.edit')}
           </button>
         </div>
       </div>
@@ -287,7 +287,7 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
       {rounds.length > 0 && (
         <div className="mp-fade-up mb-8 space-y-3">
           <h2 className="max-w-3xl mx-auto text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            已完成 · {rounds.length} 轮讨论
+            {t('roundtable.session.completedRounds', { count: rounds.length })}
           </h2>
           {rounds.map((snap) => (
             <RoundHistoryCard key={snap.roundIndex} snapshot={snap} />
@@ -374,7 +374,7 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
             'grid grid-cols-1 lg:grid-cols-3 gap-4 transition-all duration-700',
             phase1Faded && 'opacity-50 scale-[0.98] grayscale-[0.4]',
           )}
-          aria-label={phase1Faded ? '第一阶段已完成（已淑化）' : '第一阶段进行中'}
+          aria-label={phase1Faded ? t('roundtable.session.phase1Completed') : t('roundtable.session.phase1InProgress')}
         >
           {phase1Agents.map((agent) => (
             <AgentMessage
@@ -399,7 +399,7 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
         <section className="mb-8 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              第二阶段 · 交叉回应
+              {t('roundtable.session.phase2Title')}
             </h2>
             <span className="text-xs text-muted-foreground">
               {countDone(phase2Agents)} / {selectedPersonas.length}

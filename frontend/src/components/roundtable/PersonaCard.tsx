@@ -6,6 +6,7 @@
  */
 
 import { Check, Sparkles } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { PERSONA_COLOR_CLASSES, type RoundtablePersona } from '@/data/personas'
 
@@ -27,6 +28,7 @@ export function PersonaCard({
   index = 0,
   className,
 }: PersonaCardProps) {
+  const { t } = useTranslation()
   const colors = PERSONA_COLOR_CLASSES[persona.color]
   const Icon = persona.icon
 
@@ -87,7 +89,7 @@ export function PersonaCard({
           <span
             className="text-[22px] leading-none select-none"
             role="img"
-            aria-label={`${persona.name} emoji`}
+            aria-label={`${t('persona.' + persona.id + '.name')} emoji`}
           >
             {persona.emoji}
           </span>
@@ -104,15 +106,15 @@ export function PersonaCard({
         </div>
         <div className="flex flex-col gap-0.5 min-w-0">
           <div className={cn('text-sm font-semibold', selected ? colors.text : 'text-foreground')}>
-            {persona.name}
+            {t('persona.' + persona.id + '.name')}
           </div>
-          <div className="text-xs text-muted-foreground">{persona.subtitle}</div>
+          <div className="text-xs text-muted-foreground">{t('persona.' + persona.id + '.subtitle')}</div>
         </div>
       </div>
 
       {/* philosophy（斜体，小字） */}
       <p className="text-xs italic text-muted-foreground leading-relaxed">
-        「{persona.philosophy}」
+        「{t('persona.' + persona.id + '.philosophy')}」
       </p>
     </button>
   )

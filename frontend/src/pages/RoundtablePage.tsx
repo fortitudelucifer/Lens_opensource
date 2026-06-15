@@ -41,8 +41,8 @@ const BACKEND_LABELS: Record<string, string> = {
   kimi: 'Kimi',
   grok: 'Grok',
   deepseek: 'DeepSeek',
-  qwen_local: 'Qwen 本地',
-  qwen_cloud: 'Qwen 云端',
+  qwen_local: 'Qwen Local',
+  qwen_cloud: 'Qwen Cloud',
   glm: 'GLM',
 }
 
@@ -137,8 +137,8 @@ export function RoundtablePage({ onStart, onNavigateToChat }: RoundtablePageProp
   function openInjectDrawer(tab: InjectionMode) {
     const trimmedQ = question.trim()
     if (trimmedQ.length < 2) {
-      toast.info('请先写下你想讨论的问题（至少 2 个字），再调用检索', {
-        description: '检索会用你的问题作为关键词',
+      toast.info(t('roundtable.writeQuestionFirst'), {
+        description: t('roundtable.searchUsesQuestion'),
       })
       return
     }
@@ -177,7 +177,7 @@ export function RoundtablePage({ onStart, onNavigateToChat }: RoundtablePageProp
       // backend 不可用时降级到 mock（local 前缀让 SessionPage 走 runMockStreaming）
       const msg = err instanceof Error ? err.message : String(err)
       console.warn('[Roundtable] backend unavailable, falling back to mock:', msg)
-      toast.warning('后端不可用，已降级到 mock 演示模式', {
+      toast.warning(t('roundtable.backendUnavailableMock'), {
         description: msg.slice(0, 80),
       })
       startSession(`rt_local_${Date.now()}`)
@@ -248,7 +248,7 @@ export function RoundtablePage({ onStart, onNavigateToChat }: RoundtablePageProp
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-sm">{p.label}</span>
+                  <span className="font-medium text-sm">{t('preset.' + p.id + '.label')}</span>
                   <UsersRound
                     className={cn(
                       'w-4 h-4',
@@ -256,7 +256,7 @@ export function RoundtablePage({ onStart, onNavigateToChat }: RoundtablePageProp
                     )}
                   />
                 </div>
-                <p className="text-[12px] text-muted-foreground mt-1.5">{p.description}</p>
+                <p className="text-[12px] text-muted-foreground mt-1.5">{t('preset.' + p.id + '.description')}</p>
               </button>
             )
           })}
@@ -324,7 +324,7 @@ export function RoundtablePage({ onStart, onNavigateToChat }: RoundtablePageProp
           <div className="flex items-center justify-between px-4 py-2.5 border-t border-border/70 text-[11px] text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <Info className="w-3 h-3" />
-              内容仅供探索参考，不构成诊断或治疗
+              {t('roundtable.disclaimerExplore')}
             </span>
             <span>
               {question.length} / {MAX_QUESTION_LEN}
@@ -366,7 +366,7 @@ export function RoundtablePage({ onStart, onNavigateToChat }: RoundtablePageProp
       {/* CTA */}
       <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
         <p className="text-[12px] text-muted-foreground sm:mr-auto">
-          开启后将进入 2 轮讨论（独立分析 → 交叉回应 → 综合总结）
+          {t('roundtable.startDescription')}
         </p>
 
         {/* 「仍要开启」逃生通道：仅当问题轻量且其他条件均满足时显示 */}
@@ -375,9 +375,9 @@ export function RoundtablePage({ onStart, onNavigateToChat }: RoundtablePageProp
             type="button"
             onClick={() => setBypassQuality(true)}
             className="text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-4 transition"
-            title="不推荐，但允许用户跳过质量门槛主动开启圆桌"
+            title={t('roundtable.bypassQualityHint')}
           >
-            仍要开启 →
+            {t('roundtable.bypassQuality')} →
           </button>
         )}
 
@@ -386,11 +386,11 @@ export function RoundtablePage({ onStart, onNavigateToChat }: RoundtablePageProp
           onClick={handleStart}
           title={
             !isFull
-              ? `请先选择 ${MAX_PERSONAS} 位顾问`
+              ? t('roundtable.selectNAdvisors', { count: MAX_PERSONAS })
               : !meetsMinLen
-              ? '请输入你想讨论的问题'
+              ? t('roundtable.enterQuestion')
               : isLightweight && !bypassQuality
-              ? `问题太短（${trimmedLen} 字），请补充背景或点左侧「仍要开启」绕过`
+              ? t('roundtable.questionTooShort', { length: trimmedLen })
               : ''
           }
           className={cn(
@@ -429,6 +429,7 @@ interface BackendPickerProps {
 }
 
 function BackendPicker({ available, loaded, value, onChange }: BackendPickerProps) {
+  const { t } = useTranslation()
   // 未加载完之前不占空间，避免跳动
   if (!loaded) return null
   // 没拉到任何 chat-capable backend：隐藏（仅用服务器默认）
@@ -439,14 +440,14 @@ function BackendPicker({ available, loaded, value, onChange }: BackendPickerProp
       <div className="flex items-center gap-2 mb-2.5">
         <Cpu className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.8} />
         <span className="text-[12px] text-muted-foreground">
-          讨论引擎 · 留空用服务器默认（<span className="font-medium text-foreground/70">chat_backend</span>）
+          {t('roundtable.backendPicker.title')}（<span className="font-medium text-foreground/70">chat_backend</span>）
         </span>
       </div>
       <div className="flex flex-wrap gap-2">
         <BackendChip
           active={value === null}
           onClick={() => onChange(null)}
-          label="服务器默认"
+          label={t('roundtable.backendPicker.default')}
           sub="env / prefs"
         />
         {available.map((m) => (
@@ -515,6 +516,7 @@ function InjectionPicker({
   onClear,
   disabled,
 }: InjectionPickerProps) {
+  const { t } = useTranslation()
   const hasInjection = injectSummary !== null
 
   return (
@@ -522,10 +524,10 @@ function InjectionPicker({
       <div className="flex items-center gap-2 mb-2.5">
         <Sparkles className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.8} />
         <span className="text-[12px] text-muted-foreground">
-          注入参考资料 · <span className="text-foreground/70">可选</span>
+          {t('roundtable.injection.title')} · <span className="text-foreground/70">{t('common.optional')}</span>
         </span>
         <span className="ml-auto text-[11px] text-muted-foreground/70 hidden sm:inline">
-          让 3 位顾问参考你过去的对话片段或专业知识
+          {t('roundtable.injection.hint')}
         </span>
       </div>
 
@@ -536,8 +538,8 @@ function InjectionPicker({
           disabled={disabled}
           title={
             disabled
-              ? '请先写下至少 2 个字的问题作为检索关键词'
-              : '检索过去聊天记录中与当前问题相关的片段'
+              ? t('roundtable.injection.disabledTooltip')
+              : t('roundtable.injection.chatHistoryTooltip')
           }
           className={cn(
             'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] transition',
@@ -547,7 +549,7 @@ function InjectionPicker({
           )}
         >
           <MessagesSquare className="w-3.5 h-3.5" />
-          聊天记录
+          {t('roundtable.injection.chatHistory')}
         </button>
         <button
           type="button"
@@ -555,8 +557,8 @@ function InjectionPicker({
           disabled={disabled}
           title={
             disabled
-              ? '请先写下至少 2 个字的问题作为检索关键词'
-              : '检索专业知识手册中与当前问题相关的条目'
+              ? t('roundtable.injection.disabledTooltip')
+              : t('roundtable.injection.knowledgeTooltip')
           }
           className={cn(
             'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] transition',
@@ -566,22 +568,21 @@ function InjectionPicker({
           )}
         >
           <BookOpen className="w-3.5 h-3.5" />
-          知识手册
+          {t('roundtable.injection.knowledge')}
         </button>
 
         {hasInjection && (
           <div className="inline-flex items-center gap-2 ml-1 px-2.5 py-1 rounded-full bg-primary/10 ring-1 ring-primary/30 text-[11px] text-primary">
             <CheckCircle2 className="w-3 h-3" strokeWidth={2.5} />
             <span>
-              已选 {injectSummary!.chat} 片段 · {injectSummary!.kn} 知识 ·{' '}
-              <span className="tabular-nums">{injectCharCount}</span> 字
+              {t('roundtable.injection.selected', { chat: injectSummary!.chat, kn: injectSummary!.kn, chars: injectCharCount })}
             </span>
             <button
               type="button"
               onClick={onClear}
               className="inline-flex items-center justify-center -mr-1 rounded-full p-0.5 hover:bg-primary/20 transition"
-              title="清除已选"
-              aria-label="清除已选注入"
+              title={t('roundtable.injection.clear')}
+              aria-label={t('roundtable.injection.clearAria')}
             >
               <X className="w-3 h-3" strokeWidth={2.5} />
             </button>
@@ -610,6 +611,7 @@ function DepthModeToggle({
   selectedBackend,
   availableBackends,
 }: DepthModeToggleProps) {
+  const { t } = useTranslation()
   // 判断当前选的 backend 是否是"思考模型"（通过 model 名/backend 名粗略匹配）
   const isThinkingBackend = (() => {
     if (!selectedBackend) return null // 未选 → 未知
@@ -667,24 +669,23 @@ function DepthModeToggle({
                 enabled ? 'text-primary' : 'text-foreground/80',
               )}
             >
-              深度讨论模式
+              {t('roundtable.depthMode.title')}
             </span>
             <span className="text-[11px] text-muted-foreground">
               {enabled
-                ? '每位顾问 500-900 字 · 带流派解释 + 落点动作'
-                : '默认：每位顾问 150-300 字的简短视角'}
+                ? t('roundtable.depthMode.enabledSub')
+                : t('roundtable.depthMode.disabledSub')}
             </span>
           </div>
           <p className="mt-1 text-[11.5px] text-muted-foreground leading-relaxed">
-            开启后每个 agent 的 max_tokens 翻倍（1024 → 2560），Moderator 也会输出更长的综合。
-            生成速度会更慢，但分析更完整。
+            {t('roundtable.depthMode.description')}
             {enabled && (
               <>
                 <br />
                 <span className="text-primary/80">
-                  推荐配合「思考模型」使用 ·
+                  {t('roundtable.depthMode.thinkingHint')}
                 </span>{' '}
-                例如 claude-sonnet-think、qwen3-235B-thinking、gemini-think 等。
+                {t('roundtable.depthMode.thinkingExamples')}
               </>
             )}
           </p>
@@ -693,9 +694,7 @@ function DepthModeToggle({
             <div className="mt-2 flex items-center gap-1.5 rounded-md bg-amber-500/10 border border-amber-500/30 px-2.5 py-1.5 text-[11px] text-amber-700 dark:text-amber-200">
               <AlertCircle className="w-3 h-3 shrink-0" />
               <span>
-                当前 backend「
-                <span className="font-medium">{selectedBackend}</span>
-                」可能不是思考模型 · 建议切到 claude/qwen 的 thinking 变体以获得更好效果
+                {t('roundtable.depthMode.notThinkingBackend', { backend: selectedBackend })}
               </span>
             </div>
           )}
@@ -753,6 +752,7 @@ function PersonaGroup({
 // ═══════════════════════════════════════════════════════════════════
 
 function GuidanceCard({ onNavigateToChat }: { onNavigateToChat?: () => void }) {
+  const { t } = useTranslation()
   return (
     <div className="mp-fade-up mt-8 grid grid-cols-1 md:grid-cols-2 gap-3">
       {/* 适合圆桌 */}
@@ -760,13 +760,13 @@ function GuidanceCard({ onNavigateToChat }: { onNavigateToChat?: () => void }) {
         <div className="flex items-center gap-2 mb-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           <h3 className="text-sm font-semibold text-emerald-700 dark:text-emerald-200">
-            适合开圆桌
+            {t('roundtable.guidance.suitable')}
           </h3>
         </div>
         <ul className="text-[12.5px] leading-[1.7] text-foreground/85 space-y-1">
-          <li>· 复杂关系困境（涉及多人 / 多原因 / 反复纠结）</li>
-          <li>· 想被多个视角"看见"，而不是只听一种声音</li>
-          <li>· 有充分背景描述（建议 ≥ 100 字）</li>
+          <li>· {t('roundtable.guidance.suitable1')}</li>
+          <li>· {t('roundtable.guidance.suitable2')}</li>
+          <li>· {t('roundtable.guidance.suitable3')}</li>
         </ul>
       </div>
 
@@ -776,24 +776,24 @@ function GuidanceCard({ onNavigateToChat }: { onNavigateToChat?: () => void }) {
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
             <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-200">
-              这些情况建议走沉浸式
+              {t('roundtable.guidance.unsuitableTitle')}
             </h3>
           </div>
           {onNavigateToChat && (
             <button
               onClick={onNavigateToChat}
               className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 dark:text-amber-200 hover:underline underline-offset-4"
-              title="跳转到沉浸式互动单 agent 对话"
+              title={t('roundtable.guidance.chatTooltip')}
             >
               <MessageSquareText className="w-3 h-3" />
-              沉浸式互动 →
+              {t('roundtable.guidance.chatLink')} →
             </button>
           )}
         </div>
         <ul className="text-[12.5px] leading-[1.7] text-foreground/85 space-y-1">
-          <li>· 一句话问答（信息片段化）</li>
-          <li>· 求快速建议（"今晚约会穿什么"）</li>
-          <li>· 只想要单一专业视角（如只想心理咨询）</li>
+          <li>· {t('roundtable.guidance.unsuitable1')}</li>
+          <li>· {t('roundtable.guidance.unsuitable2')}</li>
+          <li>· {t('roundtable.guidance.unsuitable3')}</li>
         </ul>
       </div>
     </div>
@@ -811,6 +811,7 @@ function QuestionQualityHint({
   length: number
   onNavigateToChat?: () => void
 }) {
+  const { t } = useTranslation()
   // 空文本不显示
   if (length === 0) return null
 
@@ -823,15 +824,15 @@ function QuestionQualityHint({
       >
         <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0 text-amber-600 dark:text-amber-300" />
         <div className="flex-1 text-[12px] leading-[1.7] text-amber-800 dark:text-amber-200">
-          <span className="font-medium">问题较短，圆桌讨论可能流于表面。</span>{' '}
-          建议补充背景细节（发生了什么 / 你的感受 / 期待的结果），或者
+          <span className="font-medium">{t('roundtable.qualityHint.shortTitle')}</span>{' '}
+          {t('roundtable.qualityHint.shortDesc')}
           {onNavigateToChat && (
             <button
               onClick={onNavigateToChat}
               className="ml-1 inline-flex items-center gap-0.5 font-medium text-amber-700 dark:text-amber-300 hover:underline underline-offset-2"
             >
               <MessageSquareText className="w-3 h-3" />
-              转向沉浸式互动 →
+              {t('roundtable.qualityHint.switchToChat')} →
             </button>
           )}
         </div>
@@ -844,7 +845,7 @@ function QuestionQualityHint({
     return (
       <div className="mt-2 flex items-center gap-1.5 px-3 py-1.5 text-[11.5px] text-muted-foreground">
         <CheckCircle2 className="w-3 h-3 text-muted-foreground" />
-        <span>问题清晰，可以开启圆桌。补充更多背景会让讨论更深入。</span>
+        <span>{t('roundtable.qualityHint.ok')}</span>
       </div>
     )
   }
@@ -854,7 +855,7 @@ function QuestionQualityHint({
     <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-emerald-300/40 bg-emerald-50/40 dark:border-emerald-400/25 dark:bg-emerald-950/15 px-3 py-1.5">
       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-300" />
       <span className="text-[12px] font-medium text-emerald-700 dark:text-emerald-200">
-        问题信息充分，圆桌讨论将更有深度 ✨
+        {t('roundtable.qualityHint.great')}
       </span>
     </div>
   )

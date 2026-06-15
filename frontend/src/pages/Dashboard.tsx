@@ -56,7 +56,7 @@ export function Dashboard() {
     {
       title: t('dashboard.stats.activeSessions'),
       value: sessionCount,
-      change: `审核: ${totalReviews} 条`,
+      change: t('dashboard.reviewCount', { count: totalReviews }),
       changeType: 'up' as const,
       icon: Users,
       iconGradient: 'linear-gradient(135deg, #14b8a6, #0ea5e9)',
@@ -67,7 +67,7 @@ export function Dashboard() {
     {
       title: t('dashboard.stats.totalChunks'),
       value: stats?.chunks ?? 0,
-      change: `测试集: ${stats?.test_lines ?? 0}`,
+      change: t('dashboard.testSet', { count: stats?.test_lines ?? 0 }),
       changeType: 'up' as const,
       icon: Zap,
       iconGradient: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',

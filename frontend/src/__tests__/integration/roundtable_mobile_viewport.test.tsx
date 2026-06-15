@@ -88,7 +88,7 @@ describe('D5.7 · Mobile 375px 视口 + 暗色模式', () => {
     })
     const { container } = render(<RoundtableSessionPage />)
     // aria-label 可定位到 phase1 的淑化容器
-    const phase1Wrapper = container.querySelector('[aria-label*="第一阶段已完成"]')
+    const phase1Wrapper = container.querySelector('[aria-label*="Phase 1 completed"]')
     expect(phase1Wrapper).not.toBeNull()
     // 容器本身是响应式 grid
     const cls = (phase1Wrapper as HTMLElement).className

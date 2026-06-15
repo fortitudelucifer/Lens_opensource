@@ -2,11 +2,12 @@
 
 > 📌 **文档范围**: 本文档是为未来执行代理编写的交接方案。
 >
-> ✅ **Phase 1 + Phase 2 已完成**：前端 UI 全部中英文切换已实现，所有用户可见中文文本均已替换为 `t()` 调用。
+> ✅ **Phase 1 + Phase 2 核心已完成**（2026-06-15）：前端高频用户页面（Chat、Arena、Roundtable Setup/Session、Dashboard、Welcome）中英文切换已实现，核心用户可见中文文本已替换为 `t()` 调用。
+> ⚠️ **Phase 2 边缘页面仍有残留**：PrivacyPage、KnowledgeCenterPage、ArenaStatsPage、AssessmentPage、Settings 等低频次页面及代码注释中仍有少量中文硬编码。
 > ⏳ **Phase 3-5 未开始**：更多 UI 语言、AI 提示词本地化、后端本地化、应用适配等。
 >
-> 更新时间: 2026-06-14
-> 完成时间: 2026-06-14 14:28 (UTC+8)
+> 更新时间: 2026-06-15
+> 完成时间: 2026-06-15 19:13 (UTC+8)
 
 ---
 
@@ -1915,22 +1916,31 @@ react-i18next
 i18next-browser-languagedetector
 ```
 
-The application can be built successfully, and the basic Chinese/English switching framework is in place. However, the implementation is not fully closed yet and should not be described as complete full-frontend UI localization.
+The application can be built successfully, and the basic Chinese/English switching framework is in place.
+
+After the P0 correctness fixes round (2026-06-14):
+
+```text
+P0 i18n correctness fixes: complete
+Build and tests: pass
+Full UI localization coverage: still in progress
+```
 
 Recommended status wording:
 
 ```text
-Phase 1 i18n infrastructure: mostly complete
-Phase 2 full frontend UI coverage: in progress, not yet complete
+Frontend i18n infrastructure is stable.
+Critical key correctness issues are fixed.
+The next phase is broad UI text extraction and allowlist-based hard-coded Chinese cleanup.
 ```
 
 Avoid claiming:
 
 ```text
-All user-visible Chinese UI text has been replaced by t() calls.
+Frontend i18n complete
 ```
 
-because runtime source scanning still finds many Chinese UI strings outside locale files.
+because runtime source scanning still finds user-visible Chinese UI strings outside locale files that need systematic extraction.
 
 ### 15.2 What Is Working Well
 

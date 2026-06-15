@@ -10,6 +10,7 @@
  *   【看到你】【不同视角】【你可以尝试】【仍然存疑】【Lens 寄语】【局限】
  */
 
+import { useTranslation } from 'react-i18next'
 import { Mic, Sparkles, Eye, Compass, Footprints, HelpCircle, Heart, ShieldAlert, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ModeratorContent } from '@/stores/useRoundtableStore'
@@ -40,33 +41,34 @@ interface ModeratorCardProps {
 function explainFallbackReason(
   reason: string,
   roundIndex: number,
+  t: (key: string, options?: Record<string, unknown>) => string,
 ): { title: string; detail: string } {
   // D7.1.j+ · 多轮场景 · 提示“已自动承接”以区分与首轮静态模板
   const memorySuffix =
     roundIndex > 0
-      ? '已基于上一轮 Moderator 综合自动承接。'
-      : '首轮·无历史轮可承接。'
+      ? t('moderator.memorySuffixMulti')
+      : t('moderator.memorySuffixFirst')
   if (reason === 'llm_returned_none') {
     return {
-      title: 'Moderator 已降级 · 本轮走了规则模板',
-      detail: `LLM 调用超时或返回为空 · 常见于 thinking 模型生成慢或代理限流 · 可尝试换用更快的 backend（kimi / deepseek）或提高 ROUNDTABLE_MODERATOR_TIMEOUT。${memorySuffix}`,
+      title: t('moderator.fallbackTitle'),
+      detail: t('moderator.fallbackDetailTimeout', { memorySuffix }),
     }
   }
   if (reason === 'llm_disabled') {
     return {
-      title: 'Moderator 使用规则模板（LLM 已关闭）',
-      detail: `环境变量 ROUNDTABLE_MODERATOR_LLM=0 · 这是预期行为。${memorySuffix}`,
+      title: t('moderator.fallbackTitleDisabled'),
+      detail: t('moderator.fallbackDetailDisabled', { memorySuffix }),
     }
   }
   if (reason.startsWith('exception:')) {
     return {
-      title: 'Moderator 已降级 · 本轮走了规则模板',
-      detail: `LLM 调用异常：${reason.slice(10)} · 本轮综合由规则模板生成。${memorySuffix}`,
+      title: t('moderator.fallbackTitle'),
+      detail: t('moderator.fallbackDetailException', { reason: reason.slice(10), memorySuffix }),
     }
   }
   return {
-    title: 'Moderator 已降级 · 本轮走了规则模板',
-    detail: `降级原因：${reason}。${memorySuffix}`,
+    title: t('moderator.fallbackTitle'),
+    detail: t('moderator.fallbackDetailGeneric', { reason, memorySuffix }),
   }
 }
 
@@ -76,7 +78,8 @@ export function ModeratorCard({
   fallbackReason = null,
   roundIndex = 0,
 }: ModeratorCardProps) {
-  const fallbackInfo = fallbackReason ? explainFallbackReason(fallbackReason, roundIndex) : null
+  const { t } = useTranslation()
+  const fallbackInfo = fallbackReason ? explainFallbackReason(fallbackReason, roundIndex, t) : null
   return (
     <article
       className={cn(
@@ -87,7 +90,7 @@ export function ModeratorCard({
         className,
       )}
       role="region"
-      aria-label="圆桌讨论综合总结"
+      aria-label={t('moderator.ariaLabel')}
     >
       {/* MP 融合：背景渐变装饰（amber→rose轻薄）增强仪式感 */}
       <div
@@ -178,18 +181,18 @@ export function ModeratorCard({
           <Mic className="h-5 w-5" strokeWidth={1.8} />
         </div>
         <div className="flex flex-col">
-          <h2 className="text-base font-semibold text-foreground">Lens 综合总结</h2>
-          <p className="text-xs text-muted-foreground">来自 3 个流派视角的回声</p>
+          <h2 className="text-base font-semibold text-foreground">{t('moderator.title')}</h2>
+          <p className="text-xs text-muted-foreground">{t('moderator.subtitle')}</p>
         </div>
       </header>
 
       {/* § 看到你 · stagger 0ms */}
-      <Section icon={Eye} title="看到你" tone="seen" delayMs={0}>
+      <Section icon={Eye} title={t('moderator.section.seen')} tone="seen" delayMs={0}>
         <p className="text-sm leading-relaxed text-foreground/90">{content.seen}</p>
       </Section>
 
       {/* § 不同视角 · stagger 600ms */}
-      <Section icon={Compass} title="不同视角" tone="angles" delayMs={600}>
+      <Section icon={Compass} title={t('moderator.section.angles')} tone="angles" delayMs={600}>
         <ul className="flex flex-col gap-1.5 text-sm leading-relaxed text-foreground/90">
           {content.angles.map((angle, i) => (
             <li
@@ -204,7 +207,7 @@ export function ModeratorCard({
       </Section>
 
       {/* § 你可以尝试 · stagger 1200ms */}
-      <Section icon={Footprints} title="你可以尝试" tone="tries" delayMs={1200}>
+      <Section icon={Footprints} title={t('moderator.section.tries')} tone="tries" delayMs={1200}>
         <ol className="flex flex-col gap-2 text-sm leading-relaxed text-foreground/90">
           {content.tries.map((item, i) => (
             <li
@@ -229,7 +232,7 @@ export function ModeratorCard({
 
       {/* § 仍然存疑 · stagger 1800ms */}
       {content.doubts.length > 0 && (
-        <Section icon={HelpCircle} title="仍然存疑" tone="doubts" delayMs={1800}>
+        <Section icon={HelpCircle} title={t('moderator.section.doubts')} tone="doubts" delayMs={1800}>
           <ul className="flex flex-col gap-1.5 text-sm leading-relaxed text-muted-foreground italic">
             {content.doubts.map((d, i) => (
               <li key={i}>· {d}</li>
@@ -255,7 +258,7 @@ export function ModeratorCard({
             fill="currentColor"
             fillOpacity={0.15}
           />
-          <h3 className="text-sm font-semibold text-rose-700 dark:text-rose-200">Lens 寄语</h3>
+          <h3 className="text-sm font-semibold text-rose-700 dark:text-rose-200">{t('moderator.section.lens')}</h3>
         </div>
         <p className="text-sm leading-relaxed text-foreground/90 font-medium">
           {content.lens}

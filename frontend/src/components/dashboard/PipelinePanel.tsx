@@ -1,20 +1,22 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Activity, Brain, Zap, ShieldCheck, FileInput, Database, Layers, Image, Mic } from 'lucide-react'
 import { api, type PipelineState } from '@/lib/api'
 
-const PHASE_META: Record<number, { name: string; icon: React.ElementType }> = {
-  0: { name: '数据导入 (Ingestion)', icon: FileInput },
-  1: { name: '多模态处理 (Multimodal)', icon: Image },
-  2: { name: '语义压缩 (Compression)', icon: Layers },
-  3: { name: '合并 & 时间轴 (Merge)', icon: Database },
-  4: { name: 'L1/L2 分支 & SFT', icon: ShieldCheck },
-  5: { name: 'MoA 融合分析', icon: Brain },
-  6: { name: 'QLoRA 训练', icon: Mic },
-  7: { name: 'RAG 索引 (FAISS)', icon: Zap },
+const PHASE_META: Record<number, { nameKey: string; icon: React.ElementType }> = {
+  0: { nameKey: 'dashboard.pipelinePhase0', icon: FileInput },
+  1: { nameKey: 'dashboard.pipelinePhase1', icon: Image },
+  2: { nameKey: 'dashboard.pipelinePhase2', icon: Layers },
+  3: { nameKey: 'dashboard.pipelinePhase3', icon: Database },
+  4: { nameKey: 'dashboard.pipelinePhase4', icon: ShieldCheck },
+  5: { nameKey: 'dashboard.pipelinePhase5', icon: Brain },
+  6: { nameKey: 'dashboard.pipelinePhase6', icon: Mic },
+  7: { nameKey: 'dashboard.pipelinePhase7', icon: Zap },
 }
 
 export function PipelinePanel() {
+  const { t } = useTranslation()
   const [pipeline, setPipeline] = useState<PipelineState | null>(null)
 
   const fetchStatus = useCallback(() => {
@@ -30,30 +32,30 @@ export function PipelinePanel() {
   const pipelineStages = pipeline
     ? Object.entries(pipeline.phases).map(([key, phase]) => {
         const phaseNum = parseInt(key)
-        const meta = PHASE_META[phaseNum] || { name: phase.name, icon: Database }
+        const meta = PHASE_META[phaseNum] || { nameKey: 'dashboard.pipelinePhase0', icon: Database }
         const isRunning = phase.status === 'running'
         const isDone = phase.status === 'done'
         return {
           id: phaseNum,
-          name: meta.name,
+          name: t(meta.nameKey),
           icon: meta.icon,
           status: isDone ? 'completed' as const : isRunning ? 'processing' as const : 'waiting' as const,
-          time: isRunning ? '进行中' : isDone ? '完成' : '-',
+          time: isRunning ? t('dashboard.pipelineRunning') : isDone ? t('dashboard.pipelineCompleted') : '-',
           throughput: phase.detail || '-',
           progress: isDone ? 100 : isRunning ? 50 : 0,
-          metrics: [{ label: '状态', value: phase.status }, { label: '详情', value: phase.detail || '--' }],
+          metrics: [{ label: t('dashboard.statusLabel'), value: phase.status }, { label: t('dashboard.detailLabel'), value: phase.detail || '--' }],
           active: isRunning,
         }
       })
     : Object.entries(PHASE_META).map(([key, meta]) => ({
         id: parseInt(key),
-        name: meta.name,
+        name: t(meta.nameKey),
         icon: meta.icon,
         status: 'waiting' as const,
         time: '-',
         throughput: '-',
         progress: 0,
-        metrics: [{ label: '状态', value: '等待中' }, { label: '详情', value: '--' }],
+        metrics: [{ label: t('dashboard.statusLabel'), value: t('dashboard.pipelineWaiting') }, { label: t('dashboard.detailLabel'), value: '--' }],
         active: false,
       }))
   return (
@@ -66,10 +68,10 @@ export function PipelinePanel() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-base font-bold mb-1 text-[var(--text-primary)]">
-            Agent SFT & MoA 流水线
+            {t('dashboard.pipelineTitle')}
           </h2>
           <p className="text-xs text-[var(--text-muted)]">
-            实时监控多模态融合处理状态
+            {t('dashboard.pipelineDesc')}
           </p>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">

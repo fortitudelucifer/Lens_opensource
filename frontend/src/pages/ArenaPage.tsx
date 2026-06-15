@@ -138,7 +138,7 @@ export function ArenaPage() {
         }
       }
       setInput(prefill)
-      toast.info('正在为您建立双镜对比，生成需要较长时间，请耐心等待...')
+      toast.info(t('arena.establishingDualMirror'))
       setTimeout(() => {
         document.getElementById('arena-send-btn')?.click()
       }, 500)
@@ -318,7 +318,7 @@ export function ArenaPage() {
         <div className="flex-1 flex items-center justify-center">
           {isPickerMode ? (
             isRevealed ? (
-              <span className="text-[11px] text-emerald-500">{sidePersona.name}</span>
+              <span className="text-[11px] text-emerald-500">{t('persona.' + sidePersona.id + '.name')}</span>
             ) : (
               <span className="text-[var(--text-muted)]">{isPerspectiveMode ? t('arena.anonymousPerspective') : t('arena.anonymousSchool')}</span>
             )
@@ -373,7 +373,7 @@ export function ArenaPage() {
             </div>
             <div className="max-w-[90%] min-w-0">
               <span className="text-xs font-semibold px-1 mb-1 block" style={{ color: persona.hex }}>
-                {soloSide ? persona.name : t('arena.reply', { side: side.toUpperCase() })}
+                {soloSide ? t('persona.' + persona.id + '.name') : t('arena.reply', { side: side.toUpperCase() })}
               </span>
               <div className="px-5 py-4 text-[15px] leading-relaxed bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-2xl rounded-tl-sm shadow-sm break-words">
                 <MarkdownContent content={side === 'a' ? rd.responseA : rd.responseB} isUser={false} />
@@ -400,7 +400,7 @@ export function ArenaPage() {
           </div>
           <div className="max-w-[85%] min-w-[80px]">
             <span className="text-[10px] font-semibold px-1 mb-1 block" style={{ color: persona.hex }}>
-              {soloSide ? persona.name : t('arena.waitingFor', { side: side.toUpperCase() })}
+              {soloSide ? t('persona.' + persona.id + '.name') : t('arena.waitingFor', { side: side.toUpperCase() })}
             </span>
             <div className="px-5 py-3 h-[52px] flex items-center bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl rounded-tl-sm shadow-sm">
               <TypingIndicator
@@ -492,11 +492,11 @@ export function ArenaPage() {
             </div>
             <div>
               <h2 className="font-bold text-sm text-[var(--text-primary)] leading-tight flex items-center gap-2">
-                {soloSide ? '双镜对比（单路模式）' : '双镜对比'}
+                {soloSide ? t('arena.dualMirrorSolo') : t('arena.dualMirror')}
                 <span className="flex h-2 w-2 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" /><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" /></span>
               </h2>
               <p className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: persona.hex }}>
-                {isPickerMode ? `${personaA.name} vs ${personaB.name}` : persona.name}
+                {isPickerMode ? `${t('persona.' + personaA.id + '.name')} vs ${t('persona.' + personaB.id + '.name')}` : t('persona.' + persona.id + '.name')}
               </p>
             </div>
           </div>
@@ -526,12 +526,12 @@ export function ArenaPage() {
               <div className="hidden md:flex items-center gap-1.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-2 py-1">
                 <select value={personaA.id} onChange={e => { const p = pickerPersonas.find(x => x.id === e.target.value); if (p) setPersonaA(p) }}
                   className="h-5 rounded bg-transparent text-[10px] text-[var(--text-secondary)] outline-none cursor-pointer">
-                  {pickerPersonas.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  {pickerPersonas.map(p => <option key={p.id} value={p.id}>{t('persona.' + p.id + '.name')}</option>)}
                 </select>
                 <span className="text-[10px] text-[var(--text-muted)]">vs</span>
                 <select value={personaB.id} onChange={e => { const p = pickerPersonas.find(x => x.id === e.target.value); if (p) setPersonaB(p) }}
                   className="h-5 rounded bg-transparent text-[10px] text-[var(--text-secondary)] outline-none cursor-pointer">
-                  {pickerPersonas.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  {pickerPersonas.map(p => <option key={p.id} value={p.id}>{t('persona.' + p.id + '.name')}</option>)}
                 </select>
               </div>
             )}
@@ -539,7 +539,7 @@ export function ArenaPage() {
             {arenaSessionId && (
               <button onClick={handleToggleReveal}
                 className={`p-2 rounded-xl transition-colors ${revealToggle ? 'text-emerald-500 bg-emerald-500/10' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'}`}
-                title={revealToggle ? '隐藏模型身份' : '揭示模型身份'}>
+                title={revealToggle ? t('arena.hideModelIdentity') : t('arena.revealModelIdentity')}>
                 {revealToggle ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             )}
@@ -547,7 +547,7 @@ export function ArenaPage() {
             {soloSide && (
               <button onClick={() => setSoloSide(null)}
                 className="flex items-center gap-1 px-2 py-1 rounded-lg border border-[var(--border-color)] text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-colors">
-                <SplitSquareHorizontal className="w-3 h-3" /> 恢复双镜
+                <SplitSquareHorizontal className="w-3 h-3" /> {t('arena.restoreDualMirror')}
               </button>
             )}
             {/* Settings/Menu */}
@@ -579,7 +579,7 @@ export function ArenaPage() {
                           return (
                             <button key={p.id} onClick={(e) => { e.stopPropagation(); setPersona(p); setMenuOpen(false) }}
                               className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)]">
-                              <span className="flex items-center gap-2"><PIco className="h-3.5 w-3.5" style={{ color: p.hex }} />{p.name}</span>
+                              <span className="flex items-center gap-2"><PIco className="h-3.5 w-3.5" style={{ color: p.hex }} />{t('persona.' + p.id + '.name')}</span>
                               {p.id === persona.id && <Sparkles className="h-3.5 w-3.5 text-emerald-500" />}
                             </button>
                           )
@@ -749,7 +749,7 @@ export function ArenaPage() {
               <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
                 disabled={loading}
-                placeholder={loading ? '正在并行生成中…' : hasPendingUnsubmitted ? '请先完成打分或点击「跳过」' : soloSide ? '继续对话 (Enter 发送)' : '输入你的问题，左右同时回答 (Enter 发送)'}
+                placeholder={loading ? t('arena.placeholder.generating') : hasPendingUnsubmitted ? t('arena.placeholder.pendingVote') : soloSide ? t('arena.placeholder.soloInput') : t('arena.placeholder.dualInput')}
                 className="w-full max-h-[200px] min-h-[48px] py-3.5 pl-5 pr-14 bg-transparent resize-none outline-none text-[var(--text-primary)] placeholder-[var(--text-muted)] scrollbar-thin disabled:opacity-50"
                 rows={1} />
               <motion.button id="arena-send-btn" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
@@ -759,7 +759,7 @@ export function ArenaPage() {
               </motion.button>
             </div>
           </div>
-          <p className="text-center text-[10px] text-[var(--text-muted)] mt-2 hidden md:block">内容仅供参考，AI 顾问不能替代专业医疗建议。</p>
+          <p className="text-center text-[10px] text-[var(--text-muted)] mt-2 hidden md:block">{t('arena.medicalDisclaimer')}</p>
         </div>
 
         {/* Local toast removed in favor of global sonner Toaster */}
@@ -768,7 +768,7 @@ export function ArenaPage() {
       <ExportDialog
         open={showExport}
         onClose={() => setShowExport(false)}
-        title="导出双镜对比"
+        title={t('arena.exportDualMirror')}
         getData={() => arenaToExportData(
           rounds.map(r => ({ query: r.query, responseA: r.responseA, responseB: r.responseB, vote: r.vote, timestamp: r.timestamp })),
           contestants?.a, contestants?.b,
