@@ -107,13 +107,13 @@ rag_service.init_rag()
 
 # ── 挂载所有 routers ─────────────────────────────────────────
 from scripts.advisor.api.routes import (  # noqa: E402
-    arena, assessment, chat, data, feedback, health, keys,
+    arena, assessment, chat, data, feedback, health, keys, knowledge,
     models_routes, pipeline, rag, review, roundtable, safety, user_data,
 )
 
 for _module in (
     health, safety, keys,
-    pipeline, review, data, models_routes, rag, assessment,
+    pipeline, review, data, knowledge, models_routes, rag, assessment,
     chat, arena, roundtable, feedback, user_data,
 ):
     app.include_router(_module.router)

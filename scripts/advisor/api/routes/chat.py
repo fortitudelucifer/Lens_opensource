@@ -259,6 +259,10 @@ async def chat(req: ChatRequest):
         # 立即中断 AI，返回危机干预模板
         template = crisis.response_template or {}
         crisis_msg = template.get("message", "请立即拨打 400-161-9995（24小时心理援助热线）")
+        # D2: 追加审核通过的安全知识（按 id 解析，crisis 条目虽不进 RAG 但已全量加载）
+        _crisis_refs = rag_service.get_faq_by_ids(template.get("knowledge_refs", []))
+        if _crisis_refs:
+            crisis_msg += "\n\n" + "\n\n".join(e.get("answer", "") for e in _crisis_refs if e.get("answer"))
         session = chat_service.load_session(req.session_id) if req.session_id else None
         if not session:
             session = chat_service.create_session(req.agent_type, req.mode, req.backend)
@@ -292,6 +296,13 @@ async def chat(req: ChatRequest):
     # 危机级别 YELLOW/ORANGE：注入安全引导到 system prompt
     if crisis.level >= CrisisLevel.YELLOW:
         system_prompt += state.crisis_detector.get_safety_prompt_injection(crisis.level)
+        # D2: 把该级别 knowledge_refs 指向的安全内容作为参考注入（非诊断，需自然融入）
+        _crisis_refs = rag_service.get_faq_by_ids((crisis.response_template or {}).get("knowledge_refs", []))
+        if _crisis_refs:
+            system_prompt += (
+                "\n\n【危机参考资料（请自然融入回应，不要照搬原文，不要诊断）】\n"
+                + "\n".join(f"- {e.get('answer', '')}" for e in _crisis_refs if e.get("answer"))
+            )
 
     # 交流前测评结果注入（仅在用户开启 inject_enabled 时注入）
     _assess_files = sorted(ASSESSMENT_DIR.glob("*.json"), key=lambda f: f.stat().st_mtime, reverse=True)
@@ -334,6 +345,18 @@ async def chat(req: ChatRequest):
         session = chat_service.load_session(req.session_id)
     if not session:
         session = chat_service.create_session(req.agent_type, req.mode, req.backend)
+
+    # 编辑重发：截断会话历史到指定的用户轮次之前，再以本次消息重新生成（保证后端历史也干净）
+    if req.edit_keep_user_turns is not None and req.edit_keep_user_turns >= 0:
+        _msgs = session.get("messages", [])
+        _seen, _cut = 0, len(_msgs)
+        for _i, _m in enumerate(_msgs):
+            if _m.get("role") == "user":
+                if _seen == req.edit_keep_user_turns:
+                    _cut = _i
+                    break
+                _seen += 1
+        session["messages"] = _msgs[:_cut]
 
     # 自动生成会话标题（第一条消息的前 20 字）
     if not session.get("title"):

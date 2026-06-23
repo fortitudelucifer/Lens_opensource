@@ -1,0 +1,12 @@
+{"query": "我越想沟通他越躲，我们老是重复同一种吵法，这种僵局到底卡在哪？", "expect": ["eft_pursue_withdraw_deep", "game_theory_02"], "bridge": ["game_theory_02"], "tag": "relational"}
+{"query": "吵到心跳飙升、整个人发抖，当下怎么先让身体冷静下来？", "expect": ["dbt_tipp", "grounding_techniques_01"], "bridge": ["grounding_techniques_01"], "tag": "relational"}
+{"query": "吵完冷战了，我想主动缓和又拉不下脸，怎么开口修复？", "expect": ["communication_repair_apology", "gottman_repair_attempts"], "bridge": ["gottman_repair_attempts"], "tag": "relational"}
+{"query": "我想让他答应帮个忙，可一开口不是太软就是太冲，又怕像在指责，怎么说？", "expect": ["communication_deesc_i_message", "dbt_dear_man"], "bridge": ["dbt_dear_man"], "tag": "relational"}
+{"query": "他一抱怨我就烦、根本听不进去，怎么先让他觉得被理解而不是急着辩解？", "expect": ["communication_al_validate", "ibct_empathic_joining"], "bridge": ["ibct_empathic_joining"], "tag": "relational"}
+{"query": "我们总在为鸡毛蒜皮争对错，怎么跳回到到底想要什么样的关系？", "expect": ["act_values", "philosophy_01"], "bridge": ["philosophy_01"], "tag": "relational"}
+{"query": "一吵我就上头、说不了道理，想喊暂停又怕像逃避，怎么办？", "expect": ["communication_deesc_break", "gottman_antidote_self_soothing"], "bridge": ["communication_deesc_break"], "tag": "relational"}
+{"query": "我想让他知道我其实很难受，可一开口就变成指责，怎么把软的那面说出来？", "expect": ["ibct_soft_disclosure", "communication_deesc_soft_startup", "nvc_four_steps_01"], "bridge": ["communication_deesc_soft_startup", "nvc_four_steps_01"], "tag": "relational"}
+{"query": "在我们家直接说对不起特别别扭、很伤面子，有别的修复方式吗？", "expect": ["cultural_03", "communication_repair_apology"], "bridge": ["communication_repair_apology"], "tag": "relational"}
+{"query": "我经常话冲出口、做了才后悔，怎么在那一秒踩住刹车？", "expect": ["dbt_stop", "game_theory_06"], "bridge": ["game_theory_06"], "tag": "relational"}
+{"query": "怎么调到对方的频率去回应他的情绪，让他觉得被接住？", "expect": ["eft_emotional_attunement", "communication_al_reflect_feeling"], "bridge": ["communication_al_reflect_feeling"], "tag": "relational"}
+{"query": "我心里有一套好的关系该是什么样，但他完全不按这套来，我们总因此较劲。", "expect": ["cbct_relationship_standards", "game_theory_09"], "bridge": ["game_theory_09"], "tag": "relational"}

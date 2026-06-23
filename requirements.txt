@@ -78,3 +78,5 @@ anthropic>=0.30
 FlagEmbedding>=1.2
 faiss-cpu>=1.7
 google-generativeai>=0.8
+numpy>=1.24          # 知识中心 FAQ 混合检索（rag_service 向量计算）
+networkx>=3.0        # 知识图谱构建与图谱/E3 评测脚本

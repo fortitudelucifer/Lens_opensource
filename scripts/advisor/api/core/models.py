@@ -10,7 +10,7 @@ class ModelPreferences(BaseModel):
     analysis_model: str = ""
     review_backend: str = "grok"
     review_model: str = ""
-    chat_backend: str = "deepseek"
+    chat_backend: str = "grok"
     chat_model: str = ""
 
 
@@ -27,6 +27,9 @@ class ChatRequest(BaseModel):
     session_id: Optional[str] = None
     use_rag: bool = True
     use_knowledge: bool = True
+    # 编辑重发：仅保留会话里前 N 轮用户消息（连同其回复），其余截断后再处理本次消息。
+    # None = 普通发送，不截断。
+    edit_keep_user_turns: Optional[int] = None
 
 
 class ChatFeedback(BaseModel):
@@ -59,7 +62,7 @@ class ReviewDecision(BaseModel):
 
 
 class ArenaContestant(BaseModel):
-    backend: str = "deepseek"
+    backend: str = "grok"
     agent_type: str = "neutral"
     model: str = ""
 

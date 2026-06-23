@@ -117,7 +117,7 @@ def get_available_chat_backends(exclude: str = "") -> list[str]:
     return available
 
 
-def get_generator(backend: str = "claude", model: Optional[str] = None,
+def get_generator(backend: str = "grok", model: Optional[str] = None,
                   max_tokens: int = 65536) -> AnalysisGenerator:
     """根据后端创建 generator，自动从 env 读取配置"""
     config = {

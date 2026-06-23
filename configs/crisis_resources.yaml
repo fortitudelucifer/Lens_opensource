@@ -182,6 +182,8 @@ response_templates:
       他们受过专业训练，你说的每一句话都会被保密和尊重。
       拨打电话不需要做任何准备，打过去就好。
     stop_ai: true
+    # D2: 追加注入的安全知识条目 id（内容存 advisor_out/knowledge，由 chat.py 按 id 解析）
+    knowledge_refs: ["safety_immediate_triage"]
 
   orange:
     title: "我注意到你正在经历一些困难"
@@ -194,6 +196,8 @@ response_templates:
 
       我会继续在这里陪你，但专业的支持会让你获得更多帮助。
     stop_ai: false
+    # D2: 作为 LLM 参考资料注入 system prompt（非诊断、需自然融入）
+    knowledge_refs: ["safety_immediate_triage", "safety_when_to_seek_help"]
 
   yellow:
     title: "温馨提示"

@@ -115,7 +115,7 @@ def _get_default_backend() -> str:
     """默认 backend 读取优先级：
       1. env `ROUNDTABLE_BACKEND`（显式 override）
       2. Lens UI 的 model_preferences.json `chat_backend`
-      3. fallback → "deepseek"（QPS 较宽容）
+      3. fallback → "grok"
     """
     env_bk = os.environ.get("ROUNDTABLE_BACKEND", "").strip()
     if env_bk:
@@ -130,7 +130,7 @@ def _get_default_backend() -> str:
                 return bk
     except Exception:
         pass
-    return "gemini"
+    return "grok"
 
 # LLM 流式推送给前端的节流间隔（真 LLM token 通常以 "词"/"短字" 粒度来）
 LLM_STREAM_INTERVAL: float = 0.008

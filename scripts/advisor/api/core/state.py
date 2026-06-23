@@ -50,6 +50,12 @@ intent_classifier: Optional[Any] = None  # IntentClassifier 实例
 # ── FAQ 知识库（server.py L666）───────────────────────────────────
 faq_entries: list[dict] = []
 
+# WS-B: FAQ 语义索引（懒构建，内存）
+faq_index_ids: list[str] = []      # 语义索引的 id 顺序
+faq_index_mat: Any = None          # np.ndarray (n, dim)，L2 归一化
+faq_index_n: int = 0               # 已索引 searchable 条数（用于失效重建判断）
+faq_retrieval_log: dict = {"keyword": 0, "hybrid": 0}  # WS-B8: 检索路径计数
+
 # ── 流水线状态（server.py L850-L862）──────────────────────────────
 pipeline_state: dict = {
     "phases": {

@@ -1,0 +1,36 @@
+{"query": "他一吵架就玩消失、怎么都联系不上", "expect": ["eft_pursue_withdraw_deep"], "tag": "gap"}
+{"query": "我明明很受伤，最后却对他发了火", "expect": ["eft_primary_vs_secondary_emotion"], "tag": "gap"}
+{"query": "有件事过了很久，每次吵架我还是忍不住翻出来", "expect": ["eft_attachment_injury"], "tag": "gap"}
+{"query": "怎么判断他是不是真的把我放在心上", "expect": ["eft_are_framework"], "tag": "gap"}
+{"query": "总是我先低头认错，他还不领情", "expect": ["eft_softening"], "tag": "gap"}
+{"query": "有些话别人说没事，他一说我就瞬间炸毛", "expect": ["eft_raw_spots"], "tag": "gap"}
+{"query": "他没回消息我立刻就觉得他不爱我了", "expect": ["cbct_mind_reading", "cbct_cognitive_triangle"], "tag": "gap"}
+{"query": "我总是往最坏处想，一点小事就觉得天要塌了", "expect": ["cbct_catastrophizing"], "tag": "gap"}
+{"query": "他这次让我失望，我就觉得他根本不爱我", "expect": ["cbct_all_or_nothing"], "tag": "direct"}
+{"query": "情绪一上来脑子里就自动冒出负面的结论", "expect": ["cbct_automatic_thoughts"], "tag": "gap"}
+{"query": "有没有具体工具帮我把混乱的情绪理清楚", "expect": ["cbct_thought_record"], "tag": "gap"}
+{"query": "在一起久了只剩矛盾，怎么让关系重新有温度", "expect": ["cbct_behavior_exchange"], "tag": "gap"}
+{"query": "有些分歧我们吵了无数次还是没有结果", "expect": ["ibct_acceptance_vs_change", "ibct_perpetual_problem_acceptance"], "tag": "gap"}
+{"query": "我们好像互相把对方逼成了最讨厌的样子", "expect": ["ibct_mutual_trap"], "tag": "direct"}
+{"query": "怎么才能不再陷在互相指责的死循环里", "expect": ["ibct_unified_detachment"], "tag": "gap"}
+{"query": "他有些毛病可能一辈子都改不了，我只能忍着吗", "expect": ["ibct_tolerance_building"], "tag": "direct"}
+{"query": "吵架时我忍不住翻白眼、讽刺挖苦他", "expect": ["gottman_horseman_contempt"], "tag": "gap"}
+{"query": "他一被我说就开始辩解、反过来怪我", "expect": ["gottman_horseman_defensiveness"], "tag": "gap"}
+{"query": "吵到一半他突然不说话、转身走开像座墙", "expect": ["gottman_horseman_stonewalling"], "tag": "direct"}
+{"query": "怎么开口谈一件事才不会一上来就崩", "expect": ["gottman_antidote_gentle_startup", "communication_deesc_soft_startup"], "tag": "gap"}
+{"query": "他突然说你看那个夕阳，这种话有什么深意", "expect": ["gottman_bids"], "tag": "direct"}
+{"query": "偶尔吵架说点重话到底要不要紧", "expect": ["gottman_magic_ratio"], "tag": "gap"}
+{"query": "情绪冲到顶点感觉要爆炸，当下怎么快速降温", "expect": ["dbt_tipp"], "tag": "direct"}
+{"query": "我经常话冲口而出、做完就后悔，怎么踩刹车", "expect": ["dbt_stop"], "tag": "gap"}
+{"query": "有些事已经发生改变不了，可我就是放不下反复痛苦", "expect": ["dbt_radical_acceptance"], "tag": "direct"}
+{"query": "我想坚持自己的需求又不想把关系搞僵", "expect": ["dbt_give", "dbt_dear_man"], "tag": "gap"}
+{"query": "为了不吵架我老是一味讨好，事后又很憋屈", "expect": ["dbt_fast"], "tag": "gap"}
+{"query": "脑子里总有个声音说我不够好、配不上他", "expect": ["act_defusion"], "tag": "gap"}
+{"query": "我越想控制焦虑、越想别难过，结果反而更糟", "expect": ["act_struggle_switch"], "tag": "direct"}
+{"query": "我总在反刍过去的争吵、担心以后会分手", "expect": ["act_present_moment"], "tag": "direct"}
+{"query": "我们老盯着哪里不好，能不能想想到底想要什么样子", "expect": ["sfbt_miracle_question"], "tag": "gap"}
+{"query": "我总觉得他必须秒回、我绝不能被冷落，这样对吗", "expect": ["rebt_irrational_demands"], "tag": "direct"}
+{"query": "他说话的时候我满脑子都在准备怎么反驳", "expect": ["mindfulness_mindful_listening"], "tag": "gap"}
+{"query": "我也道歉了他却说我没诚意，怎么道歉才有用", "expect": ["communication_repair_apology"], "tag": "direct"}
+{"query": "我们一吵架就扯出一堆陈年旧账越吵越大", "expect": ["communication_deesc_one_topic"], "tag": "direct"}
+{"query": "情绪问题到什么程度就该去找专业帮助", "expect": ["safety_when_to_seek_help"], "tag": "direct"}

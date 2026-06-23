@@ -87,6 +87,7 @@ async def get_models():
             "base_url": base_url or "(默认)",
             "status": status,
             "has_key": has_key,
+            "suitable_for": _get_suitable_roles(backend),
         })
 
     return models_info
@@ -213,3 +214,42 @@ async def test_model(req: ModelTestRequest):
             "error": str(e)[:500],
             "latency_ms": round(elapsed * 1000),
         }
+
+
+# ── 真实连通性探测（GET {base}/models），带 5 分钟缓存 ──
+# status="connected" 只代表"配了 key+url"，不代表真的能用（失效 key 也会显示 connected）。
+# 前端据此只展示**真正连通**的后端，把 401/不通的隐藏掉。
+_reach_cache: dict = {"ts": 0.0, "data": {}}
+
+
+async def _probe_backend(backend: str, prefix: str) -> tuple[str, bool]:
+    key = os.environ.get(f"{prefix}_API_KEY", "")
+    base = os.environ.get(f"{prefix}_BASE_URL", "")
+    if not key or not base:
+        return backend, False
+    try:
+        async with httpx.AsyncClient(timeout=6.0) as client:
+            r = await client.get(
+                f"{base.rstrip('/')}/models",
+                headers={"Authorization": f"Bearer {key}"},
+            )
+        return backend, r.status_code == 200
+    except Exception:
+        return backend, False
+
+
+@router.get("/api/models/reachable")
+async def get_reachable():
+    """真实探测各聊天后端是否连通（GET /models）。结果缓存 300s。
+
+    返回 {backend: bool}。前端只展示 True 的后端，避免列出 key 失效/不通的。
+    """
+    now = time.time()
+    if now - _reach_cache["ts"] < 300 and _reach_cache["data"]:
+        return _reach_cache["data"]
+    prefixes = AnalysisGenerator._ENV_PREFIX
+    chat_backends = [(b, prefixes[b]) for b in prefixes if "chat" in _get_suitable_roles(b)]
+    results = await asyncio.gather(*[_probe_backend(b, p) for b, p in chat_backends])
+    data = {b: ok for b, ok in results}
+    _reach_cache.update(ts=now, data=data)
+    return data

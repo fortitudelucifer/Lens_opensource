@@ -60,6 +60,9 @@ eggs/
 lib/
 lib64/
 parts/
+# frontend/src/lib 是前端源码（api/utils 等），勿被上面的 Python lib/ 规则忽略
+!frontend/src/lib/
+!frontend/src/lib/**
 sdist/
 var/
 wheels/
@@ -115,6 +118,10 @@ electron/build/
 # Generated data files and temporary outputs
 # ══════════════════════════════════════════════════════════════
 *.jsonl
+# 知识中心评测集（脚本输入，需随仓库分发；覆盖上面的 *.jsonl 忽略）
+!scripts/advisor/*_eval_set.jsonl
+# 知识中心知识库数据（开源发布；覆盖 advisor_out/** 与 *.jsonl 忽略）
+!advisor_out/knowledge/**/*.jsonl
 *.csv
 *.html
 *.tmp

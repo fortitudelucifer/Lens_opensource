@@ -27,11 +27,14 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import threading
 from collections import Counter
 from pathlib import Path
 from typing import Optional
+
+import numpy as np
 
 from scripts.advisor.chunk_based_rag import ChunkAwareRAG
 from ..core import state
@@ -563,34 +566,225 @@ def _tokenize_zh(text: str) -> set[str]:
     return tokens
 
 
-def search_faq(query: str, top_k: int = 2, agent_type: str = "") -> list[dict]:
-    """从专业知识库检索，agent_type 匹配的 category 权重 ×2
+# WS-E E3: 1-hop 软链接关联注入的上限（0 = 关闭）
+FAQ_RELATED_MAX = 3
 
-    评分规则（与历史一致 · 仅替换分词）：
-      - 命中 question + answer 文本：每个 token +1
-      - 命中 keywords 列表：每个 token +2
-      - agent_type 与 entry.category 匹配：总分 ×2
+# B 视角保底：当 agent_type 本身是某知识 category（如 game_theory/sociology/philosophy/
+# cultural）时，保证该视角至少有这么多条知识被注入——即便用户口语与抽象概念条目字面/
+# 语义没撞上。修复"博弈论对话却不引用博弈论知识"（概念全靠人设提示词背诵）的问题。
+FAQ_PERSPECTIVE_FLOOR = 2
+
+
+def _faq_searchable(entry: dict) -> bool:
+    """常规检索门控：仅 review_status=approved 且 risk_level!=crisis 可进入召回/关联注入。"""
+    return entry.get("review_status") == "approved" and entry.get("risk_level", "general") != "crisis"
+
+
+# WS-B: FAQ 语义/混合检索（默认关闭；环境变量 USE_FAQ_SEMANTIC=1 开启）
+# 评测结论（196 条语料 / 36 query）：关键词 baseline 已很强（R@3 94%、MRR 0.90）；
+# RRF 排名融合最稳——召回持平、MRR 提升至 0.919，且不像加权融合那样拉低 R@3。
+USE_FAQ_SEMANTIC = os.getenv("USE_FAQ_SEMANTIC", "0") == "1"
+FAQ_SEMANTIC_FLOOR = 0.30   # 语义相似度下限，低于此值不参与融合（防小语料误召）
+FAQ_RRF_K = 60              # RRF 融合常数（越大越平滑）
+
+
+def _faq_lexical_scores(query: str, agent_type: str = "") -> dict[str, float]:
+    """对所有 searchable FAQ 计算关键词命中分，返回 {id: score}（未截断、未归一化）。
+
+    评分（与历史一致）：命中 question+answer 每 token +1；命中 keywords 每 token +2；
+    agent_type 与 entry.category 匹配则 ×2。
     """
-    if not state.faq_entries:
-        return []
+    out: dict[str, float] = {}
     query_words = _tokenize_zh(query)
     if not query_words:
-        return []
-    scored = []
+        return out
     for entry in state.faq_entries:
-        q_text = entry.get('question', '') + ' ' + entry.get('answer', '')
-        entry_kws = entry.get("keywords", [])
-        # entry 文本侧也做小写归一（让英文 token 大小写无关）
-        q_text_lower = q_text.lower()
-        entry_kws_lower = [str(k).lower() for k in entry_kws]
+        if not _faq_searchable(entry):
+            continue
+        q_text_lower = (entry.get('question', '') + ' ' + entry.get('answer', '')).lower()
+        entry_kws_lower = [str(k).lower() for k in entry.get("keywords", [])]
         hits = sum(1 for w in query_words if w in q_text_lower)
         hits += sum(2 for w in query_words if w in entry_kws_lower)
         if agent_type and entry.get("category") == agent_type:
-            hits = int(hits * 2)
+            hits = hits * 2
         if hits > 0:
-            scored.append((hits, entry))
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return [e for _, e in scored[:top_k]]
+            out[entry.get("id", "")] = float(hits)
+    return out
+
+
+def search_faq(query: str, top_k: int = 2, agent_type: str = "") -> list[dict]:
+    """专业知识库关键词检索（门控 + agent_type ×2）。语义混合见 search_faq_hybrid。"""
+    if not state.faq_entries:
+        return []
+    scores = _faq_lexical_scores(query, agent_type)
+    if not scores:
+        return []
+    by_id = {e.get("id"): e for e in state.faq_entries}
+    ranked = sorted(scores.items(), key=lambda kv: kv[1], reverse=True)
+    return [by_id[i] for i, _ in ranked[:top_k] if i in by_id]
+
+
+def _faq_encode(texts: list[str]):
+    """用已加载的 semantic_rag（BGE-M3）编码并 L2 归一化，返回 np.ndarray 或 None。"""
+    rag = state.semantic_rag
+    if rag is None:
+        return None
+    try:
+        vec = rag._encode_texts(texts, show_progress=False)
+    except Exception as e:
+        print(f"[FAQ-Hybrid] 编码失败: {e}")
+        return None
+    if vec is None:
+        return None
+    norms = np.linalg.norm(vec, axis=1, keepdims=True)
+    norms[norms == 0] = 1.0
+    return (vec / norms).astype("float32")
+
+
+def build_faq_index() -> bool:
+    """对 searchable FAQ 编码建内存索引（懒构建，需 semantic_rag 就绪）。"""
+    if not state.semantic_rag_ready or state.semantic_rag is None:
+        return False
+    entries = [e for e in state.faq_entries if _faq_searchable(e)]
+    if not entries:
+        state.faq_index_ids, state.faq_index_mat, state.faq_index_n = [], None, 0
+        return False
+    texts = [
+        f"{e.get('question', '')}\n{e.get('answer', '')[:120]}\n{' '.join(str(k) for k in e.get('keywords', []))}"
+        for e in entries
+    ]
+    mat = _faq_encode(texts)
+    if mat is None:
+        return False
+    state.faq_index_ids = [e.get("id", "") for e in entries]
+    state.faq_index_mat = mat
+    state.faq_index_n = len(entries)
+    print(f"[FAQ-Hybrid] 语义索引已构建：{len(entries)} 条")
+    return True
+
+
+def _ensure_faq_index() -> bool:
+    """懒构建 / 失效重建（searchable 条数变化时重建）。"""
+    cur_n = sum(1 for e in state.faq_entries if _faq_searchable(e))
+    if state.faq_index_mat is not None and state.faq_index_n == cur_n:
+        return True
+    return build_faq_index()
+
+
+def search_faq_hybrid(query: str, top_k: int = 2, agent_type: str = "") -> list[dict]:
+    """关键词 × 语义 混合检索。flag 关闭 / 语义未就绪 / 编码失败 → 回退纯关键词。"""
+    _active = USE_FAQ_SEMANTIC and state.semantic_rag_ready and state.semantic_rag is not None
+    state.faq_retrieval_log["hybrid" if _active else "keyword"] += 1  # WS-B8 监控
+    if not USE_FAQ_SEMANTIC or not state.semantic_rag_ready or state.semantic_rag is None:
+        return search_faq(query, top_k, agent_type)
+    if not _ensure_faq_index() or state.faq_index_mat is None:
+        return search_faq(query, top_k, agent_type)
+    qv = _faq_encode([query])
+    if qv is None:
+        return search_faq(query, top_k, agent_type)
+
+    # 关键词排名
+    lex = _faq_lexical_scores(query, agent_type)
+    lex_ids = [i for i, _ in sorted(lex.items(), key=lambda kv: kv[1], reverse=True)]
+    # 语义排名（过相似度下限）
+    sims = state.faq_index_mat @ qv[0]   # 余弦（双方已 L2 归一化）
+    sem_sorted = sorted(
+        ((state.faq_index_ids[i], float(sims[i])) for i in range(len(state.faq_index_ids))),
+        key=lambda kv: kv[1], reverse=True,
+    )
+    sem_ids = [i for i, s in sem_sorted if s >= FAQ_SEMANTIC_FLOOR]
+    # RRF 排名融合（对分数尺度鲁棒；评测中召回持平关键词、MRR 更优）
+    fused: dict[str, float] = {}
+    for r, i in enumerate(lex_ids):
+        fused[i] = fused.get(i, 0.0) + 1.0 / (FAQ_RRF_K + r + 1)
+    for r, i in enumerate(sem_ids):
+        fused[i] = fused.get(i, 0.0) + 1.0 / (FAQ_RRF_K + r + 1)
+    if not fused:
+        return []
+    by_id = {e.get("id"): e for e in state.faq_entries}
+    ranked = sorted(fused.items(), key=lambda kv: kv[1], reverse=True)
+    return [by_id[i] for i, _ in ranked[:top_k] if i in by_id]
+
+
+def perspective_floor(query: str, agent_type: str, exclude_ids: set, already: int) -> list[dict]:
+    """B 视角保底：补足 category==agent_type 的知识至 FAQ_PERSPECTIVE_FLOOR 条。
+
+    按与 query 的语义相似度挑（hybrid 就绪时），否则回退关键词分。agent_type 不是
+    知识 category（如 neutral）时候选为空 → 自然空操作。
+    """
+    need = FAQ_PERSPECTIVE_FLOOR - already
+    if not agent_type or need <= 0:
+        return []
+    cands = [e for e in state.faq_entries
+             if e.get("category") == agent_type and _faq_searchable(e)
+             and e.get("id") not in exclude_ids]
+    if not cands:
+        return []
+    # 语义排序（hybrid 就绪）
+    if (USE_FAQ_SEMANTIC and state.semantic_rag_ready and state.semantic_rag is not None
+            and _ensure_faq_index() and state.faq_index_mat is not None):
+        qv = _faq_encode([query])
+        if qv is not None:
+            row = {fid: i for i, fid in enumerate(state.faq_index_ids)}
+            cands.sort(
+                key=lambda e: float(state.faq_index_mat[row[e["id"]]] @ qv[0]) if e.get("id") in row else -1.0,
+                reverse=True,
+            )
+            return cands[:need]
+    # 关键词回退
+    lex = _faq_lexical_scores(query, agent_type=agent_type)
+    cands.sort(key=lambda e: lex.get(e.get("id", ""), 0.0), reverse=True)
+    return cands[:need]
+
+
+def e3_related_neighbors(query: str, faq_results: list[dict]) -> list[dict]:
+    """E3 关联概念注入：对称池 + qsim 选择（门控、去重、限 FAQ_RELATED_MAX）。
+
+    对称池 = 命中条目的 outgoing related ∪ incoming（别处 related 指向命中条目的）。
+    实验（eval_e3_selection）：只跟 outgoing 时桥接概念封顶 33%；对称池+qsim → 50%。
+    qsim = hybrid 就绪时按与 query 的语义相似度排；否则保留作者顺序（outgoing 在前）。
+    """
+    if FAQ_RELATED_MAX <= 0 or not faq_results:
+        return []
+    seen = {fq.get("id") for fq in faq_results}
+    by_id = {e.get("id"): e for e in state.faq_entries}
+    pool: list[str] = []
+    # outgoing：命中条目自己标的 related（作者顺序）
+    for fq in faq_results:
+        for rid in fq.get("related", []):
+            if rid not in seen and rid not in pool:
+                pool.append(rid)
+    # incoming：别处 related 指向命中条目的（对称补全 —— 关系是双向的）
+    for e in state.faq_entries:
+        eid = e.get("id")
+        if eid not in seen and eid not in pool and (seen & set(e.get("related", []))):
+            pool.append(eid)
+    cands = [rid for rid in pool if rid in by_id and _faq_searchable(by_id[rid])]
+    if not cands:
+        return []
+    # qsim 排序（hybrid 就绪），否则保留作者顺序
+    if (USE_FAQ_SEMANTIC and state.semantic_rag_ready and state.semantic_rag is not None
+            and _ensure_faq_index() and state.faq_index_mat is not None):
+        qv = _faq_encode([query])
+        if qv is not None:
+            row = {fid: i for i, fid in enumerate(state.faq_index_ids)}
+            cands.sort(
+                key=lambda rid: float(state.faq_index_mat[row[rid]] @ qv[0]) if rid in row else -1.0,
+                reverse=True,
+            )
+    return [by_id[rid] for rid in cands[:FAQ_RELATED_MAX]]
+
+
+def get_faq_by_ids(ids: list[str]) -> list[dict]:
+    """按 id 从已加载的 FAQ 中取条目（含被 search_faq 门控挡住的 crisis 条目）。
+
+    供危机流程 D2 使用：crisis_resources.yaml 的 knowledge_refs 列出 id，
+    本函数从 state.faq_entries 解析对应条目（单一事实源——内容只存 JSONL）。
+    """
+    if not ids or not state.faq_entries:
+        return []
+    by_id = {e.get("id"): e for e in state.faq_entries if e.get("id")}
+    return [by_id[i] for i in ids if i in by_id]
 
 
 def build_rag_context(query: str, top_k: int = 3, max_preview: int = 500,
@@ -687,12 +881,29 @@ def build_rag_context(query: str, top_k: int = 3, max_preview: int = 500,
         parts.append("【相关历史对话片段】\n" + "\n\n".join(history_parts))
 
     # 维度5: 多源融合 — 专业知识库补充（受 use_knowledge 开关控制）
-    faq_results = search_faq(query, top_k=3, agent_type=agent_type) if use_knowledge else []
+    faq_results = search_faq_hybrid(query, top_k=3, agent_type=agent_type) if use_knowledge else []
+    # B 视角保底：用户处于某知识视角时，保证该视角知识有代表（不靠口语恰好撞上抽象概念）
+    if use_knowledge and agent_type:
+        floor = perspective_floor(
+            query, agent_type,
+            exclude_ids={e.get("id") for e in faq_results},
+            already=sum(1 for e in faq_results if e.get("category") == agent_type),
+        )
+        faq_results = faq_results + floor
     if faq_results:
         faq_parts = []
         for fq in faq_results:
             faq_parts.append(f"Q: {fq.get('question', '')}\nA: {fq.get('answer', '')}")
-        parts.append("【专业知识】\n" + "\n\n".join(faq_parts))
+        # D4: 非诊断 guard —— 临床知识仅作教育参考，避免诊断/治疗口吻
+        guard = "（以下为教育性参考，请用通俗、非诊断的语言自然融入回应，不要照搬原文，不要下诊断或给医疗结论）"
+        parts.append("【专业知识】" + guard + "\n" + "\n\n".join(faq_parts))
+
+        # WS-E E3: 关联概念注入 —— 对称池 + qsim 选择（门控、去重、限量）
+        # 作为"跨学科延伸"补充注入，让概念之间的关联在回应中可被点到
+        neighbors = e3_related_neighbors(query, faq_results)
+        if neighbors:
+            rel_lines = [f"· {e.get('question', '')} —— {e.get('answer', '')[:60]}…" for e in neighbors]
+            parts.append("【相关概念（跨学科延伸，点到为止即可）】\n" + "\n".join(rel_lines))
 
     result = "\n\n".join(parts)
 
