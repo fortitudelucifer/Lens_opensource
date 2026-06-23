@@ -166,6 +166,26 @@ export function PipelinePanel() {
           )
         })}
       </div>
+
+      {/* 数据产物：流水线产出的 L1/L2（从用户设置归位到流水线旁） */}
+      <div className="mt-6 pt-4 border-t border-[var(--border-color)]">
+        <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mb-2">
+          {t('dashboard.dataProducts')}
+        </p>
+        <div className="space-y-2 text-sm">
+          {[
+            { label: t('settings.l1TrainingData'), path: 'timeline_out/agent_sft_l1.jsonl', color: 'text-purple-500' },
+            { label: t('settings.l2AnonymizedData'), path: 'timeline_out/agent_sft_l2.jsonl', color: 'text-orange-500' },
+          ].map((item, i) => (
+            <div key={i} className="flex justify-between items-center gap-3">
+              <span className="text-[var(--text-secondary)]">{item.label}</span>
+              <code className={`text-xs bg-[var(--bg-secondary)] px-2 py-1 rounded ${item.color} font-mono border border-[var(--border-color)] truncate`}>
+                {item.path}
+              </code>
+            </div>
+          ))}
+        </div>
+      </div>
     </motion.div>
   )
 }

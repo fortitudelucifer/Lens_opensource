@@ -202,7 +202,7 @@ export function ActivityFeed() {
       mounted = false
       window.clearInterval(timer)
     }
-  }, [])
+  }, [t])
 
   const rendered = useMemo(() => activities, [activities])
 

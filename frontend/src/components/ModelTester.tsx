@@ -15,10 +15,15 @@ export default function ModelTester() {
   const [backends, setBackends] = useState<AvailableModel[]>([])
   const [testStates, setTestStates] = useState<Record<string, TestState>>({})
   const [testAllLoading, setTestAllLoading] = useState(false)
+  // 自动连通探测（复用 /api/models/reachable，与聊天下拉同一来源）：进页面即显示绿/红
+  const [reachable, setReachable] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     api.getAvailableModels()
       .then(setBackends)
+      .catch(() => {})
+    api.getReachable()
+      .then(setReachable)
       .catch(() => {})
   }, [])
 
@@ -58,11 +63,17 @@ export default function ModelTester() {
     setTestAllLoading(false)
   }
 
-  const getStatusIcon = (state: TestState | undefined) => {
-    if (!state) return null
-    if (state.loading) return <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-    if (state.result?.status === "ok") return <CheckCircle2 className="w-4 h-4 text-green-500" />
-    return <XCircle className="w-4 h-4 text-red-500" />
+  const getStatusIcon = (backend: string, state: TestState | undefined) => {
+    if (state?.loading) return <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+    // 手动深度测试结果优先
+    if (state?.result) return state.result.status === "ok"
+      ? <CheckCircle2 className="w-4 h-4 text-green-500" />
+      : <XCircle className="w-4 h-4 text-red-500" />
+    // 否则用自动连通探测结果（绿=连通 / 红=不通）
+    if (backend in reachable) return reachable[backend]
+      ? <CheckCircle2 className="w-4 h-4 text-green-500" />
+      : <XCircle className="w-4 h-4 text-red-500" />
+    return <Loader2 className="w-4 h-4 animate-spin text-muted-foreground/40" />
   }
 
   return (
@@ -108,14 +119,14 @@ export default function ModelTester() {
               key={b.backend}
               className={cn(
                 "rounded-lg border p-3 transition-colors",
-                result?.status === "ok" && "border-green-200 bg-green-50/50",
-                result?.status === "error" && "border-red-200 bg-red-50/50",
-                !result && "border-border"
+                (result?.status === "ok" || (!result && reachable[b.backend] === true)) && "border-green-200 bg-green-50/50",
+                (result?.status === "error" || (!result && reachable[b.backend] === false)) && "border-red-200 bg-red-50/50",
+                !result && reachable[b.backend] === undefined && "border-border"
               )}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                  {getStatusIcon(state)}
+                  {getStatusIcon(b.backend, state)}
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm">{b.backend}</span>

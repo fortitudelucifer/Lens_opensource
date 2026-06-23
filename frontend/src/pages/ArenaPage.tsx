@@ -18,7 +18,7 @@ import { SessionOptions } from '../components/shared/SessionOptions'
 import { format } from 'date-fns'
 
 const FALLBACK_CHAT_MODELS: AvailableModel[] = [
-  { backend: 'deepseek', model: 'deepseek-ai/DeepSeek-V3.1', base_url: 'https://api.example.com/v1', suitable_for: ['chat'] },
+  { backend: 'grok', model: 'grok-4.3-high', base_url: 'https://api.example.com/v1', suitable_for: ['chat'] },
 ]
 const mkKey = (m: AvailableModel) => `${m.backend}::${m.model}`
 
@@ -106,10 +106,10 @@ export function ArenaPage() {
       const chat = avail.filter(m => m.suitable_for.includes('chat'))
       const all = Array.from(new Map([...chat, ...FALLBACK_CHAT_MODELS].map(m => [mkKey(m), m])).values())
       setChatModels(all)
-      const ds = all.find(m => m.backend === 'deepseek')
-      const gk = all.find(m => m.backend === 'grok')
-      if (ds) setModelKeyA(mkKey(ds))
-      if (gk) setModelKeyB(mkKey(gk))
+      const gk1 = all.find(m => m.backend === 'grok')
+      const gk2 = all.find((m, i) => m.backend === 'grok' && i > 0)
+      if (gk1) setModelKeyA(mkKey(gk1))
+      if (gk2) setModelKeyB(mkKey(gk2))
       else if (all.length > 1) setModelKeyB(mkKey(all[1]))
     }).catch(() => {})
   }, [])
@@ -143,7 +143,7 @@ export function ArenaPage() {
         document.getElementById('arena-send-btn')?.click()
       }, 500)
     }
-  }, [])
+  }, [t])
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
@@ -256,7 +256,9 @@ export function ArenaPage() {
     try {
       const s = await api.arenaSession(arenaSessionId) as { contestant_a: Record<string, string>; contestant_b: Record<string, string> }
       setContestants({ a: s.contestant_a, b: s.contestant_b }); setRevealToggle(true)
-    } catch {}
+    } catch {
+      setRevealToggle(false)
+    }
   }
 
   const handleNewSession = () => {
@@ -294,7 +296,8 @@ export function ArenaPage() {
   const handleSoloSelect = (side: 'a' | 'b') => {
     setSoloSide(side); setRevealToggle(true)
     if (!contestants && arenaSessionId) {
-      api.arenaSession(arenaSessionId).then((s: any) => {
+      api.arenaSession(arenaSessionId).then((payload) => {
+        const s = payload as { contestant_a: Record<string, string>; contestant_b: Record<string, string> }
         setContestants({ a: s.contestant_a, b: s.contestant_b })
       }).catch(() => {})
     }

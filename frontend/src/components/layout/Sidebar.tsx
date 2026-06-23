@@ -21,6 +21,9 @@ import lensLogo from '../../assets/lens_logo_high_precision.svg'
 import type { NavItem } from '../../types'
 import { EmergencyModal } from '../safety/EmergencyModal'
 import { LanguageSwitcher } from '../settings/LanguageSwitcher'
+import { ModeSwitcher } from '../settings/ModeSwitcher'
+import { useSettingsStore } from '../../stores/useSettingsStore'
+import { isOperatorNav } from '../../lib/uiMode'
 
 interface SidebarProps {
   active: string
@@ -61,13 +64,17 @@ const navItems: NavItem[] = [
 export function Sidebar({ active, setActive, theme, toggleTheme, collapsed, onToggleCollapsed }: SidebarProps) {
   const { t } = useTranslation()
   const [showEmergency, setShowEmergency] = useState(false)
+  const uiMode = useSettingsStore((s) => s.uiMode)
 
   const translatedNavItems = useMemo(() =>
-    navItems.map((item) => ({
-      ...item,
-      label: t(NAV_T_KEYS[item.id] || item.id),
-    })),
-    [t]
+    navItems
+      // 用户模式隐藏运维页（dashboard / review）
+      .filter((item) => uiMode === 'developer' || !isOperatorNav(item.id))
+      .map((item) => ({
+        ...item,
+        label: t(NAV_T_KEYS[item.id] || item.id),
+      })),
+    [t, uiMode]
   )
 
   return (
@@ -146,6 +153,7 @@ export function Sidebar({ active, setActive, theme, toggleTheme, collapsed, onTo
           {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
         </button>
         <LanguageSwitcher />
+        <ModeSwitcher />
         <button
           onClick={() => setActive('privacy')}
           className={`w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] text-[var(--text-muted)] hover:text-emerald-500 transition-colors ${

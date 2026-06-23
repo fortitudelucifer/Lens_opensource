@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { MessageSquare, CheckCircle, Users, Zap } from 'lucide-react'
 import { StatsCard } from '../components/dashboard/StatsCard'
 import { PipelinePanel } from '../components/dashboard/PipelinePanel'
-import { ModelConfig } from '../components/dashboard/ModelConfig'
+import ModelPanel from '../components/ModelPanel'
 import { ActivityFeed } from '../components/dashboard/ActivityFeed'
 import { api, type DataStats } from '../lib/api'
 
@@ -111,7 +111,7 @@ export function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <PipelinePanel />
-        <ModelConfig />
+        <ModelPanel />
       </div>
 
       <ActivityFeed />

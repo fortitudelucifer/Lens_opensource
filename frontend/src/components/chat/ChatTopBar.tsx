@@ -9,6 +9,7 @@ interface ChatModelOption {
   backend: string
   model: string
   baseUrl: string
+  hasKey: boolean
 }
 
 interface ChatTopBarProps {
@@ -124,8 +125,8 @@ export function ChatTopBar({
             {groupedModels.local.length > 0 && (
               <optgroup label={t('chat.topBar.localModels')}>
                 {groupedModels.local.map((m) => (
-                  <option key={m.key} value={m.key}>
-                    {m.backend} · {m.model}
+                  <option key={m.key} value={m.key} disabled={!m.hasKey}>
+                    {m.backend} · {m.model}{m.hasKey ? '' : ' ' + t('chat.topBar.noKey')}
                   </option>
                 ))}
               </optgroup>
@@ -133,8 +134,8 @@ export function ChatTopBar({
             {groupedModels.cloudOfficial.length > 0 && (
               <optgroup label={t('chat.topBar.cloudOfficial')}>
                 {groupedModels.cloudOfficial.map((m) => (
-                  <option key={m.key} value={m.key}>
-                    {m.backend} · {m.model}
+                  <option key={m.key} value={m.key} disabled={!m.hasKey}>
+                    {m.backend} · {m.model}{m.hasKey ? '' : ' ' + t('chat.topBar.noKey')}
                   </option>
                 ))}
               </optgroup>
@@ -142,8 +143,8 @@ export function ChatTopBar({
             {groupedModels.cloudProxy.length > 0 && (
               <optgroup label={t('chat.topBar.cloudProxy')}>
                 {groupedModels.cloudProxy.map((m) => (
-                  <option key={m.key} value={m.key}>
-                    {m.backend} · {m.model}
+                  <option key={m.key} value={m.key} disabled={!m.hasKey}>
+                    {m.backend} · {m.model}{m.hasKey ? '' : ' ' + t('chat.topBar.noKey')}
                   </option>
                 ))}
               </optgroup>

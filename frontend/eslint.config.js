@@ -19,5 +19,14 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      'react-hooks/set-state-in-effect': 'error',
+    },
+  },
+  {
+    files: ['src/App.tsx', 'src/components/shared/ExportDialog.tsx', 'src/components/roundtable/InjectionDrawer.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
   },
 ])

@@ -71,12 +71,12 @@ export const useArenaStore = create<ArenaState>((set) => ({
     set({
       battleId: p.battleId,
       contestantA: {
-        backend: (p.contestantA as Record<string, string>).backend ?? 'deepseek',
+        backend: (p.contestantA as Record<string, string>).backend ?? 'grok',
         agent_type: (p.contestantA as Record<string, string>).agent_type,
         model: (p.contestantA as Record<string, string>).model,
       },
       contestantB: {
-        backend: (p.contestantB as Record<string, string>).backend ?? 'deepseek',
+        backend: (p.contestantB as Record<string, string>).backend ?? 'grok',
         agent_type: (p.contestantB as Record<string, string>).agent_type,
         model: (p.contestantB as Record<string, string>).model,
       },

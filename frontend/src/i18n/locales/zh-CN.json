@@ -35,13 +35,20 @@
     "betaTooltip": "圆桌讨论功能处于 Beta 阶段",
     "switchToLang": "切换为 {{lang}}"
   },
+  "mode": {
+    "label": "模式",
+    "user": "用户",
+    "developer": "开发者",
+    "switchTo": "切换到{{mode}}模式"
+  },
   "settings": {
     "title": "设置",
-    "subtitle": "API 密钥与模型配置 · 系统参数管理",
+    "subtitle": "语言、隐私、数据与反馈偏好管理",
     "language": {
       "label": "语言",
       "switchTo": "切换语言"
     },
+    "modelAndConnectivity": "模型与连通",
     "modelSelection": "模型选择",
     "connectionTest": "连接测试",
     "apiKeyManagement": "API 密钥管理",
@@ -149,6 +156,7 @@
     "detailLabel": "详情",
     "pipelineTitle": "Agent SFT & MoA 流水线",
     "pipelineDesc": "实时监控多模态融合处理状态",
+    "dataProducts": "数据产物",
     "rounds": "轮",
     "reviewCount": "审核: {{count}} 条",
     "testSet": "测试集: {{count}}"
@@ -186,29 +194,59 @@
     "subtitle": "Knowledge Center — 所有专业知识库的索引与概览",
     "stats": {
       "entries": "知识条目",
+      "searchable": "可检索",
       "activeDomains": "已激活领域",
       "planned": "规划中"
     },
+    "statsError": "动态统计加载失败：{{error}}",
+    "statsErrorGeneric": "知识库统计加载失败",
     "status": {
       "active": "已激活",
       "planned": "规划中"
     },
     "entriesSuffix": "条",
     "emptyState": "🔮 该领域知识库正在规划中，敬请期待",
-    "ragNote": "通过 _search_faq() 自动注入对话上下文",
+    "ragNotePrefix": "通过",
+    "ragNoteSuffix": "自动注入对话上下文（含 1-hop 相关概念）",
     "roadmap": {
       "title": "📋 知识库扩展路线",
-      "current": "当前：{{totalEntries}} 条 FAQ 覆盖 {{activeCount}} 个领域（沟通/危机/EFT/跨学科视角）",
-      "near": "近期：CBT/DBT/Gottman 治疗手册 FAQ",
-      "future": "远期：GraphRAG 知识图谱（FAQ > 200 条后，跨学科概念多跳推理）"
+      "current": "当前：{{totalEntries}} 条 FAQ（{{searchableEntries}} 条可检索）覆盖 {{activeCount}} 个已激活领域",
+      "ready": "已就绪：EFT/CBCT/IBCT/Gottman/DBT/ACT 等循证支柱 + 沟通 + 安全层",
+      "future": "远期：GraphRAG 知识图谱（FAQ > 200 已达成，多跳推理待评估）"
     },
-    "categories": {
-      "perspectives": { "name": "S6 跨学科视角", "description": "社会学、哲学、博弈论、文化研究四大学科视角，为关系问题提供多维透镜" },
-      "communication": { "name": "沟通技巧", "description": "非暴力沟通等核心沟通方法论" },
-      "crisis": { "name": "危机干预", "description": "接地技巧、安全稳定化等危机应对资源" },
-      "eftResources": { "name": "EFT 情绪聚焦", "description": "Sue Johnson 情绪聚焦治疗 Tango 九步流程" },
-      "therapyManuals": { "name": "治疗手册", "description": "系统化的治疗方法手册（CBT、DBT 等）" },
-      "graphrag": { "name": "GraphRAG 知识图谱", "description": "跨学科概念关联的多跳推理知识图谱（NetworkX → Neo4j）" }
+    "domains": {
+      "clinical_intervention": { "name": "循证临床干预", "description": "EFT · CBCT · IBCT · Gottman · DBT · ACT · SFBT · REBT · 正念 · PREP" },
+      "communication": { "name": "沟通技巧", "description": "非暴力沟通 · 积极倾听 · 修复尝试 · 冲突降级" },
+      "crisis_safety": { "name": "危机与安全", "description": "接地技巧 · C-SSRS 筛查 · 安全计划 · 求助阈值（危机条目不进常规检索）" },
+      "perspectives": { "name": "S6 跨学科视角", "description": "社会学 · 哲学 · 博弈论 · 文化研究" },
+      "clinical_lens": { "name": "临床透镜", "description": "精神动力学 · Bowen · 依恋（理解视角，非干预）" },
+      "graphrag": { "name": "GraphRAG 知识图谱", "description": "跨学科概念多跳推理（NetworkX → Neo4j，远期·条件触发）" }
+    },
+    "files": {
+      "perspectives_sociology": "布尔迪厄场域/资本、吉登斯反思性、戈夫曼拟剧论",
+      "perspectives_philosophy": "存在主义、现象学、实用主义、儒家关怀伦理",
+      "perspectives_game_theory": "纳什均衡、囚徒困境、沉没成本、损失厌恶",
+      "perspectives_cultural": "差序格局、集体/个人主义、面子/人情/报",
+      "communication_nvc_four_steps": "NVC 四步：观察→感受→需要→请求",
+      "communication_active_listening": "积极倾听：复述/映射感受/验证/开放提问/总结",
+      "communication_repair_attempts": "修复尝试：有效道歉/幽默/暂停/身体接触/共同回忆",
+      "communication_conflict_deescalation": "冲突降级：20分钟冷静/软化开场/时间窗/我信息/一次一事",
+      "crisis_safety_grounding_techniques": "5-4-3-2-1 接地、呼吸调节等即时安全技巧",
+      "crisis_safety_safety_core": "即时分流 · C-SSRS · 安全计划 · IPV · 求助阈值（危机条目门控）",
+      "clinical_tango_process": "EFT 核心：追逃循环、三阶段、依恋需求 A.R.E.",
+      "clinical_eft_deepening": "EFT 深化：恶魔对话/EFT探戈/A.R.E./软化/原始敏感点",
+      "clinical_cbct_core": "CBCT：认知三角/7类扭曲/思维记录/苏格拉底/行为交换",
+      "clinical_ibct_core": "IBCT：接纳vs改变/DEEP/统一抽离/共情联结/容忍",
+      "clinical_gottman_core": "Gottman：四骑士+解药/健全关系之屋/修复尝试/5:1",
+      "clinical_dbt_skills": "DBT：正念/痛苦耐受(TIPP)/情绪调节/人际效能(DEAR MAN)",
+      "clinical_act_core": "ACT：认知解离/接纳/价值/承诺行动/挣扎开关",
+      "clinical_sfbt": "SFBT：奇迹问句/刻度化/例外/应对问句/小步骤",
+      "clinical_rebt": "REBT：ABC模型/非理性信念/反驳/无条件接纳",
+      "clinical_mindfulness": "正念-MBRE：正念呼吸/慈心/正念倾听/共调身体扫描",
+      "clinical_prep": "PREP：危险信号/暂停规则/公平争吵/隐藏议题/预防",
+      "clinical_lens_attachment": "依恋类型：安全/焦虑/回避——为何吵架能和好、一冷淡就慌",
+      "clinical_lens_psychoanalytic": "客体关系与投射认同：总踩同样的坑、被同一类人吸引",
+      "clinical_lens_bowen": "自我分化与三角化：被对方情绪卷走、第三方被拉进矛盾"
     }
   },
   "welcomeScreen": {
@@ -270,6 +308,14 @@
     "switchBackend": "可切换后端",
     "modelCallFailedRetry": "模型调用失败，请稍后重试。",
     "exportDialogTitle": "导出对话",
+    "actions": {
+      "copy": "复制",
+      "copied": "已复制",
+      "edit": "编辑并重新发送",
+      "cancel": "取消",
+      "saveResend": "保存并重新发送",
+      "sendToArena": "发送到双镜对比"
+    },
     "bottomInput": {
       "placeholder": "输入你的问题或感受 (Enter 发送, Shift+Enter 换行)",
       "thinkingPlaceholder": "顾问正在思考中...",
@@ -285,6 +331,7 @@
       "localModels": "本地模型",
       "cloudOfficial": "云端官方",
       "cloudProxy": "云端代理",
+      "noKey": "（未配置 key）",
       "chatHistory": "聊天记录",
       "knowledge": "专业知识",
       "modeListen": "倾听模式",

@@ -14,14 +14,12 @@ const SECTION_META = [
 
 export function ConsentModal() {
   const { t } = useTranslation()
-  const [show, setShow] = useState(false)
+  const [show, setShow] = useState(() => !localStorage.getItem(CONSENT_KEY))
   const [showAssessmentPrompt, setShowAssessmentPrompt] = useState(false)
 
   useEffect(() => {
     const accepted = localStorage.getItem(CONSENT_KEY)
-    if (!accepted) {
-      setShow(true)
-    } else {
+    if (accepted) {
       const prompted = localStorage.getItem(ASSESSMENT_PROMPT_KEY)
       if (!prompted) {
         fetch('/api/assessment/latest')

@@ -18,9 +18,7 @@ import { PrivacyPage } from './pages/PrivacyPage'
 import { RoundtablePage } from './pages/RoundtablePage'
 import { RoundtableSessionPage } from './pages/RoundtableSessionPage'
 import { useRoundtableStore } from './stores/useRoundtableStore'
-import ModelSelector from './components/ModelSelector'
-import ModelTester from './components/ModelTester'
-import ApiKeyChecker from './components/ApiKeyChecker'
+import ModelPanel from './components/ModelPanel'
 import ReviewPanel from './components/ReviewPanel'
 import { CrisisBanner } from './components/safety/CrisisBanner'
 import { ConsentModal } from './components/safety/ConsentModal'
@@ -28,6 +26,8 @@ import { PERSONAS } from './constants'
 import type { Persona } from './types'
 import type { ChatSessionSearchResult } from './lib/api'
 import { PanelLeftOpen } from 'lucide-react'
+import { useSettingsStore } from './stores/useSettingsStore'
+import { isOperatorNav, USER_HOME_PATH, type UiMode } from './lib/uiMode'
 
 /**
  * 圆桌讨论路由壳 · 按 `currentPhase` + `sessionId` 组合切换：
@@ -55,12 +55,32 @@ function RoundtableRouter({ onNavigateToChat }: { onNavigateToChat: () => void }
 // 导出供单测（__tests__/RoundtableRouter.test.tsx）使用 · 非 App 外部 API
 export { RoundtableRouter as _RoundtableRouter }
 
+function getActiveNavFromPath(path: string) {
+  if (path.startsWith('/consent')) return 'consent'
+  if (path.startsWith('/chat')) return 'chat'
+  if (path.startsWith('/review')) return 'review'
+  if (path.startsWith('/arena') || path.startsWith('/dual-mirror')) return 'arena'
+  if (path.startsWith('/assessment')) return 'assessment'
+  if (path.startsWith('/communication-status')) return 'communication-status'
+  if (path.startsWith('/roundtable')) return 'roundtable'
+  if (path.startsWith('/knowledge-center')) return 'knowledge-center'
+  if (path.startsWith('/settings')) return 'settings'
+  if (path.startsWith('/privacy')) return 'privacy'
+  return 'dashboard'
+}
+
+function normalizePath(path: string, uiMode: UiMode = useSettingsStore.getState().uiMode) {
+  if (path === '/') {
+    return uiMode === 'user' ? USER_HOME_PATH : '/dashboard'
+  }
+  if (uiMode === 'user' && isOperatorNav(getActiveNavFromPath(path))) {
+    return USER_HOME_PATH
+  }
+  return path
+}
+
 export function App() {
   const { t } = useTranslation()
-  const normalizePath = (path: string) => {
-    if (path === '/') return '/dashboard'
-    return path
-  }
 
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
@@ -68,12 +88,18 @@ export function App() {
     }
     return 'dark'
   })
-  const [currentPath, setCurrentPath] = useState<string>(() =>
-    typeof window !== 'undefined' ? normalizePath(window.location.pathname) : '/dashboard',
-  )
+  const [currentPath, setCurrentPath] = useState<string>(() => {
+    if (typeof window === 'undefined') return USER_HOME_PATH
+    const target = normalizePath(window.location.pathname)
+    if (window.location.pathname !== target) {
+      window.history.replaceState(null, '', target)
+    }
+    return target
+  })
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [searchTargetSession, setSearchTargetSession] = useState<ChatSessionSearchResult | null>(null)
   const [showDataErase, setShowDataErase] = useState(false)
+  const uiMode = useSettingsStore((s) => s.uiMode)
 
   const navigate = useCallback((path: string, replace = false) => {
     const target = normalizePath(path)
@@ -91,18 +117,17 @@ export function App() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    if (window.location.pathname === '/') {
-      window.history.replaceState(null, '', '/dashboard')
-      setCurrentPath('/dashboard')
-    }
-
     const onPopState = () => {
-      setCurrentPath(normalizePath(window.location.pathname))
+      const target = normalizePath(window.location.pathname)
+      if (window.location.pathname !== target) {
+        window.history.replaceState(null, '', target)
+      }
+      setCurrentPath(target)
     }
 
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
-  }, [navigate])
+  }, [])
 
   const selectedPersona = useMemo<Persona | null>(() => {
     if (!currentPath.startsWith('/chat')) return null
@@ -112,18 +137,21 @@ export function App() {
   }, [currentPath])
 
   const activeNav = useMemo(() => {
-    if (currentPath.startsWith('/consent')) return 'consent'
-    if (currentPath.startsWith('/chat')) return 'chat'
-    if (currentPath.startsWith('/review')) return 'review'
-    if (currentPath.startsWith('/arena') || currentPath.startsWith('/dual-mirror')) return 'arena'
-    if (currentPath.startsWith('/assessment')) return 'assessment'
-    if (currentPath.startsWith('/communication-status')) return 'communication-status'
-    if (currentPath.startsWith('/roundtable')) return 'roundtable'
-    if (currentPath.startsWith('/knowledge-center')) return 'knowledge-center'
-    if (currentPath.startsWith('/settings')) return 'settings'
-    if (currentPath.startsWith('/privacy')) return 'privacy'
-    return 'dashboard'
+    return getActiveNavFromPath(currentPath)
   }, [currentPath])
+
+  // 用户模式下不允许进入运维页（dashboard/review）：重定向到用户首页
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    return useSettingsStore.subscribe((state) => {
+      if (state.uiMode !== 'user') return
+      const target = normalizePath(window.location.pathname, state.uiMode)
+      if (window.location.pathname !== target) {
+        window.history.replaceState(null, '', target)
+        setCurrentPath(target)
+      }
+    })
+  }, [])
 
   // Apply theme class
   useEffect(() => {
@@ -209,7 +237,7 @@ export function App() {
         >
           {activeNav === 'consent' && <ConsentPage />}
 
-          {activeNav === 'dashboard' && <Dashboard />}
+          {activeNav === 'dashboard' && uiMode === 'developer' && <Dashboard />}
           
           {activeNav === 'chat' && !selectedPersona && (
             <WelcomeScreen onSelect={handlePersonaSelect} />
@@ -225,7 +253,7 @@ export function App() {
             />
           )}
 
-          {activeNav === 'review' && (
+          {activeNav === 'review' && uiMode === 'developer' && (
             <div className="flex-1 overflow-hidden flex flex-col p-6">
               <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-sm flex-1 flex flex-col min-h-0">
                 <ReviewPanel />
@@ -248,37 +276,16 @@ export function App() {
                 </div>
               </div>
 
-              {/* Settings Sections */}
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <div className="space-y-6">
-                  <div className="flex items-center gap-2">
-                    <div className="w-1 h-6 bg-blue-500 rounded-full" />
-                    <h2 className="text-lg font-semibold">{t('settings.modelSelection')}</h2>
-                  </div>
-                  <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-sm p-1">
-                    <ModelSelector />
-                  </div>
-                </div>
-                
-                <div className="space-y-6">
-                  <div className="flex items-center gap-2">
-                    <div className="w-1 h-6 bg-green-500 rounded-full" />
-                    <h2 className="text-lg font-semibold">{t('settings.connectionTest')}</h2>
-                  </div>
-                  <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-sm p-1">
-                    <ModelTester />
-                  </div>
-                </div>
-              </div>
-
+              {/* 运维设置（仅开发者模式可见）：模型 / 连通 / API Key / 配置路径 */}
+              {uiMode === 'developer' && (
+              <>
+              {/* 模型与连通（合一面板：选型 / 连通 / Key 检查） */}
               <div className="space-y-6">
                 <div className="flex items-center gap-2">
-                  <div className="w-1 h-6 bg-purple-500 rounded-full" />
-                  <h2 className="text-lg font-semibold">{t('settings.apiKeyManagement')}</h2>
+                  <div className="w-1 h-6 bg-blue-500 rounded-full" />
+                  <h2 className="text-lg font-semibold">{t('settings.modelAndConnectivity')}</h2>
                 </div>
-                <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-sm p-1">
-                  <ApiKeyChecker />
-                </div>
+                <ModelPanel />
               </div>
 
               {/* Configuration Info */}
@@ -291,8 +298,6 @@ export function App() {
                   {[
                     { label: t('settings.apiKeyConfig'), path: "local_secrets/.env.advisor", color: "text-blue-500" },
                     { label: t('settings.modelConfig'), path: "configs/advisor.yaml", color: "text-emerald-500" },
-                    { label: t('settings.l1TrainingData'), path: "timeline_out/agent_sft_l1.jsonl", color: "text-purple-500" },
-                    { label: t('settings.l2AnonymizedData'), path: "timeline_out/agent_sft_l2.jsonl", color: "text-orange-500" },
                   ].map((item, index) => (
                     <div key={index} className="flex justify-between items-center py-3 border-b border-[var(--border-color)] last:border-0">
                       <span className="text-[var(--text-secondary)] font-medium">{item.label}</span>
@@ -308,6 +313,8 @@ export function App() {
                   </p>
                 </div>
               </div>
+              </>
+              )}
 
               {/* Problem & Suggestion Feedback */}
               <div className="space-y-6">

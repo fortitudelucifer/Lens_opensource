@@ -31,36 +31,25 @@ interface ModeratorThinkingProps {
  * 用于 `prefers-reduced-motion: reduce` 场景（OS 或用户偏好关闭动画）
  */
 function useTypewriter(full: string, speedMs = 28, instant = false): { shown: string; done: boolean } {
-  const [shown, setShown] = useState('')
-  const [done, setDone] = useState(false)
+  const [typed, setTyped] = useState({ full: '', shown: '', done: false })
   useEffect(() => {
-    if (!full) {
-      setShown('')
-      setDone(true)
-      return
-    }
-    // 辅助功能模式：直接全文到达，跳过打字机
-    if (instant) {
-      setShown(full)
-      setDone(true)
-      return
-    }
-    setShown('')
-    setDone(false)
+    if (!full || instant) return
     let i = 0
     const id = window.setInterval(() => {
       i += 1
       if (i >= full.length) {
-        setShown(full)
-        setDone(true)
+        setTyped({ full, shown: full, done: true })
         window.clearInterval(id)
       } else {
-        setShown(full.slice(0, i))
+        setTyped({ full, shown: full.slice(0, i), done: false })
       }
     }, speedMs)
     return () => window.clearInterval(id)
   }, [full, speedMs, instant])
-  return { shown, done }
+  if (!full) return { shown: '', done: true }
+  if (instant) return { shown: full, done: true }
+  if (typed.full !== full) return { shown: '', done: false }
+  return { shown: typed.shown, done: typed.done }
 }
 
 export function ModeratorThinking({
@@ -81,8 +70,8 @@ export function ModeratorThinking({
     if (!text || userOverrideRef.current) return
     if (moderatorDone && typedDone && !collapsed) {
       if (reducedMotion) {
-        setCollapsed(true)
-        return
+        const id = window.setTimeout(() => setCollapsed(true), 0)
+        return () => window.clearTimeout(id)
       }
       const id = window.setTimeout(() => {
         if (!userOverrideRef.current) setCollapsed(true)

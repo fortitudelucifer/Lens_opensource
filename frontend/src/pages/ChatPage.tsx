@@ -7,17 +7,17 @@ import { ChatArea } from '../components/chat/ChatArea'
 import { BottomInput } from '../components/chat/BottomInput'
 import type { Message, Persona, ChatMode, Session } from '../types'
 import { PERSONAS } from '../constants'
-import { api, type AvailableModel, type ChatSessionSearchResult, type ModelPreferences } from '../lib/api'
+import { api, type ModelInfo, type ChatSessionSearchResult, type ModelPreferences } from '../lib/api'
 import { SafetyDisclaimer } from '../components/safety/SafetyDisclaimer'
 import { ExportDialog, chatToExportData } from '../components/shared/ExportDialog'
 import { SupervisionStatePanel } from '../components/supervision/SupervisionStatePanel'
 import { DialogueProgressAnalysis } from '../components/supervision/DialogueProgressAnalysis'
 
-const FALLBACK_CHAT_MODELS: AvailableModel[] = [
-  { backend: 'deepseek', model: 'deepseek-ai/DeepSeek-V3.1', base_url: 'https://api.example.com/v1', suitable_for: ['chat'] },
+const FALLBACK_CHAT_MODELS: ModelInfo[] = [
+  { backend: 'grok', model: 'grok-4.3-high', base_url: 'https://api.example.com/v1', status: 'connected', has_key: true, suitable_for: ['chat'] },
 ]
 
-const modelKey = (m: AvailableModel) => `${m.backend}::${m.model}`
+const modelKey = (m: { backend: string; model: string }) => `${m.backend}::${m.model}`
 
 type RawConversationTurn = {
   role?: string
@@ -69,7 +69,7 @@ export function ChatPage({
   const [messages, setMessages] = useState<Message[]>([])
   const [isTyping, setIsTyping] = useState(false)
   const [backendSessionId, setBackendSessionId] = useState<string | null>(null)
-  const [chatModels, setChatModels] = useState<AvailableModel[]>(FALLBACK_CHAT_MODELS)
+  const [chatModels, setChatModels] = useState<ModelInfo[]>(FALLBACK_CHAT_MODELS)
   const [selectedModelKey, setSelectedModelKey] = useState(modelKey(FALLBACK_CHAT_MODELS[0]))
   const [useRag, setUseRag] = useState(true)
   const [useKnowledge, setUseKnowledge] = useState(true)
@@ -133,22 +133,27 @@ export function ChatPage({
     let mounted = true
 
     Promise.all([
-      api.getAvailableModels().catch(() => [] as AvailableModel[]),
+      api.getModels().catch(() => [] as ModelInfo[]),
       api.getModelPreferences().catch(() => null as ModelPreferences | null),
-    ]).then(([available, prefs]) => {
+      api.getReachable().catch(() => ({} as Record<string, boolean>)),
+    ]).then(([all, prefs, reachable]) => {
       if (!mounted) return
 
-      const candidates = available.filter((m) => m.suitable_for.includes('chat'))
-      const unique = Array.from(
-        new Map([...candidates, ...FALLBACK_CHAT_MODELS].map((m) => [modelKey(m), m])).values(),
+      // 只展示「真正连通」的聊天后端（GET /models 探测通过）；
+      // 探测结果缺失时退回 has_key（避免误隐藏）。
+      const haveProbe = Object.keys(reachable).length > 0
+      const candidates = all.filter((m) =>
+        m.suitable_for?.includes('chat') &&
+        (haveProbe ? reachable[m.backend] === true : m.has_key)
       )
+      const list = candidates.length > 0 ? candidates : FALLBACK_CHAT_MODELS
       const preferred = prefs?.chat_backend
-      const selected = unique.find((m) => m.backend === preferred)
-        || unique.find((m) => m.backend === 'deepseek')
-        || unique[0]
+      // 默认选中：优先 prefs → 第一个
+      const selected = list.find((m) => m.backend === preferred)
+        || list[0]
 
-      setChatModels(unique)
-      setSelectedModelKey(modelKey(selected))
+      setChatModels(list)
+      if (selected) setSelectedModelKey(modelKey(selected))
     })
 
     return () => {
@@ -244,7 +249,7 @@ export function ChatPage({
     } finally {
       setLoadingSample(null)
     }
-  }, [applyConversationPayload])
+  }, [applyConversationPayload, t])
 
   const handleUploadSampleFiles = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || [])
@@ -331,7 +336,7 @@ export function ChatPage({
     setBackendSessionId(null)
   }, [loadSampleConversation, sampleConversations, remoteSessions, currentPersona.id])
 
-  const handleSendMessage = useCallback(async (content: string) => {
+  const handleSendMessage = useCallback(async (content: string, opts?: { editKeepUserTurns?: number }) => {
     if (!content.trim()) return
 
     const assistantId = `${Date.now()}-assistant`
@@ -370,10 +375,11 @@ export function ChatPage({
         message: content,
         agent_type: currentPersona.id,
         mode: mode === 'deep' ? 'consult' : 'listen',
-        backend: selectedModel?.backend || 'deepseek',
+        backend: selectedModel?.backend || 'grok',
         session_id: backendSessionId || undefined,
         use_rag: useRag,
         use_knowledge: useKnowledge,
+        edit_keep_user_turns: opts?.editKeepUserTurns,
       })) {
         if (token.startsWith('__SESSION_ID__')) {
           const sid = token.replace('__SESSION_ID__', '')
@@ -435,6 +441,18 @@ export function ChatPage({
       }
     }
   }, [backendSessionId, currentPersona, mode, selectedModel, useRag, useKnowledge, fetchRemoteSessions, t])
+
+  // 编辑某条用户消息并重新发送：前端砍掉该条及之后，后端也按“保留前 N 轮用户消息”截断，
+  // 再以新内容重发（重新生成回复），保证前后端历史一致。
+  const handleEditMessage = useCallback((messageId: string, newContent: string) => {
+    if (!newContent.trim()) return
+    const idx = messages.findIndex((m) => m.id === messageId)
+    if (idx === -1) return
+    // 被编辑消息之前的用户消息轮数 = 后端要保留的用户轮数
+    const keepUserTurns = messages.slice(0, idx).filter((m) => m.role === 'user').length
+    setMessages(messages.slice(0, idx))
+    void handleSendMessage(newContent.trim(), { editKeepUserTurns: keepUserTurns })
+  }, [messages, handleSendMessage])
 
   const handleClearMessages = useCallback(() => {
     setMessages([])
@@ -509,7 +527,7 @@ export function ChatPage({
     return () => {
       active = false
     }
-  }, [onPersonaRouteChange, onSearchTargetConsumed, parseConversationPayload, searchTargetSession])
+  }, [currentPersona.id, onPersonaRouteChange, onSearchTargetConsumed, parseConversationPayload, searchTargetSession])
 
   return (
     <div className="flex-1 flex h-full overflow-hidden bg-[var(--bg-primary)] transition-all duration-300">
@@ -548,6 +566,7 @@ export function ChatPage({
             backend: m.backend,
             model: m.model,
             baseUrl: m.base_url,
+            hasKey: m.has_key,
           }))}
           selectedModelKey={selectedModelKey}
           onModelChange={setSelectedModelKey}
@@ -632,6 +651,7 @@ export function ChatPage({
             )}
             <div className="flex-1 overflow-y-auto">
               <ChatArea messages={messages} currentPersona={currentPersona}
+                onEditMessage={handleEditMessage}
                 onSendToArena={(content) => {
                   sessionStorage.setItem('arena-prefill', content)
                   sessionStorage.setItem('arena-prefill-persona', currentPersona.id)

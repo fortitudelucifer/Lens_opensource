@@ -39,9 +39,6 @@ export function useReducedMotion(): boolean {
     }
     const mql = window.matchMedia(MEDIA_QUERY)
 
-    // 立即同步一次（避免 SSR default false 与真实值不一致）
-    setReduced(mql.matches)
-
     const handleChange = (e: MediaQueryListEvent) => setReduced(e.matches)
 
     // 现代浏览器用 addEventListener；老版本 Safari < 14 fallback（addListener 已废弃但仍有类型）

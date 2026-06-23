@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { BarChart3, Trophy, Loader2, ArrowLeft } from 'lucide-react'
 
 interface Rating {
@@ -66,7 +66,7 @@ export function ArenaStatsPage({ onBack }: { onBack: () => void }) {
   const [sortKey, setSortKey] = useState<'overall' | typeof DIMS[number]>('overall')
   const [statsMode, setStatsMode] = useState('')
 
-  const fetchStats = (mode: string) => {
+  const fetchStats = useCallback((mode: string) => {
     setLoading(true)
     const modeParam = mode ? `?mode=${mode}` : ''
     Promise.all([
@@ -77,9 +77,11 @@ export function ArenaStatsPage({ onBack }: { onBack: () => void }) {
     ]).then(([s, sm, qs, an]) => {
       setStats(s); setSummary(sm); setQueryStats(qs); setAnnotator(an)
     }).catch(() => {}).finally(() => setLoading(false))
-  }
+  }, [])
 
-  useEffect(() => { fetchStats(statsMode) }, [statsMode])
+  useEffect(() => {
+    queueMicrotask(() => fetchStats(statsMode))
+  }, [fetchStats, statsMode])
 
   if (loading) {
     return (

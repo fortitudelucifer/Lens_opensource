@@ -82,7 +82,7 @@ export function ModelConfig() {
       },
       SAMPLE_MODELS[2],
     ]
-  }, [available, prefs])
+  }, [available, prefs, t])
 
   return (
     <motion.div

@@ -30,6 +30,9 @@ export function BottomInput({ onSend, disabled, isThinking }: BottomInputProps) 
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // 输入法组合期间（中文/日文等拼字选词）的 Enter 用于确认候选，不应触发发送，
+    // 否则“确认候选的 Enter” + “真正发送的 Enter”会造成重复提交。
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()

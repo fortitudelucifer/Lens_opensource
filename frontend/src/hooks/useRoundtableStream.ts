@@ -228,8 +228,12 @@ export function useRoundtableStream({
     }
 
     const url = endpoint ?? `/api/roundtable/stream/${encodeURIComponent(sessionId)}`
-    setStatus('connecting')
-    setError(null)
+    let active = true
+    queueMicrotask(() => {
+      if (!active) return
+      setStatus('connecting')
+      setError(null)
+    })
 
     const es = new EventSource(url)
     esRef.current = es
@@ -278,6 +282,7 @@ export function useRoundtableStream({
     }
 
     return () => {
+      active = false
       es.close()
       esRef.current = null
       setStatus('closed')

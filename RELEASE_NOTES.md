@@ -279,7 +279,7 @@ VITE_USE_MOCK=false                      # 切换 mock / 真后端
 - **内存态 session 存储** · 当前 `roundtable_service._sessions: dict` 是单进程内存字典 · **重启即丢**；多 worker 部署需要共享存储（Redis / SQLite） · 推迟到 V2
 - **RAG 注入延迟** · `inject/preview` 调用 BGE-M3 + rerank · 首次冷加载 2-3s · 后续 < 200ms · 已通过 lazy init 优化
 - ~~**真 LLM 首 token p95 SLO 需复测**~~ · ✅ **已完成 2026-04-30（D7.1.c / Section 83）** · SLO 三层分层定稿（L1 mock ≤ 3s ✅ / L2 单 backend ≤ 6s · Claude 5.82s ✅ / L3 多 backend 并发 ≤ 4s ⏳ 待直连 key）
-- **代理生态脆弱性**（新 · 2026-04-30 观察） · OpenAI-compatible proxy / jiuuij.de5 / backup provider 等代理在过去 4 天内（Section 80 → Section 83）陆续限流 / 下架 / 吊销 key · **只剩 Claude 单线稳定**；生产前必须：① 至少申请 1 个直连 provider key（Gemini AI Studio Free Tier / Kimi 直连 / OpenAI Tier 1）② 避免多 backend 共用同一 key · 以免一起失效
+- **代理生态脆弱性**（新 · 2026-04-30 观察） · OpenAI-compatible proxy / backup provider 等代理在过去 4 天内（Section 80 → Section 83）陆续限流 / 下架 / 吊销 key · **只剩 Claude 单线稳定**；生产前必须：① 至少申请 1 个直连 provider key（Gemini AI Studio Free Tier / Kimi 直连 / OpenAI Tier 1）② 避免多 backend 共用同一 key · 以免一起失效
 
 ### 7.3 多轮 / DAG / 历史
 

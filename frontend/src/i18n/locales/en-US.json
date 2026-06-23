@@ -35,13 +35,20 @@
     "betaTooltip": "Roundtable is in Beta",
     "switchToLang": "Switch to {{lang}}"
   },
+  "mode": {
+    "label": "Mode",
+    "user": "User",
+    "developer": "Developer",
+    "switchTo": "Switch to {{mode}} mode"
+  },
   "settings": {
     "title": "Settings",
-    "subtitle": "API Keys & Model Config · System Parameters",
+    "subtitle": "Language, privacy, data, and feedback preferences",
     "language": {
       "label": "Language",
       "switchTo": "Switch Language"
     },
+    "modelAndConnectivity": "Models & Connectivity",
     "modelSelection": "Model Selection",
     "connectionTest": "Connection Test",
     "apiKeyManagement": "API Key Management",
@@ -149,6 +156,7 @@
     "detailLabel": "Detail",
     "pipelineTitle": "Agent SFT & MoA Pipeline",
     "pipelineDesc": "Real-time monitoring of multimodal fusion processing",
+    "dataProducts": "Data Products",
     "rounds": "rounds",
     "reviewCount": "Reviews: {{count}}",
     "testSet": "Test set: {{count}}"
@@ -186,29 +194,59 @@
     "subtitle": "Knowledge Center — Index and overview of all professional knowledge bases",
     "stats": {
       "entries": "Knowledge Entries",
+      "searchable": "Searchable",
       "activeDomains": "Active Domains",
       "planned": "Planned"
     },
+    "statsError": "Failed to load live stats: {{error}}",
+    "statsErrorGeneric": "Failed to load knowledge stats",
     "status": {
       "active": "Active",
       "planned": "Planned"
     },
     "entriesSuffix": "entries",
     "emptyState": "🔮 Knowledge base for this domain is under planning. Stay tuned.",
-    "ragNote": "Automatically injected into dialogue context via _search_faq()",
+    "ragNotePrefix": "Auto-injected into dialogue context via",
+    "ragNoteSuffix": "(incl. 1-hop related concepts)",
     "roadmap": {
       "title": "📋 Knowledge Base Roadmap",
-      "current": "Current: {{totalEntries}} FAQ entries covering {{activeCount}} domains (Communication/Crisis/EFT/Interdisciplinary)",
-      "near": "Near term: CBT/DBT/Gottman therapy manual FAQ",
-      "future": "Long term: GraphRAG knowledge graph (after FAQ > 200, multi-hop reasoning across disciplines)"
+      "current": "Current: {{totalEntries}} FAQ entries ({{searchableEntries}} searchable) across {{activeCount}} active domains",
+      "ready": "Ready: evidence-based pillars (EFT/CBCT/IBCT/Gottman/DBT/ACT) + communication + safety layer",
+      "future": "Long term: GraphRAG knowledge graph (FAQ > 200 reached; multi-hop reasoning under evaluation)"
     },
-    "categories": {
-      "perspectives": { "name": "S6 Interdisciplinary Perspectives", "description": "Sociology, philosophy, game theory, and cultural studies — four disciplinary lenses for relationship issues" },
-      "communication": { "name": "Communication Skills", "description": "Core communication methodologies including Nonviolent Communication" },
-      "crisis": { "name": "Crisis Intervention", "description": "Crisis response resources including grounding techniques and stabilization" },
-      "eftResources": { "name": "EFT Emotion Focused", "description": "Sue Johnson Emotion Focused Therapy Tango nine-step process" },
-      "therapyManuals": { "name": "Therapy Manuals", "description": "Systematic therapy method manuals (CBT, DBT, etc.)" },
-      "graphrag": { "name": "GraphRAG Knowledge Graph", "description": "Multi-hop reasoning knowledge graph for interdisciplinary concept associations (NetworkX → Neo4j)" }
+    "domains": {
+      "clinical_intervention": { "name": "Evidence-based Clinical Interventions", "description": "EFT · CBCT · IBCT · Gottman · DBT · ACT · SFBT · REBT · Mindfulness · PREP" },
+      "communication": { "name": "Communication Skills", "description": "Nonviolent Communication · Active Listening · Repair Attempts · Conflict De-escalation" },
+      "crisis_safety": { "name": "Crisis & Safety", "description": "Grounding · C-SSRS screening · Safety planning · Help-seeking thresholds (crisis entries excluded from normal retrieval)" },
+      "perspectives": { "name": "S6 Interdisciplinary Lenses", "description": "Sociology · Philosophy · Game Theory · Cultural Studies" },
+      "clinical_lens": { "name": "Clinical Lenses", "description": "Psychodynamic · Bowen · Attachment (understanding lens, not intervention)" },
+      "graphrag": { "name": "GraphRAG Knowledge Graph", "description": "Multi-hop reasoning over interdisciplinary concepts (NetworkX → Neo4j; long-term, conditional)" }
+    },
+    "files": {
+      "perspectives_sociology": "Bourdieu's field/capital, Giddens' reflexivity, Goffman's dramaturgy",
+      "perspectives_philosophy": "Existentialism, phenomenology, pragmatism, Confucian ethics of care",
+      "perspectives_game_theory": "Nash equilibrium, prisoner's dilemma, sunk cost, loss aversion",
+      "perspectives_cultural": "Differential mode of association, collectivism/individualism, face/renqing/bao",
+      "communication_nvc_four_steps": "NVC four steps: observation → feeling → need → request",
+      "communication_active_listening": "Active listening: paraphrase / mirror feelings / validate / open questions / summarize",
+      "communication_repair_attempts": "Repair attempts: effective apology / humor / time-out / physical touch / shared memories",
+      "communication_conflict_deescalation": "De-escalation: 20-min cooldown / soft start-up / time windows / I-statements / one thing at a time",
+      "crisis_safety_grounding_techniques": "5-4-3-2-1 grounding, breathing regulation and other immediate safety skills",
+      "crisis_safety_safety_core": "Immediate triage · C-SSRS · safety plan · IPV · help-seeking thresholds (crisis gating)",
+      "clinical_tango_process": "EFT core: pursue-withdraw cycle, three stages, attachment needs A.R.E.",
+      "clinical_eft_deepening": "EFT deepening: demon dialogues / EFT tango / A.R.E. / softening / raw spots",
+      "clinical_cbct_core": "CBCT: cognitive triangle / 7 distortions / thought records / Socratic / behavior exchange",
+      "clinical_ibct_core": "IBCT: acceptance vs change / DEEP / unified detachment / empathic joining / tolerance",
+      "clinical_gottman_core": "Gottman: Four Horsemen + antidotes / Sound Relationship House / repair attempts / 5:1",
+      "clinical_dbt_skills": "DBT: mindfulness / distress tolerance (TIPP) / emotion regulation / interpersonal effectiveness (DEAR MAN)",
+      "clinical_act_core": "ACT: cognitive defusion / acceptance / values / committed action / struggle switch",
+      "clinical_sfbt": "SFBT: miracle question / scaling / exceptions / coping questions / small steps",
+      "clinical_rebt": "REBT: ABC model / irrational beliefs / disputing / unconditional acceptance",
+      "clinical_mindfulness": "Mindfulness-MBRE: mindful breathing / loving-kindness / mindful listening / co-regulated body scan",
+      "clinical_prep": "PREP: danger signs / time-out rules / fair fighting / hidden issues / prevention",
+      "clinical_lens_attachment": "Attachment styles: secure / anxious / avoidant — making up after fights, panic at distance",
+      "clinical_lens_psychoanalytic": "Object relations & projective identification: repeating the same patterns, drawn to the same type",
+      "clinical_lens_bowen": "Differentiation & triangulation: getting swept into emotions, pulling in a third party"
     }
   },
   "welcomeScreen": {
@@ -270,6 +308,14 @@
     "switchBackend": "Switch backend",
     "modelCallFailedRetry": "Model call failed. Please try again later.",
     "exportDialogTitle": "Export Conversation",
+    "actions": {
+      "copy": "Copy",
+      "copied": "Copied",
+      "edit": "Edit & resend",
+      "cancel": "Cancel",
+      "saveResend": "Save & resend",
+      "sendToArena": "Send to Arena Compare"
+    },
     "bottomInput": {
       "placeholder": "Type your question or feelings (Enter to send, Shift+Enter for new line)",
       "thinkingPlaceholder": "Advisor is thinking...",
@@ -285,6 +331,7 @@
       "localModels": "Local Models",
       "cloudOfficial": "Cloud Official",
       "cloudProxy": "Cloud Proxy",
+      "noKey": "(no key)",
       "chatHistory": "Chat History",
       "knowledge": "Knowledge",
       "modeListen": "Listen Mode",
