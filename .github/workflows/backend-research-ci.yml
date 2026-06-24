@@ -1,0 +1,42 @@
+name: Backend Research CI
+
+on:
+  push:
+    branches:
+      - main
+      - ci/backend-research
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  backend-research:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-backend-ci.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements-backend-ci.txt
+
+      - name: Syntax check
+        run: python -m compileall scripts tests
+
+      - name: Backend research smoke
+        run: python scripts/advisor/backend_research_ci.py
+
+      - name: Router property tests
+        run: |
+          python - <<'PY'
+          import runpy
+          import pytest
+          runpy.run_path('scripts/advisor/backend_research_ci.py')['install_torch_stub']()
+          raise SystemExit(pytest.main(['tests/test_advisor_router_properties.py', '-q']))
+          PY
