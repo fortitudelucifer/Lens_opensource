@@ -32,6 +32,8 @@ source_manifest.yaml
 picks/
 research/
 data/
+!frontend/src/data/
+!frontend/src/data/**
 datasets/
 logs/
 cache/
