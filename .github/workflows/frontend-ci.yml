@@ -38,14 +38,4 @@ jobs:
         run: npm run test
 
       - name: Build
-        run: |
-          node --version
-          npm --version
-          set +e
-          npm run build -- --debug 2>&1 | tee build.log
-          status=${PIPESTATUS[0]}
-          if [ "$status" -ne 0 ]; then
-            message=$(tail -30 build.log | tr '\n' ' ' | sed 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g')
-            echo "::error title=Frontend build failed::$message"
-            exit "$status"
-          fi
+        run: npm run build

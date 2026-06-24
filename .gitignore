@@ -126,6 +126,7 @@ electron/build/
 !advisor_out/knowledge/**/*.jsonl
 *.csv
 *.html
+!frontend/index.html
 *.tmp
 *.temp
 *.cache
