@@ -1,0 +1,38 @@
+Lens (聆诉)
+Copyright 2025-2026 The Lens Project Contributors
+
+This product includes software developed by The Lens Project.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this software except in compliance with the License. You may obtain a
+copy of the License in the LICENSE file at the root of this repository, or at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations
+under the License.
+
+--------------------------------------------------------------------------------
+ADDITIONAL USE GUIDELINES
+--------------------------------------------------------------------------------
+
+Lens is a research, personal-data-organization, and relationship-reflection
+tool. It is NOT a medical, diagnostic, psychotherapy, crisis-counseling, or
+emergency-response system.
+
+In addition to the Apache 2.0 terms above, we ask all users to follow the
+Acceptable Use Policy in ACCEPTABLE_USE_POLICY.md. For the SOURCE CODE, the
+Acceptable Use Policy is a good-faith request and is not an additional term or
+condition of the Apache 2.0 license — the code remains licensed under Apache
+2.0 with no field-of-use restriction.
+
+If and when fine-tuned MODEL WEIGHTS are released, those weights will be
+distributed under a separate license (OpenRAIL-M) whose behavioral use
+restrictions ARE binding. No such weights are released at this time.
+
+Datasets, when released, are intended for non-commercial research use
+(CC BY-NC-SA 4.0); sensitive data is released only in synthetic or fully
+anonymized form.

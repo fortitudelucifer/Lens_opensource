@@ -175,3 +175,8 @@ dmypy.json
 # WeChat article drafts / release marketing drafts
 wechat_article.md
 Lens_opensource_wechat_article_v2.md
+
+# ══════════════════════════════════════════════════════════════
+# Private research / publication strategy (never commit)
+# ══════════════════════════════════════════════════════════════
+NATURE_COMMUNICATIONS_PLAN.md
