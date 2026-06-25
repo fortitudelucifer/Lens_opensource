@@ -18,11 +18,11 @@
     "consent": "知情同意",
     "dashboard": "总览",
     "chat": "沉浸式互动",
-    "arena": "双镜对比",
+    "arena": "双镜并观",
     "assessment": "交流测评",
     "review": "审核",
     "settings": "设置",
-    "communicationStatus": "交流状态",
+    "communicationStatus": "深度对焦",
     "roundtable": "圆桌讨论",
     "knowledgeCenter": "知识中心",
     "privacy": "隐私政策"
@@ -267,7 +267,7 @@
     },
     "source": {
       "chat": "沉浸式互动",
-      "arena": "双镜对比",
+      "arena": "双镜并观",
       "sample": "样例数据"
     },
     "statusFilters": {
@@ -314,7 +314,7 @@
       "edit": "编辑并重新发送",
       "cancel": "取消",
       "saveResend": "保存并重新发送",
-      "sendToArena": "发送到双镜对比"
+      "sendToArena": "发送到双镜并观"
     },
     "bottomInput": {
       "placeholder": "输入你的问题或感受 (Enter 发送, Shift+Enter 换行)",
@@ -381,12 +381,12 @@
     "voteRemark": "评分备注：{{remark}}",
     "safetyIntervention": "已触发安全干预，本轮不参与评分",
     "loadFailed": "加载失败",
-    "establishingDualMirror": "正在为您建立双镜对比，生成需要较长时间，请耐心等待...",
-    "dualMirrorSolo": "双镜对比（单路模式）",
-    "dualMirror": "双镜对比",
+    "establishingDualMirror": "正在为您建立双镜并观，生成需要较长时间，请耐心等待...",
+    "dualMirrorSolo": "双镜并观（单路模式）",
+    "dualMirror": "双镜并观",
     "hideModelIdentity": "隐藏模型身份",
     "revealModelIdentity": "揭示模型身份",
-    "exportDualMirror": "导出双镜对比",
+    "exportDualMirror": "导出双镜并观",
     "restoreDualMirror": "恢复双镜",
     "medicalDisclaimer": "内容仅供参考，AI 顾问不能替代专业医疗建议。",
     "selfEval": "自评",
@@ -414,7 +414,7 @@
     "submit": "提交测评"
   },
   "communicationStatus": {
-    "title": "交流状态与进展分析",
+    "title": "深度对焦 · 交流状态与进展分析",
     "subtitle": "这里汇总了你近期所有互动的对话节点与监督裁判的深度评估。你可以通过多视角的交叉比对，观察沟通模式的演变。",
     "loading": "加载交互日志中...",
     "noRecords": "暂无交流记录",
@@ -435,7 +435,7 @@
     "description": "此操作将永久删除以下用户数据：",
     "items": {
       "chatSessions": "全部沉浸式互动会话",
-      "arenaSessions": "全部双镜对比会话（Arena 聚合 Elo 统计保留）",
+      "arenaSessions": "全部双镜并观会话（Arena 聚合 Elo 统计保留）",
       "assessments": "全部交流测评记录",
       "crisisRecords": "危机干预归档记录",
       "feedback": "UI 反馈 / RAG 评价记录",

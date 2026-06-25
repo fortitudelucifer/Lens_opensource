@@ -362,7 +362,7 @@ export const api = {
       body: JSON.stringify({ detection_id: detectionId }),
     }),
 
-  // Arena 双镜对比（S3 — 多轮并行沉浸式互动）
+  // Arena 双镜并观（S3 — 多轮并行沉浸式互动）
   arenaChat: (body: {
     message: string
     arena_session_id?: string

@@ -111,7 +111,7 @@ export function arenaToExportData(
       contestant_b: contestantB,
       rounds,
     },
-    markdown: `# 双镜对比：${sessionTitle || '对话记录'}\n\nA = ${lblA} | B = ${lblB}\n\n导出时间：${new Date().toLocaleString('zh-CN')}\n\n---\n\n${md}`,
+    markdown: `# 双镜并观：${sessionTitle || '对话记录'}\n\nA = ${lblA} | B = ${lblB}\n\n导出时间：${new Date().toLocaleString('zh-CN')}\n\n---\n\n${md}`,
     filename,
   }
 }

@@ -52,11 +52,11 @@ const navItems: NavItem[] = [
   { id: 'consent', label: '知情同意', icon: BadgeCheck, path: '/consent' },
   { id: 'dashboard', label: '总览', icon: LayoutDashboard, path: '/' },
   { id: 'chat', label: '沉浸式互动', icon: MessageSquare, path: '/chat' },
-  { id: 'arena', label: '双镜对比', icon: SplitSquareHorizontal, path: '/arena' },
+  { id: 'arena', label: '双镜并观', icon: SplitSquareHorizontal, path: '/arena' },
   { id: 'assessment', label: '交流测评', icon: ClipboardList, path: '/assessment' },
   { id: 'review', label: '审核', icon: ShieldCheck, path: '/review' },
   { id: 'settings', label: '设置', icon: Settings, path: '/settings' },
-  { id: 'communication-status', label: '交流状态', icon: Activity, path: '/communication-status' },
+  { id: 'communication-status', label: '深度对焦', icon: Activity, path: '/communication-status' },
   { id: 'roundtable', label: '圆桌讨论', icon: UsersRound, path: '/roundtable' },
   { id: 'knowledge-center', label: '知识中心', icon: BookOpen, path: '/knowledge-center' },
 ]

@@ -59,7 +59,7 @@ export function PrivacyPage({ onBack }: PrivacyPageProps) {
         <Section icon={<Server className="w-4 h-4 text-emerald-500" />} title={t('privacy.dataLifecycleTitle')} accent="emerald">
           <h3 className="font-semibold text-sm mt-1">{t('privacy.collectTitle')}</h3>
           <ul className="list-disc pl-5 space-y-1">
-            <li><strong>您主动输入的对话内容</strong>：沉浸式互动 / 双镜对比 / 交流测评答案。</li>
+            <li><strong>您主动输入的对话内容</strong>：沉浸式互动 / 双镜并观 / 交流测评答案。</li>
             <li><strong>评分反馈</strong>：Arena 打分、测评结果、UI 问题反馈。</li>
             <li><strong>浏览器元数据</strong>：User Agent、当前路径（仅用于反馈 Bug 定位）。</li>
             <li><strong>不收集</strong>：Cookie 跟踪、第三方分析、广告标识、设备指纹。</li>
@@ -88,7 +88,7 @@ export function PrivacyPage({ onBack }: PrivacyPageProps) {
         {/* §3 AI 透明度 */}
         <Section icon={<Lock className="w-4 h-4 text-blue-500" />} title={t('privacy.aiTransparencyTitle')} accent="blue">
           <ul className="list-disc pl-5 space-y-1">
-            <li><strong>可解释性</strong>：双镜对比模式下，您可比较不同模型/流派对同一问题的回答差异，理解 AI 输出的多样性。</li>
+            <li><strong>可解释性</strong>：双镜并观模式下，您可比较不同模型/流派对同一问题的回答差异，理解 AI 输出的多样性。</li>
             <li><strong>安全监督</strong>：所有输出经过四级危机检测 + 用词红线后处理（禁用"诊断/治疗/处方"等医学越界词）。</li>
             <li><strong>测评说明</strong>：PHQ-2/GAD-2/依恋/冲突量表仅作筛查参考，结果附解读说明，不作诊断。</li>
             <li><strong>模型身份</strong>：Arena 默认投票后揭示模型真实身份，用户可选择始终显示。</li>

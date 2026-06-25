@@ -10,7 +10,7 @@ interface SupervisionStatePanelProps {
   singlePerspectiveRisk?: boolean
   /** 情感依赖等级：低/中/高 */
   attachmentLevel?: '低' | '中' | '高'
-  /** 前往双镜对比回调 */
+  /** 前往双镜并观回调 */
   onGoToArena?: () => void
   /** 默认是否折叠 */
   defaultCollapsed?: boolean
@@ -39,7 +39,7 @@ export function SupervisionStatePanel({
         )}
         <Info size={14} className="text-amber-500/80 shrink-0" />
         <span className="text-[var(--text-secondary)]">
-          本 AI 仅供自我探索参考，非人类、非伴侣，建议结合双镜对比获取多视角
+          本 AI 仅供自我探索参考，非人类、非伴侣，建议结合双镜并观获取多视角
         </span>
       </button>
 
@@ -59,7 +59,7 @@ export function SupervisionStatePanel({
                     className="mt-2 flex items-center gap-1.5 text-xs font-medium text-amber-600 hover:text-amber-500"
                   >
                     <SplitSquareHorizontal size={14} />
-                    前往双镜对比
+                    前往双镜并观
                   </button>
                 )}
               </div>

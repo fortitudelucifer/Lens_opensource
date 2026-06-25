@@ -22,7 +22,7 @@
     "assessment": "Assessment",
     "review": "Review",
     "settings": "Settings",
-    "communicationStatus": "Comm Status",
+    "communicationStatus": "Deep Focus",
     "roundtable": "Roundtable",
     "knowledgeCenter": "Knowledge",
     "privacy": "Privacy Policy"
@@ -414,7 +414,7 @@
     "submit": "Submit Assessment"
   },
   "communicationStatus": {
-    "title": "Communication Status & Progress",
+    "title": "Deep Focus · Communication Status & Progress",
     "subtitle": "This page summarizes recent conversation nodes and supervision evaluations. Cross-reference multiple perspectives to observe communication pattern evolution.",
     "loading": "Loading interaction logs...",
     "noRecords": "No Communication Records",
