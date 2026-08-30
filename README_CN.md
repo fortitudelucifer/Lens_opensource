@@ -10,6 +10,8 @@
 
 [English](README.md) | 中文 | [贡献指南](CONTRIBUTING.md) | [安全政策](SECURITY.md) | [开发路线图](RoadMap.md)
 
+> **状态：积极开发中** — 本项目仍在积极开发中，API、数据格式、模块边界和界面可能在版本之间发生变化。欢迎提交反馈与贡献，详见 [贡献指南](CONTRIBUTING.md) 与 [开发路线图](RoadMap.md)。
+
 <div align="center">
   <img src="assets/lens_logo_high_precision_with_bg.svg" alt="Lens Logo" width="180" height="180">
   <img src="assets/lens_vector_ultra_precision.svg" alt="Lens Icon" width="180" height="180">
@@ -89,11 +91,23 @@ graph TB
         J[QLoRA / 推理 / 数据增强]
     end
 
-    subgraph "检索、安全与在线应用"
-        K[Knowledge / Graph RAG<br/>FAISS · BGE-M3 · 知识注入]
+    subgraph "知识资产"
+        KB[知识库 / 知识中心<br/>NVC · EFT · 危机 · 跨学科 FAQ]
+        AS[测评结果注入<br/>inject_enabled]
+    end
+
+    subgraph "Hybrid RAG 检索"
+        K1[稠密召回<br/>FAISS · BGE-M3 top-20]
+        K2[稀疏回退 + 日期索引<br/>jieba · Day Index]
+        K3[交叉编码精排<br/>BGE-Reranker-V2-M3 → top-10]
+        K4[意图分类 + 多维评分<br/>语义·时间·情感 → top-5]
+        K5[6 类上下文组装<br/>档案 · 模式 · 片段 · 知识 · 提示]
+    end
+
+    subgraph "安全与在线应用"
         L[安全与监督<br/>危机等级 · 用词红线 · LLM-as-Judge]
         M[FastAPI Advisor API<br/>chat · rag · arena · roundtable · assessment]
-        N[React Web App<br/>聊天 · 仪表盘 · Arena · Roundtable]
+        N[React Web App<br/>聊天 · 仪表盘 · Arena · Roundtable · 知识中心]
     end
 
     A --> B
@@ -115,10 +129,17 @@ graph TB
     G --> I
     H --> J
     I --> J
-    F --> K
-    I --> K
+    F --> K1
+    F --> K2
+    I --> K1
+    K1 --> K3
+    K2 --> K3
+    K3 --> K4
+    K4 --> K5
+    KB --> K5
+    AS --> K5
     J --> M
-    K --> M
+    K5 --> M
     L --> M
     M --> N
     N --> L
@@ -169,13 +190,15 @@ graph TB
 | Agent SFT 数据 | 将富化时间轴转换为 L1/L2 SFT 训练数据 | `scripts/timeline/`, `scripts/compression/`, `scripts/advisor/run_all/_05*.py` | [Agent SFT](docs/pipelines/agent_sft_pipeline_overview.md) |
 | 关系顾问 MoA | 提取对话、生成多专家分析、融合/审核/补齐 | `scripts/advisor/run_all/_01*` 到 `_04*` | [MoA 融合](docs/advisor/advisor_moa_fusion_overview.md) |
 | 训练 / 推理 | QLoRA 训练、推理对比、可选数据增强 | `scripts/advisor/run_all/_06*` 到 `_10*` | [顾问训练](docs/advisor/advisor_training_overview.md) |
-| Knowledge / Graph RAG | 构建检索索引并注入时间轴/知识/测评上下文 | `scripts/advisor/run_all/_09_build_graph.py` | [知识增强 RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) |
-| 知识中心 | Web 端知识库索引，展示已激活/规划中的知识库与 RAG-ready FAQ 资源 | `frontend/src/pages/KnowledgeCenterPage.tsx` | [知识中心](docs/app/knowledge_center_overview.md), [知识增强 RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) |
-| Advisor API | 模块化 FastAPI 后端，支持 chat、RAG、review、models、safety、Arena、Roundtable | `scripts/advisor/api/main.py`, `scripts/advisor/api/routes/` | [顾问服务](docs/advisor/advisor_service_overview.md) |
-| Web 应用 | Dashboard、Chat、Consent、Privacy、Assessment、Knowledge、Arena、Roundtable 页面 | `frontend/src/pages/` | [Web 应用设计](docs/app/web_app_overview.md) |
-| 圆桌讨论 | 三人格多 Agent 讨论，支持 SSE 流式输出、多轮追问、上下文注入和 Moderator 综合总结 | `frontend/src/pages/RoundtablePage.tsx`, `scripts/advisor/api/routes/roundtable.py` | [圆桌讨论设计](docs/app/roundtable_discussion_overview.md) |
-| 安全 / 危机 | 四级危机检测、用词红线、知情同意和固定资源 | `scripts/advisor/api/crisis_detector.py`, `scripts/advisor/api/routes/safety.py` | [安全危机系统](docs/pipelines/safety_crisis_overview.md) |
-| Arena / 监督 | 双镜对比与 LLM-as-Judge 质量/风险监控 | `arena.py`, `supervision_agent.py` | [Arena](docs/pipelines/arena_dual_mirror_overview.md), [监督评估](docs/pipelines/supervision_pipeline_overview.md), [交流状态](docs/app/communication_status_overview.md) |
+| Hybrid RAG 检索 | 四层混合检索（稠密 + 稀疏 + 日期）、构建索引、注入时间轴/知识/测评上下文 | `scripts/advisor/chunk_based_rag.py`, `graph_rag.py`, `run_all/_09_build_graph.py` | [RAG 检索系统](docs/advisor/advisor_rag_overview.md), [知识增强 RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) |
+| 知识库 / 知识治理 | 专业 FAQ 知识库 + 内容工单、LLM 起草、红区合规 lint、审核台账、知识图谱原型 | `scripts/advisor/knowledge_*.py`, `advisor_out/knowledge/` | [知识中心](docs/app/knowledge_center_overview.md), [知识增强 RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) |
+| 知识中心 | Web 端知识库索引，展示已激活/规划中的知识库与 RAG-ready FAQ 资源 | `frontend/src/pages/KnowledgeCenterPage.tsx` | [知识中心](docs/app/knowledge_center_overview.md) |
+| Advisor API | 模块化 FastAPI 后端：chat、rag、review、models、safety、arena、roundtable、assessment、knowledge、feedback | `scripts/advisor/api/main.py`, `scripts/advisor/api/routes/` | [顾问服务](docs/advisor/advisor_service_overview.md) |
+| Web 应用 | Dashboard、Chat、Consent、Privacy、Assessment、Knowledge、Arena(+Stats)、Roundtable(+Session)、交流状态 页面 | `frontend/src/pages/` | [Web 应用设计](docs/app/web_app_overview.md) |
+| 圆桌讨论 | 三人格多 Agent 讨论，SSE 流式、多轮追问、上下文注入、Moderator 总结、会话持久化 | `frontend/src/pages/RoundtablePage.tsx`, `scripts/advisor/api/routes/roundtable.py` | [圆桌讨论设计](docs/app/roundtable_discussion_overview.md) |
+| 安全 / 危机 | 四级危机检测、用词红线、偏见检测、知情同意和固定资源 | `scripts/advisor/api/crisis_detector.py`, `services/bias_detector.py`, `routes/safety.py` | [安全危机系统](docs/pipelines/safety_crisis_overview.md) |
+| Arena / 监督 | 双镜对比、Elo 排名与 LLM-as-Judge 质量/风险监控 | `routes/arena.py`, `supervision_agent.py` | [Arena](docs/pipelines/arena_dual_mirror_overview.md), [监督评估](docs/pipelines/supervision_pipeline_overview.md), [交流状态](docs/app/communication_status_overview.md) |
+| 反馈闭环 | 全局 UI/Bug 反馈与 RAG 质量评价双通道 | `scripts/advisor/api/routes/feedback.py` | [Web 应用设计](docs/app/web_app_overview.md) |
 
 ---
 
@@ -566,7 +589,7 @@ enriched_full.jsonl
 
 基于处理后聊天数据构建的全栈 AI 关系顾问：
 
-### 离线流水线（10+ 阶段，16 个脚本）
+### 离线流水线（11 阶段 0–10，18 个脚本）
 
 | 阶段 | 脚本 | 描述 | 模型 / 工具 |
 |------|------|------|-------------|
@@ -655,39 +678,124 @@ python scripts/advisor/run_all/_02c_fusion_pipeline.py --moa --Qwen-backend kimi
 
 ### 在线服务
 
-- **后端：** FastAPI（端口 8787），SSE 流式响应，多轮会话管理，对话历史压缩
-- **前端：** React 19 + Vite + Tailwind CSS 仪表盘，支持对话、流水线控制、人工审核、模型管理、API Key 检测
-- **RAG：** 三层检索 — 日期精确查找（Day Index）+ FAISS 语义搜索（BGE-M3）+ 关键词回退 + FAQ 知识库
-- **LLM 后端：** 5 种后端统一 OpenAI 兼容接口（DeepSeek、Kimi、Qwen、deepseek、GLM、Qwen-本地 Ollama）
-- **安全：** SafetyLayer P0、GlobalRateLimiter（RPM≤19）、后端自动故障转移、Ollama 看门狗自动重启
+- **后端：** 模块化 FastAPI（端口 8787），SSE 流式响应，多轮会话管理，对话历史压缩
+- **前端：** React 19 + Vite + Tailwind CSS，覆盖对话、仪表盘、测评、隐私、知识中心、Arena、Roundtable、交流状态等页面
+- **检索：** Hybrid RAG（见 [Hybrid RAG 检索系统](#hybrid-rag-检索系统)）+ 专业知识库注入（见 [知识库与知识治理](#知识库与知识治理)）
+- **LLM 后端：** 5 种后端统一 OpenAI 兼容接口（DeepSeek、Kimi、Qwen、GLM、Qwen-本地 Ollama），自动故障转移
+- **安全：** SafetyLayer P0、GlobalRateLimiter（RPM≤19）、Ollama 看门狗自动重启
 - **会话管理：** 持久化会话，支持 Agent 类型/模式切换、记忆事实提取、历史截断
+
+#### API 路由总览（`scripts/advisor/api/routes/`）
+
+| 路由 | 职责 |
+|------|------|
+| `chat` | 对话主入口、SSE 流式、RAG/知识注入开关、质量反馈 |
+| `rag` | RAG 检索查询、增量索引更新 |
+| `arena` | 双镜 A/B 对比、投票、Elo 排名、查询级与标注者级统计 |
+| `roundtable` | 圆桌讨论编排、SSE 多路复用、会话列表与延续 |
+| `assessment` | 交流前测评、结果存取、上下文注入 |
+| `knowledge` | 知识库统计、分类/领域/审核状态聚合 |
+| `safety` | 危机检测、用词红线、固定危机资源 |
+| `review` | 人工审核导入导出 |
+| `models_routes` / `keys` | LLM 后端管理、API Key 检测 |
+| `pipeline` | 离线流水线控制与状态 |
+| `data` / `user_data` | 工作空间数据访问 |
+| `feedback` | 全局 UI / Bug 反馈收集 |
+| `health` | 健康检查 |
+
+#### 前端页面总览（`frontend/src/pages/`）
+
+| 页面 | 说明 |
+|------|------|
+| `Dashboard` | 系统总览与流水线控制 |
+| `ChatPage` | 关系顾问对话（人格 × 模式切换、RAG / 知识开关） |
+| `AssessmentPage` | 交流前测评与结果 |
+| `ArenaPage` / `ArenaStatsPage` | 双镜并观 A/B 对比 / Elo 排名与统计 |
+| `RoundtablePage` / `RoundtableSessionPage` | 圆桌讨论 / 历史会话回看 |
+| `CommunicationStatusPage` | 深度对焦：对话进展分析与监督 |
+| `KnowledgeCenterPage` | 知识中心索引 |
+| `ConsentPage` / `PrivacyPage` | 知情同意 / 隐私设置 |
+
+完整 i18n 国际化：中英文一键切换（react-i18next，300+ 翻译键，偏好持久化）。
 
 ---
 
-## 通用数据接入
+## Hybrid RAG 检索系统
 
-插件式适配器架构，支持从多个平台导入聊天数据：
+关系咨询场景的检索与通用问答不同：时间敏感、情感关联 ≠ 语义相似、跨天冲突模式。系统采用**四层混合检索**（稠密 + 稀疏 + 日期精确索引），核心实现 `scripts/advisor/chunk_based_rag.py`（继承 `graph_rag.py`）。
 
-| 适配器 | 数据源 | 格式 |
-|--------|--------|------|
-| `wechat_html` | CHAT_APP桌面版导出 | HTML + CSV |
-| `telegram_json` | Telegram 桌面版导出 | result.json |
-| `whatsapp_txt` | WhatsApp 导出 | *.txt（8 种日期格式） |
-| `generic_csv` | 任意 CSV | field_mapping DSL |
-| `generic_jsonl` | 任意 JSONL | field_mapping DSL |
+| 层级 | 组件 | 模型 / 方法 | 输入 → 输出 |
+|------|------|------------|------------|
+| L1 稠密召回 | FAISS | BGE-M3（1024 维，FlatIP / HNSW 自适应） | query → top-20 |
+| L1b 稀疏回退 | jieba 分词 + 日期倒排索引 | 关键词匹配 / Day Index O(1) | query → 候选集 |
+| L2 交叉精排 | BGE-Reranker-V2-M3 | query-passage 交叉编码 | top-20 → top-10 |
+| L3 多维评分 | 规则引擎 | 语义×0.5 + 时间×0.2 + 情感×0.3 | top-10 → top-5 |
+| L4 上下文组装 | 模板引擎 | 6 类信息块拼接 | top-5 → 注入 system prompt |
 
-所有适配器输出统一的 Canonical Schema（`P1_messages_raw.jsonl`），直接进入下游模态处理流水线。
+- **意图驱动**：`intent_classifier.py` 识别 5 类意图（时间查询 / 情感倾诉 / 建议请求 / 模式分析 / 闲聊），动态调整检索策略与 top_k。
+- **6 类上下文块**：人物对照 · 用户档案 · 历史模式 · 对话片段 · 参考知识（FAQ）· 交互提示。
+- **增量更新**：`POST /api/rag/incremental-update` 追加新 chunks，无需全量重建（FAISS append + 元数据合并）。
+- **索引工厂**：N < 30k → FlatIP，否则 → HNSWFlat（M=32），蓝绿原子写入。
 
-```bash
-# 自动检测数据源类型并接入
-python scripts/workspace/run_ingest.py --workspace /path/to/workspace
+详见 [RAG 检索系统](docs/advisor/advisor_rag_overview.md) 与 [知识增强 RAG](docs/pipelines/knowledge_rag_upgrade_overview.md)。
 
-# 指定数据源类型
-python scripts/workspace/run_ingest.py --workspace /path/to/workspace --source-type telegram_json
+---
 
-# 预检模式（预览不写入）
-python scripts/workspace/run_ingest.py --dry-run
-```
+## 知识库与知识治理
+
+除聊天记录检索外，系统维护一套**专业知识库**（NVC、EFT、危机干预、跨学科视角等结构化 FAQ），由检索层注入对话上下文，并配套一条内容生产与合规治理流水线。
+
+### 知识库与注入
+
+- **目录**：`advisor_out/knowledge/{communication,crisis,eft_resources,perspectives,…}/*.jsonl`，启动时 `rglob` 递归加载。
+- **条目格式**：`question / answer / category / keywords / source / license`，附 `review_status`、`risk_level` 治理字段。
+- **检索注入**：`_search_faq()` 关键词 + keywords + category×agent_type 加权；命中以 `【专业知识】` 段落注入 system prompt。
+- **三开关独立控制**：聊天记录 `use_rag`、专业知识 `use_knowledge`、测评注入 `inject_enabled`。
+- **前端**：知识中心页（`KnowledgeCenterPage.tsx`）展示已激活 / 规划中知识库与分类统计。
+
+### 知识治理流水线（`scripts/advisor/knowledge_*.py`）
+
+| 脚本 | 职责 |
+|------|------|
+| `knowledge_worklist.py` | 把内容蓝图拆成逐条目生产工单（稳定 id + 元数据） |
+| `knowledge_draft.py` | LLM 批量起草 schema v2 草稿（`review_status=draft`，待人工审核） |
+| `knowledge_redzone_lint.py` | 红区合规机器初筛（商标冒用、专有材料指纹、证据限定缺失、license 一致性） |
+| `knowledge_schema.py` | `KnowledgeEntry` 结构校验与分类→领域映射 |
+| `knowledge_ledger.py` | 审核 / 合规台账 CSV 导出（来源、许可、证据、风险、审核状态） |
+| `knowledge_graph.py` | 知识图谱原型：把 FAQ 软链接物化为内存图，评估多跳检索收益（原型，非生产组件） |
+
+详见 [知识中心](docs/app/knowledge_center_overview.md) 与 [知识增强 RAG](docs/pipelines/knowledge_rag_upgrade_overview.md)。
+
+---
+
+## 评估、安全与监督
+
+在线应用之上叠加一层评测、危机护栏与质量监督。
+
+### 双镜 Arena（`ArenaPage` / `ArenaStatsPage`）
+
+- 对模型、顾问流派、跨学科视角进行**盲评 A/B 对比**，支持投票与多维评分。
+- **Bradley-Terry Elo 排名**：`/api/arena/leaderboard`、`/api/arena/stats`、`/api/arena/query-stats`、`/api/arena/annotator-stats` 提供排名、查询级与标注者级统计。
+- 长对话记忆机制、安全治理与 S6 视角碰撞模式。详见 [双镜 Arena](docs/pipelines/arena_dual_mirror_overview.md)。
+
+### 圆桌讨论（`RoundtablePage` / `RoundtableSessionPage`）
+
+- 三人格多 Agent 三阶段讨论，SSE 多路复用流式输出，多轮延续与跨轮记忆压缩，RAG 上下文注入，Moderator 综合总结。
+- **会话持久化**：`/api/roundtable/sessions` 列表回看与中断恢复。详见 [圆桌讨论设计](docs/app/roundtable_discussion_overview.md)。
+
+### 交流状态 / 深度对焦（`CommunicationStatusPage`）
+
+- LLM-as-Judge **六维度**监督评估，优先级链降级，前端「对话进展分析」与「交流状态」展示。详见 [交流状态](docs/app/communication_status_overview.md) 与 [监督评估流水线](docs/pipelines/supervision_pipeline_overview.md)。
+
+### 安全与危机护栏
+
+- **四级危机检测**（`crisis_detector.py`）+ 用词红线**双重拦截** + 固定危机资源响应 + 知情同意 / 免责声明。
+- **偏见检测**（`bias_detector.py`）：5 类约 60 条隐性偏见规则（性别刻板、关系绝对化、受害者归咎、道德评判、病理化标签），在圆桌流式 flush 前由 `_sanitize_agent_output` 拦截替换。
+- 详见 [安全危机系统](docs/pipelines/safety_crisis_overview.md)。
+
+### 反馈闭环
+
+- `/api/feedback`（全局 UI / Bug）与 `/api/chat/feedback`（RAG 质量评价）双通道，落盘 `advisor_out/feedback/*.jsonl`，供质量回归与样本审核。
 
 ---
 

@@ -48,7 +48,8 @@ function explainFallbackReason(
     roundIndex > 0
       ? t('moderator.memorySuffixMulti')
       : t('moderator.memorySuffixFirst')
-  if (reason === 'llm_returned_none') {
+  // D · 2026-07-08 · 旧 session 兜底值，含义等同 timeout（当时未细分原因）
+  if (reason === 'llm_returned_none' || reason === 'timeout') {
     return {
       title: t('moderator.fallbackTitle'),
       detail: t('moderator.fallbackDetailTimeout', { memorySuffix }),
@@ -60,7 +61,13 @@ function explainFallbackReason(
       detail: t('moderator.fallbackDetailDisabled', { memorySuffix }),
     }
   }
-  if (reason.startsWith('exception:')) {
+  if (reason === 'json_parse_fail') {
+    return {
+      title: t('moderator.fallbackTitle'),
+      detail: t('moderator.fallbackDetailJsonParseFail', { memorySuffix }),
+    }
+  }
+  if (reason.startsWith('exception:') || reason.startsWith('api_error:')) {
     return {
       title: t('moderator.fallbackTitle'),
       detail: t('moderator.fallbackDetailException', { reason: reason.slice(10), memorySuffix }),

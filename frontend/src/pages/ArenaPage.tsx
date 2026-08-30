@@ -18,7 +18,7 @@ import { SessionOptions } from '../components/shared/SessionOptions'
 import { format } from 'date-fns'
 
 const FALLBACK_CHAT_MODELS: AvailableModel[] = [
-  { backend: 'grok', model: 'grok-4.3-high', base_url: 'https://api.example.com/v1', suitable_for: ['chat'] },
+  { backend: 'grok', model: 'grok-4.20-multi-agent-xhigh', base_url: 'https://api.example.com/v1', suitable_for: ['chat'] },
 ]
 const mkKey = (m: AvailableModel) => `${m.backend}::${m.model}`
 

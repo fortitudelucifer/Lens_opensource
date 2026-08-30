@@ -1,0 +1,35 @@
+# ============================================================
+# 评测 Harness · 消融开关 + 实验参数注册表（M1 MVP）
+# ------------------------------------------------------------
+# 对应文档：plan_v6/评测Harness_Trace与消融开关_接口契约.md（§3 / §12 / §13）
+#           plan_v6/preregistration.md（§5 变量与操作化）
+#
+# 原则（不变式 H3）：默认值 = 现状行为。closed_loop=off 时系统与现在逐字节一致，
+# 不做任何干预注入；本文件只被 scripts/advisor/eval 读取，不影响线上默认对话。
+# ============================================================
+
+# --- 消融开关（默认拒绝偏移）---
+# 注意：off/on 必须加引号，否则 YAML 会把它们解析成布尔 false/true，
+# 破坏契约里「枚举字符串」的语义（live hook 判 == "on" 会失效）。
+flags:
+  closed_loop:  { type: enum, values: ["off", "on"],    default: "off" }  # 反思闭环干预总开关
+  inject_level: { type: enum, values: ["L0", "L0+L1"],  default: "L0" }   # L0=仅六维；L0+L1=加棱镜结构（MVP 不用）
+  skill_lib:    { type: enum, values: ["off", "on"],    default: "on" }
+  agent_mode:   { type: enum, values: [single, moa, roundtable], default: single }
+
+# --- 合格决策点规则（preregistration §5.2；分层 MRT 的 availability）---
+eligibility:
+  trigger_dim: empathy_specificity   # 触发维度（六维之一）
+  trigger_threshold: 6               # τ：dim.score <= τ 视为「需要干预」→ 触发
+  crisis_labels: ["风险"]             # safety_boundary.label 命中 → 危机，不合格（安全优先）
+  cooldown: 2                        # k：距上次注入至少 k 个决策点，防止连续打扰
+  min_turn: 1                        # 会话前 min_turn 个决策点不干预（0-indexed round >= min_turn）
+
+# --- 决策点随机化（MRT；preregistration §7）---
+randomization:
+  prob_prompt: 0.5                   # p：合格点上分配到 prompt 臂的概率
+  seed: 20260703                     # 钉死随机种子（可复现）
+
+# --- 近端结局窗口（preregistration §5.3）---
+proximal:
+  lag: 1                             # 近端结局锚定：下 lag 个决策点的六维变化

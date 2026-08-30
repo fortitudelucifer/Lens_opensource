@@ -283,7 +283,7 @@
 class ArenaContestant(BaseModel):
     backend: str = "deepseek"        # 模型后端标识（deepseek/grok/claude/gpt/...）
     agent_type: str = "neutral"      # 顾问类型（neutral/supportive/psychoanalytic）
-    model: str = ""                  # 具体模型名（如 deepseek-ai/DeepSeek-V3.1）
+    model: str = ""                  # 具体模型名（如 deepseek-ai/deepseek-v4-flash）
 
 class ArenaScoresSchema(BaseModel):
     empathy: int = 5                 # 共情 1-10
@@ -815,8 +815,8 @@ def _classify_query(query):
       "label": "情绪支持",
       "battles": 15,
       "models": {
-        "deepseek-ai/DeepSeek-V3.1": { "battles": 15, "wins": 9, "win_rate": 60.0 },
-        "grok-4.1-thinking":          { "battles": 15, "wins": 5, "win_rate": 33.3 }
+        "deepseek-ai/deepseek-v4-flash": { "battles": 15, "wins": 9, "win_rate": 60.0 },
+        "grok-4.20-multi-agent-xhigh":          { "battles": 15, "wins": 5, "win_rate": 33.3 }
       }
     }
   }
@@ -966,8 +966,8 @@ ArenaStatsPage
 ```jsonc
 {
   "id": "arena-27635ec8",
-  "contestant_a": { "backend": "deepseek", "agent_type": "neutral", "model": "deepseek-ai/DeepSeek-V3.1" },
-  "contestant_b": { "backend": "grok", "agent_type": "neutral", "model": "grok-4.1-thinking" },
+  "contestant_a": { "backend": "deepseek", "agent_type": "neutral", "model": "deepseek-ai/deepseek-v4-flash" },
+  "contestant_b": { "backend": "grok", "agent_type": "neutral", "model": "grok-4.20-multi-agent-xhigh" },
   "mode": "model",
   "use_rag": true,
   "rounds": [
@@ -1003,8 +1003,8 @@ ArenaStatsPage
   "round_index": 0,
   "query": "用户的提问",
   "mode": "model",
-  "contestant_a": { "backend": "deepseek", "agent_type": "neutral", "model": "deepseek-ai/DeepSeek-V3.1" },
-  "contestant_b": { "backend": "grok", "agent_type": "neutral", "model": "grok-4.1-thinking" },
+  "contestant_a": { "backend": "deepseek", "agent_type": "neutral", "model": "deepseek-ai/deepseek-v4-flash" },
+  "contestant_b": { "backend": "grok", "agent_type": "neutral", "model": "grok-4.20-multi-agent-xhigh" },
   "response_a": "A 的完整回复...",
   "response_b": "B 的完整回复...",
   "vote": "a_win",
@@ -1025,13 +1025,13 @@ ArenaStatsPage
   "updated_at": "2026-03-07T14:10:46.869889",
   "total_battles": 5,
   "ratings": {
-    "deepseek::deepseek-ai/DeepSeek-V3.1": {
+    "deepseek::deepseek-ai/deepseek-v4-flash": {
       "overall": 1032,
       "ci_95": [798, 1266],
       "empathy": 1045, "depth": 1060, "practicality": 1010,
       "professionalism": 1028, "fluency": 1050,
       "battles": 5, "wins": 3, "losses": 1, "ties": 1,
-      "contestant": { "backend": "deepseek", "agent_type": "neutral", "model": "deepseek-ai/DeepSeek-V3.1" }
+      "contestant": { "backend": "deepseek", "agent_type": "neutral", "model": "deepseek-ai/deepseek-v4-flash" }
     }
   }
 }

@@ -219,14 +219,14 @@ advisor_out/chunks/conversation_chunks.jsonl
 
 | 后端 | 默认模型 | base_url | 适用角色 |
 |------|----------|----------|----------|
-| `openai` | gpt-5.2-high | 第三方代理 (backup provider-codex) | analysis, review, chat |
-| `claude` | claude-sonnet-4.5-thinking | 第三方代理 | analysis, review, chat |
+| `openai` | gpt-5.5-high | 第三方代理 (backup provider-codex) | analysis, review, chat |
+| `claude` | claude-sonnet-5ing | 第三方代理 | analysis, review, chat |
 | `gemini` | gemini-3-pro-preview | Google AI Studio | analysis, review, chat |
 | `kimi` | kimi-k2.5 | https://api.moonshot.cn/v1 | analysis, chat |
-| `grok` | grok-4.1-thinking | https://api.x.ai/v1 | analysis, review, chat |
+| `grok` | grok-4.20-multi-agent-xhigh | https://api.x.ai/v1 | analysis, review, chat |
 | `deepseek` | DeepSeek-V3.2 | https://api.deepseek.com/v1 | analysis, review, chat |
-| `qwen_cloud` | Qwen3-235B-A22B-Thinking | DashScope | analysis, review, chat |
-| `glm` | glm4.7 | https://open.bigmodel.cn/api/paas/v4 | analysis, chat |
+| `qwen_cloud` | qwen3.5-397b-a17b-A22B-Thinking | DashScope | analysis, review, chat |
+| `glm` | GLM-4.7-Flash | https://open.bigmodel.cn/api/paas/v4 | analysis, chat |
 | `qwen_local` | qwen3:8b (Ollama) | http://localhost:11434/v1 | chat |
 
 > 所有后端均通过 OpenAI 兼容接口调用。思考模型（模型名含 `think`）自动检测，不限制 `max_tokens`。
@@ -262,7 +262,7 @@ python scripts/advisor/run_all/_02_generate_analysis.py \
 }
 ```
 
-> Phase 2 通过 API 运行时，Claude 后端默认使用 `claude-sonnet-4.5-thinking`。
+> Phase 2 通过 API 运行时，Claude 后端默认使用 `claude-sonnet-5ing`。
 
 ### 输出
 
@@ -555,7 +555,7 @@ ollama run qwen3:8b
   "backend": "grok",
   "messages": [
     {"role": "user", "content": "...", "timestamp": "..."},
-    {"role": "assistant", "content": "...", "timestamp": "...", "backend": "grok", "model": "grok-4.1-thinking"}
+    {"role": "assistant", "content": "...", "timestamp": "...", "backend": "grok", "model": "grok-4.20-multi-agent-xhigh"}
   ],
   "created_at": "...",
   "updated_at": "..."
@@ -902,10 +902,10 @@ python scripts/advisor/run_all/_10_augment_data.py \
 
 | 平台 | 可用模型 |
 |------|----------|
-| **example proxy** (key1 Claude专用) | claude-sonnet-4.5-think ✅, claude-sonnet-4 ✅, claude-haiku-4.5 ✅ |
-| **example proxy** (key2/3 通用) | DeepSeek-V3.2 ✅, grok-4.1-thinking ✅, Qwen3-235B ✅, glm4.7 ✅, gemini-3-pro ✅ |
-| **backup provider.com** | gpt-5 ✅, deepseek-v3.1 ✅, gemini-2.5-pro ✅, grok-4.1-thinking ✅ |
-| **websee.top** | claude-sonnet-4.5-thinking ✅, grok-4.1-thinking ✅, grok-4-fast ✅ |
+| **example proxy** (key1 Claude专用) | claude-sonnet-5 ✅, claude-sonnet-4 ✅, claude-haiku-4.5 ✅ |
+| **example proxy** (key2/3 通用) | DeepSeek-V3.2 ✅, grok-4.20-multi-agent-xhigh ✅, qwen3.5-397b-a17b ✅, GLM-4.7-Flash ✅, gemini-3-pro ✅ |
+| **backup provider.com** | gpt-5 ✅, deepseek-v3.1 ✅, gemini-2.5-pro ✅, grok-4.20-multi-agent-xhigh ✅ |
+| **websee.top** | claude-sonnet-5ing ✅, grok-4.20-multi-agent-xhigh ✅, grok-4-fast ✅ |
 | **本地** | Ollama qwen3:8b ✅ |
 
 ### 推荐组合
@@ -996,7 +996,7 @@ export QWEN_LOCAL_MODEL="qwen3:8b"
 
 ### Q: 对话回复被截断
 
-思考模型（如 grok-4.1-thinking）的 `<think>` 推理过程消耗大量 token。后端已自动处理：检测到模型名含 `think` 时不设置 `max_tokens`，让模型用满上下文窗口。
+思考模型（如 grok-4.20-multi-agent-xhigh）的 `<think>` 推理过程消耗大量 token。后端已自动处理：检测到模型名含 `think` 时不设置 `max_tokens`，让模型用满上下文窗口。
 
 ### Q: Agent 回复末尾出现字数
 

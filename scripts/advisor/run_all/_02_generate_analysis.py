@@ -20,15 +20,15 @@ LLM 关系分析生成脚本
 5. 输出生成统计（成功/失败/重试/Token 用量）
 
 支持的后端（9 个）：
-- openai:     OpenAI API (gpt-5.2)
-- claude:     Anthropic Claude API (claude-opus-4.6-think)，使用原生 SDK
+- openai:     OpenAI API (gpt-5.5)
+- claude:     Anthropic Claude API (claude-opus-4-8-think)，使用原生 SDK
 - gemini:     Google Gemini API (gemini-3-pro-preview)
 - kimi:       Moonshot Kimi API (kimi-k2.5)
-- grok:       xAI Grok API (grok-4.1-thinking)
-- deepseek:   DeepSeek API (deepseek-ai/DeepSeek-V3.1)
+- grok:       xAI Grok API (grok-4.20-multi-agent-xhigh)
+- deepseek:   DeepSeek API (deepseek-ai/deepseek-v4-flash)
 - qwen_local: 本地 Qwen（vLLM/Ollama OpenAI 兼容接口）
-- qwen_cloud: 通义千问云端 (Qwen3-235B-A22B-Thinking)
-- glm:        智谱 GLM (glm4.7)
+- qwen_cloud: 通义千问云端 (qwen3.5-397b-a17b-A22B-Thinking)
+- glm:        智谱 GLM (GLM-4.7-Flash)
 
 Agent 分析类型：
 - neutral: 中立分析，客观描述关系动态

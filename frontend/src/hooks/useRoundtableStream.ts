@@ -59,7 +59,7 @@ export type RoundtableSseEvent =
       content: ModeratorContent
       /**
        * Day 7 · Moderator LLM 失败降级原因 · null=LLM 成功 · 其余值代表本轮走了规则模板（无跨轮记忆）
-       * 值域参考：'llm_returned_none' | 'llm_disabled' | 'exception:XxxError'
+       * 值域参考：'timeout' | 'json_parse_fail' | 'api_error:XxxError' | 'llm_disabled' | 'exception:XxxError'
        */
       fallback_reason?: string | null
     }

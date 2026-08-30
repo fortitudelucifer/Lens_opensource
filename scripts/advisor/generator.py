@@ -416,7 +416,7 @@ class AnalysisGenerator:
         client: API 客户端实例（OpenAI 或 Anthropic）
 
     Example:
-        >>> generator = AnalysisGenerator({'backend': 'claude', 'model': 'claude-sonnet-4-20250514'})
+        >>> generator = AnalysisGenerator({'backend': 'claude', 'model': 'claude-sonnet-5'})
         >>> result = generator.generate_analysis("对话内容...", agent_type='neutral')
     """
 

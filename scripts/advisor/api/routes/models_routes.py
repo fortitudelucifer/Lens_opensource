@@ -19,15 +19,15 @@ router = APIRouter()
 
 
 _DEFAULT_MODELS = {
-    "openai": "gpt-5.3-codex-spark",
-    "claude": "claude-sonnet-4.6-think",
-    "gemini": "gemini-3.1-pro-preview",
-    "kimi": "gemini-3-flash",
-    "grok": "grok-4.1-thinking",
-    "deepseek": "gemini-2.5-flash",
+    "openai": "gpt-5.5",
+    "claude": "claude-sonnet-5",
+    "gemini": "gemini-3.1-flash-lite-preview",
+    "kimi": "moonshotai/kimi-k2.6",
+    "grok": "grok-4.20-multi-agent-xhigh",
+    "deepseek": "deepseek-ai/deepseek-v4-flash",
     "qwen_local": "qwen3:8b",
-    "qwen_cloud": "gemini-2.5-flash",
-    "glm": "gemini-2.5-flash",
+    "qwen_cloud": "qwen/qwen3.5-397b-a17b",
+    "glm": "GLM-4.7-Flash",
 }
 
 

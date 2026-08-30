@@ -10,6 +10,8 @@
 
 [English](README.md) | [中文](README_CN.md) | [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md) | [RoadMap](RoadMap.md)
 
+> **Status: Active Development** — This project is under active development. APIs, data formats, module boundaries, and the UI may change between releases. Feedback and contributions are welcome; see [Contributing](CONTRIBUTING.md) and [RoadMap](RoadMap.md).
+
 <div align="center">
   <img src="assets/lens_logo_high_precision_with_bg.svg" alt="Lens Logo" width="180" height="180">
   <img src="assets/lens_vector_ultra_precision.svg" alt="Lens Icon" width="180" height="180">
@@ -89,11 +91,23 @@ graph TB
         J[QLoRA / inference / augmentation]
     end
 
-    subgraph "Retrieval, Safety, and Online App"
-        K[Knowledge / Graph RAG<br/>FAISS · BGE-M3 · knowledge injection]
+    subgraph "Knowledge Assets"
+        KB[Knowledge base / Knowledge Center<br/>NVC · EFT · crisis · interdisciplinary FAQ]
+        AS[Assessment injection<br/>inject_enabled]
+    end
+
+    subgraph "Hybrid RAG Retrieval"
+        K1[Dense recall<br/>FAISS · BGE-M3 top-20]
+        K2[Sparse fallback + day index<br/>jieba · Day Index]
+        K3[Cross-encoder rerank<br/>BGE-Reranker-V2-M3 → top-10]
+        K4[Intent classify + multi-dim scoring<br/>semantic·temporal·emotional → top-5]
+        K5[6-block context assembly<br/>profile · patterns · snippets · knowledge · hints]
+    end
+
+    subgraph "Safety and Online App"
         L[Safety and supervision<br/>crisis levels · red lines · LLM-as-Judge]
         M[FastAPI Advisor API<br/>chat · rag · arena · roundtable · assessment]
-        N[React Web App<br/>Chat · Dashboard · Arena · Roundtable]
+        N[React Web App<br/>Chat · Dashboard · Arena · Roundtable · Knowledge Center]
     end
 
     A --> B
@@ -115,10 +129,17 @@ graph TB
     G --> I
     H --> J
     I --> J
-    F --> K
-    I --> K
+    F --> K1
+    F --> K2
+    I --> K1
+    K1 --> K3
+    K2 --> K3
+    K3 --> K4
+    K4 --> K5
+    KB --> K5
+    AS --> K5
     J --> M
-    K --> M
+    K5 --> M
     L --> M
     M --> N
     N --> L
@@ -169,13 +190,15 @@ graph TB
 | Agent SFT Data | Convert enriched timelines into L1/L2 SFT-ready datasets | `scripts/timeline/`, `scripts/compression/`, `scripts/advisor/run_all/_05*.py` | [Agent SFT](docs/pipelines/agent_sft_pipeline_overview.md) |
 | Advisor MoA | Extract conversations, generate multi-expert analyses, fuse/review/remediate | `scripts/advisor/run_all/_01*` to `_04*` | [MoA Fusion](docs/advisor/advisor_moa_fusion_overview.md) |
 | Training / Inference | QLoRA training, inference comparison, optional augmentation | `scripts/advisor/run_all/_06*` to `_10*` | [Advisor Training](docs/advisor/advisor_training_overview.md) |
-| Knowledge / Graph RAG | Build retrieval indexes and inject timeline/knowledge/assessment context | `scripts/advisor/run_all/_09_build_graph.py` | [Knowledge RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) |
-| Knowledge Center | Web index for active/planned knowledge bases and RAG-ready FAQ resources | `frontend/src/pages/KnowledgeCenterPage.tsx` | [Knowledge Center](docs/app/knowledge_center_overview.md), [Knowledge RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) |
-| Advisor API | Modular FastAPI backend for chat, RAG, review, models, safety, Arena, Roundtable | `scripts/advisor/api/main.py`, `scripts/advisor/api/routes/` | [Advisor Service](docs/advisor/advisor_service_overview.md) |
-| Web App | React pages for dashboard, chat, consent, privacy, assessment, knowledge, Arena, Roundtable | `frontend/src/pages/` | [Web App Design](docs/app/web_app_overview.md) |
-| Roundtable Discussion | Three-persona multi-agent discussion with SSE streaming, multi-round follow-up, context injection, and moderator synthesis | `frontend/src/pages/RoundtablePage.tsx`, `scripts/advisor/api/routes/roundtable.py` | [Roundtable Design](docs/app/roundtable_discussion_overview.md) |
-| Safety / Crisis | Four-level crisis detection, red-line wording checks, consent and fixed resources | `scripts/advisor/api/crisis_detector.py`, `scripts/advisor/api/routes/safety.py` | [Safety Crisis](docs/pipelines/safety_crisis_overview.md) |
-| Arena / Supervision | Dual-mirror comparison and LLM-as-Judge quality/risk monitoring | `arena.py`, `supervision_agent.py` | [Arena](docs/pipelines/arena_dual_mirror_overview.md), [Supervision](docs/pipelines/supervision_pipeline_overview.md), [Communication Status](docs/app/communication_status_overview.md) |
+| Hybrid RAG Retrieval | Four-layer hybrid retrieval (dense + sparse + date); build indexes and inject timeline/knowledge/assessment context | `scripts/advisor/chunk_based_rag.py`, `graph_rag.py`, `run_all/_09_build_graph.py` | [RAG Retrieval](docs/advisor/advisor_rag_overview.md), [Knowledge RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) |
+| Knowledge Base / Governance | Professional FAQ knowledge base + content tickets, LLM drafting, red-zone lint, review ledger, knowledge-graph prototype | `scripts/advisor/knowledge_*.py`, `advisor_out/knowledge/` | [Knowledge Center](docs/app/knowledge_center_overview.md), [Knowledge RAG](docs/pipelines/knowledge_rag_upgrade_overview.md) |
+| Knowledge Center | Web index for active/planned knowledge bases and RAG-ready FAQ resources | `frontend/src/pages/KnowledgeCenterPage.tsx` | [Knowledge Center](docs/app/knowledge_center_overview.md) |
+| Advisor API | Modular FastAPI backend: chat, rag, review, models, safety, arena, roundtable, assessment, knowledge, feedback | `scripts/advisor/api/main.py`, `scripts/advisor/api/routes/` | [Advisor Service](docs/advisor/advisor_service_overview.md) |
+| Web App | React pages: dashboard, chat, consent, privacy, assessment, knowledge, Arena(+Stats), Roundtable(+Session), communication status | `frontend/src/pages/` | [Web App Design](docs/app/web_app_overview.md) |
+| Roundtable Discussion | Three-persona multi-agent discussion with SSE streaming, multi-round follow-up, context injection, moderator synthesis, session persistence | `frontend/src/pages/RoundtablePage.tsx`, `scripts/advisor/api/routes/roundtable.py` | [Roundtable Design](docs/app/roundtable_discussion_overview.md) |
+| Safety / Crisis | Four-level crisis detection, red-line wording, bias detection, consent and fixed resources | `scripts/advisor/api/crisis_detector.py`, `services/bias_detector.py`, `routes/safety.py` | [Safety Crisis](docs/pipelines/safety_crisis_overview.md) |
+| Arena / Supervision | Dual-mirror comparison, Elo ranking, and LLM-as-Judge quality/risk monitoring | `routes/arena.py`, `supervision_agent.py` | [Arena](docs/pipelines/arena_dual_mirror_overview.md), [Supervision](docs/pipelines/supervision_pipeline_overview.md), [Communication Status](docs/app/communication_status_overview.md) |
+| Feedback Loop | Dual-channel global UI/bug feedback and RAG quality rating | `scripts/advisor/api/routes/feedback.py` | [Web App Design](docs/app/web_app_overview.md) |
 
 ---
 
@@ -566,13 +589,13 @@ Run with:
 
 A full-stack AI relationship advisor built on the processed chat data:
 
-### Offline Pipeline (16 scripts across 10+ phases)
+### Offline Pipeline (18 scripts across 11 phases, 0–10)
 
 | Phase | Script | Description | Models / Tools |
 |-------|--------|-------------|----------------|
 | 0 | `_00_verify_environment.py` | Verify Python deps (torch, transformers, peft, bitsandbytes, trl, datasets, accelerate), CUDA/GPU, base model files, test 4-bit quantized loading + inference | Qwen3-8B-Instruct (NF4) |
 | 1 | `_01_extract_conversations.py` | Sliding window extraction from SFT data (L1/L2). Window size 20, step 10, min 10 messages. Auto-classifies chunks: conflict / sweet / normal | — |
-| 2a | `_02_generate_analysis.py` | Single-backend LLM analysis. 5 backends (DeepSeek, Kimi, Qwen, deepseek, GLM). Checkpoint resume support | Any of 5 LLM backends |
+| 2a | `_02_generate_analysis.py` | Single-backend LLM analysis. 5 backends (DeepSeek, Kimi, Qwen, Qwen-local, GLM). Checkpoint resume support | Any of 5 LLM backends |
 | 2b | `_02b_model_comparison.py` | Side-by-side multi-backend comparison on representative chunks. Generates Markdown comparison reports | Multiple backends |
 | 2c | `_02c_fusion_pipeline.py` | **MoA (Mixture of Agents) fusion pipeline** — the core analysis engine (see details below) | DeepSeek + GLM + Kimi + Qwen |
 | 2c' | `_02c_rerun_moa.py` | Re-run MoA fusion for specific failed/low-quality chunks | Same as 2c |
@@ -655,39 +678,124 @@ python scripts/advisor/run_all/_02c_fusion_pipeline.py --moa --Qwen-backend kimi
 
 ### Online Service
 
-- **Backend:** FastAPI (port 8787) with SSE streaming, multi-turn session management, conversation history compression
-- **Frontend:** React 19 + Vite + Tailwind CSS dashboard with chat, pipeline control, human review, model management, and API key checker
-- **RAG:** Triple-layer retrieval — date-precise day index lookup + FAISS semantic search (BGE-M3) + keyword fallback + FAQ knowledge base
-- **LLM Backends:** 5 backends via unified OpenAI-compatible interface (DeepSeek, Kimi, Qwen, deepseek, GLM, Qwen-local Ollama)
-- **Safety:** SafetyLayer P0, GlobalRateLimiter (RPM≤19), auto-failover between backends, Ollama watchdog auto-restart
+- **Backend:** Modular FastAPI (port 8787) with SSE streaming, multi-turn session management, conversation history compression
+- **Frontend:** React 19 + Vite + Tailwind CSS covering chat, dashboard, assessment, privacy, knowledge center, Arena, Roundtable, and communication-status pages
+- **Retrieval:** Hybrid RAG (see [Hybrid RAG Retrieval System](#hybrid-rag-retrieval-system)) + professional knowledge injection (see [Knowledge Base & Governance](#knowledge-base--governance))
+- **LLM Backends:** 5 backends via unified OpenAI-compatible interface (DeepSeek, Kimi, Qwen, GLM, Qwen-local Ollama) with auto-failover
+- **Safety:** SafetyLayer P0, GlobalRateLimiter (RPM≤19), Ollama watchdog auto-restart
 - **Session Management:** Persistent sessions with agent type, mode switching, memory fact extraction, history truncation
+
+#### API Route Inventory (`scripts/advisor/api/routes/`)
+
+| Route | Responsibility |
+|-------|----------------|
+| `chat` | Main conversation entry, SSE streaming, RAG/knowledge injection toggles, quality feedback |
+| `rag` | RAG retrieval queries, incremental index updates |
+| `arena` | Dual-mirror A/B comparison, voting, Elo ranking, query- and annotator-level stats |
+| `roundtable` | Roundtable orchestration, SSE multiplexing, session list & continuation |
+| `assessment` | Pre-conversation assessment, result storage, context injection |
+| `knowledge` | Knowledge-base stats, category/domain/review-status aggregation |
+| `safety` | Crisis detection, red-line words, fixed crisis resources |
+| `review` | Human review import/export |
+| `models_routes` / `keys` | LLM backend management, API key checking |
+| `pipeline` | Offline pipeline control & status |
+| `data` / `user_data` | Workspace data access |
+| `feedback` | Global UI / bug feedback collection |
+| `health` | Health check |
+
+#### Frontend Page Inventory (`frontend/src/pages/`)
+
+| Page | Description |
+|------|-------------|
+| `Dashboard` | System overview & pipeline control |
+| `ChatPage` | Advisor chat (persona × mode switching, RAG / knowledge toggles) |
+| `AssessmentPage` | Pre-conversation assessment & results |
+| `ArenaPage` / `ArenaStatsPage` | Dual-mirror A/B comparison / Elo ranking & stats |
+| `RoundtablePage` / `RoundtableSessionPage` | Roundtable discussion / session history replay |
+| `CommunicationStatusPage` | Deep Focus: conversation progress analysis & supervision |
+| `KnowledgeCenterPage` | Knowledge center index |
+| `ConsentPage` / `PrivacyPage` | Informed consent / privacy settings |
+
+Full i18n: one-click EN/CN switching (react-i18next, 300+ translation keys, persisted preference).
 
 ---
 
-## Universal Ingestion
+## Hybrid RAG Retrieval System
 
-Plugin-based adapter architecture for importing chat data from multiple platforms:
+Retrieval for relationship counseling differs from generic QA: time-sensitive queries, emotional relevance ≠ semantic similarity, cross-day conflict patterns. The system uses **four-layer hybrid retrieval** (dense + sparse + date-precise index), implemented in `scripts/advisor/chunk_based_rag.py` (subclass of `graph_rag.py`).
 
-| Adapter | Source | Format |
-|---------|--------|--------|
-| `wechat_html` | CHAT_APP Desktop export | HTML + CSV |
-| `telegram_json` | Telegram Desktop export | result.json |
-| `whatsapp_txt` | WhatsApp export | *.txt (8 date formats) |
-| `generic_csv` | Any CSV | field_mapping DSL |
-| `generic_jsonl` | Any JSONL | field_mapping DSL |
+| Layer | Component | Model / Method | Input → Output |
+|-------|-----------|----------------|----------------|
+| L1 Dense recall | FAISS | BGE-M3 (1024-dim, FlatIP / HNSW adaptive) | query → top-20 |
+| L1b Sparse fallback | jieba + date inverted index | keyword match / Day Index O(1) | query → candidates |
+| L2 Cross-encoder rerank | BGE-Reranker-V2-M3 | query-passage cross-encoding | top-20 → top-10 |
+| L3 Multi-dim scoring | Rule engine | semantic×0.5 + temporal×0.2 + emotional×0.3 | top-10 → top-5 |
+| L4 Context assembly | Template engine | 6-block concatenation | top-5 → injected system prompt |
 
-All adapters output to a unified Canonical Schema (`P1_messages_raw.jsonl`) that feeds into the downstream modality pipelines.
+- **Intent-driven:** `intent_classifier.py` recognizes 5 intents (time query / emotional venting / advice / pattern analysis / chit-chat) and adjusts retrieval strategy and top_k.
+- **6 context blocks:** name mapping · user profile · historical patterns · conversation snippets · reference knowledge (FAQ) · interaction hints.
+- **Incremental updates:** `POST /api/rag/incremental-update` appends new chunks without full rebuild (FAISS append + metadata merge).
+- **Index factory:** N < 30k → FlatIP, otherwise → HNSWFlat (M=32), blue-green atomic writes.
 
-```bash
-# Auto-detect source type and ingest
-python scripts/workspace/run_ingest.py --workspace /path/to/workspace
+See [RAG Retrieval System](docs/advisor/advisor_rag_overview.md) and [Knowledge RAG](docs/pipelines/knowledge_rag_upgrade_overview.md).
 
-# Specify source type
-python scripts/workspace/run_ingest.py --workspace /path/to/workspace --source-type telegram_json
+---
 
-# Dry run (preview without writing)
-python scripts/workspace/run_ingest.py --dry-run
-```
+## Knowledge Base & Governance
+
+Beyond chat-history retrieval, the system maintains a **professional knowledge base** (structured FAQ on NVC, EFT, crisis intervention, interdisciplinary perspectives) injected into conversation context, plus a content-production and compliance-governance pipeline.
+
+### Knowledge Base & Injection
+
+- **Directory:** `advisor_out/knowledge/{communication,crisis,eft_resources,perspectives,…}/*.jsonl`, recursively loaded via `rglob` at startup.
+- **Entry format:** `question / answer / category / keywords / source / license`, plus `review_status` and `risk_level` governance fields.
+- **Retrieval injection:** `_search_faq()` weights keywords + keyword list + category×agent_type; hits are injected into the system prompt as a `【Professional Knowledge】` block.
+- **Three independent toggles:** chat history `use_rag`, professional knowledge `use_knowledge`, assessment injection `inject_enabled`.
+- **Frontend:** Knowledge Center page (`KnowledgeCenterPage.tsx`) showing active / planned knowledge bases and category stats.
+
+### Knowledge Governance Pipeline (`scripts/advisor/knowledge_*.py`)
+
+| Script | Responsibility |
+|--------|----------------|
+| `knowledge_worklist.py` | Break the content blueprint into per-entry production tickets (stable id + metadata) |
+| `knowledge_draft.py` | LLM batch-drafts schema v2 drafts (`review_status=draft`, pending human review) |
+| `knowledge_redzone_lint.py` | Red-zone compliance pre-screen (trademark misuse, proprietary-material fingerprints, missing evidence qualifiers, license consistency) |
+| `knowledge_schema.py` | `KnowledgeEntry` structural validation and category→domain mapping |
+| `knowledge_ledger.py` | Review/compliance ledger CSV export (source, license, evidence, risk, review status) |
+| `knowledge_graph.py` | Knowledge-graph prototype: materializes FAQ soft links into an in-memory graph to evaluate multi-hop retrieval gains (prototype, not production) |
+
+See [Knowledge Center](docs/app/knowledge_center_overview.md) and [Knowledge RAG](docs/pipelines/knowledge_rag_upgrade_overview.md).
+
+---
+
+## Evaluation, Safety & Supervision
+
+A layer of evaluation, crisis guardrails, and quality supervision sits on top of the online app.
+
+### Dual-Mirror Arena (`ArenaPage` / `ArenaStatsPage`)
+
+- **Blind A/B comparison** across models, advisor schools, and interdisciplinary perspectives, with voting and multi-dimensional scoring.
+- **Bradley-Terry Elo ranking:** `/api/arena/leaderboard`, `/api/arena/stats`, `/api/arena/query-stats`, `/api/arena/annotator-stats` provide ranking, query-level, and annotator-level statistics.
+- Long-conversation memory, safety governance, and S6 perspective-clash mode. See [Dual-Mirror Arena](docs/pipelines/arena_dual_mirror_overview.md).
+
+### Roundtable Discussion (`RoundtablePage` / `RoundtableSessionPage`)
+
+- Three-persona multi-agent three-phase discussion, SSE-multiplexed streaming, multi-turn continuation with cross-round memory compression, RAG context injection, and moderator synthesis.
+- **Session persistence:** `/api/roundtable/sessions` for listing/replay and interrupt recovery. See [Roundtable Discussion](docs/app/roundtable_discussion_overview.md).
+
+### Communication Status / Deep Focus (`CommunicationStatusPage`)
+
+- LLM-as-Judge **six-dimensional** supervision evaluation with priority-chain fallback; frontend "conversation progress analysis" and "communication status" views. See [Communication Status](docs/app/communication_status_overview.md) and [Supervision Pipeline](docs/pipelines/supervision_pipeline_overview.md).
+
+### Safety & Crisis Guardrails
+
+- **Four-level crisis detection** (`crisis_detector.py`) + **double-interception** red-line words + fixed crisis-resource responses + informed consent / disclaimers.
+- **Bias detection** (`bias_detector.py`): ~60 implicit-bias rules across 5 categories (gender stereotyping, relationship absolutism, victim-blaming, moral judgment, pathologizing labels), intercepted/replaced by `_sanitize_agent_output` before each roundtable streaming flush.
+- See [Safety & Crisis System](docs/pipelines/safety_crisis_overview.md).
+
+### Feedback Loop
+
+- `/api/feedback` (global UI / bug) and `/api/chat/feedback` (RAG quality rating) dual channels, persisted to `advisor_out/feedback/*.jsonl` for quality regression and sample review.
 
 ---
 

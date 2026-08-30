@@ -25,7 +25,7 @@
 - Grok 4.1 Thinking (proxy-key)
 - DeepSeek V3.2 (proxy-key)
 - Gemini 3 Pro (proxy-key)
-- Qwen3-235B Thinking (proxy-key)
+- qwen3.5-397b-a17b Thinking (proxy-key)
 - GLM 4.7 (backup provider-glm)
 - Kimi K2.5 (proxy-key)
 
@@ -50,7 +50,7 @@
 
     # 指定后端和 chunk 数量
     python scripts/advisor/run_all/_02b_model_comparison.py \\
-        --backends gpt-5.2-high claude-opus-4.6-think --chunk-count 3
+        --backends gpt-5.5-high claude-opus-4-8-think --chunk-count 3
 
     # 从第 3 个 chunk 开始（跳过前 2 个）
     python scripts/advisor/run_all/_02b_model_comparison.py --start-chunk 3
@@ -121,25 +121,25 @@ def load_platform_key(platform_name: str) -> tuple[str, str]:
 COMPARISON_BACKENDS = [
     # 1. GPT-5.2-high (backup provider-codex)
     {
-        "id": "gpt-5.2-high",
+        "id": "gpt-5.5-high",
         "backend": "openai",
-        "model": "gpt-5.2-high",
+        "model": "gpt-5.5-high",
         "display": "GPT-5.2-high",
         "platform": "backup provider-codex",
     },
     # 2. Claude Opus 4.6 Thinking (OpenAI-compatible proxy Claude 专用 key)
     {
-        "id": "claude-opus-4.6-think",
+        "id": "claude-opus-4-8-think",
         "backend": "claude",
-        "model": "claude-opus-4.6-think",
+        "model": "claude-opus-4-8-think",
         "display": "Claude Opus 4.6 Thinking",
         "platform": "proxy-key",
     },
     # 3. Grok 4.1 Thinking (OpenAI-compatible proxy)
     {
-        "id": "grok-4.1-thinking",
+        "id": "grok-4.20-multi-agent-xhigh",
         "backend": "grok",
-        "model": "grok-4.1-thinking",
+        "model": "grok-4.20-multi-agent-xhigh",
         "display": "Grok 4.1 Thinking",
         "platform": "proxy-key",
     },
@@ -159,12 +159,12 @@ COMPARISON_BACKENDS = [
         "display": "Gemini 3 Pro",
         "platform": "proxy-key",
     },
-    # 6. Qwen3-235B Thinking (OpenAI-compatible proxy)
+    # 6. qwen3.5-397b-a17b Thinking (OpenAI-compatible proxy)
     {
         "id": "qwen3-235b-thinking",
         "backend": "qwen_cloud",
-        "model": "Qwen/Qwen3-235B-A22B-Thinking-2507",
-        "display": "Qwen3-235B Thinking",
+        "model": "qwen/qwen3.5-397b-a17b",
+        "display": "qwen3.5-397b-a17b Thinking",
         "platform": "proxy-key",
     },
     # 7. GLM 4.7 (backup provider)
@@ -330,7 +330,7 @@ def create_generator(backend_cfg: dict) -> AnalysisGenerator:
         AnalysisGenerator: 配置好的分析生成器实例
     
     Example:
-        >>> cfg = {"id": "gpt-5.2-high", "backend": "openai", "model": "gpt-5.2-high", "platform": "backup provider-codex"}
+        >>> cfg = {"id": "gpt-5.5-high", "backend": "openai", "model": "gpt-5.5-high", "platform": "backup provider-codex"}
         >>> gen = create_generator(cfg)
     """
     # 读取 API 配置

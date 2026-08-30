@@ -56,10 +56,10 @@ analysis:
   # -----------------------------------------------------------------------
   # OpenAI 配置（OpenAI 兼容接口）
   # 环境变量: OPENAI_API_KEY
-  # 可选模型: gpt-5 / gpt-5.2 / gpt-4.1 / gpt-4o
+  # 可选模型: gpt-5 / gpt-5.5 / gpt-4.1 / gpt-4o
   # -----------------------------------------------------------------------
   openai:
-    model: gpt-5.3-codex-spark
+    model: gpt-5.5
     api_key: ${OPENAI_API_KEY}
     base_url: https://api.example.com/v1
     temperature: 0.7
@@ -68,10 +68,10 @@ analysis:
   # -----------------------------------------------------------------------
   # Claude 配置（OpenAI 兼容接口，通过 Anthropic 官方兼容层）
   # 环境变量: ANTHROPIC_API_KEY
-  # 可选模型: claude-sonnet-4-5-20250514 / claude-opus-4-20250514
+  # 可选模型: claude-sonnet-5 / claude-opus-4-8
   # -----------------------------------------------------------------------
   claude:
-    model: claude-sonnet-4.6-think
+    model: claude-sonnet-5
     api_key: ${ANTHROPIC_API_KEY}
     base_url: https://api.example.com/v1
     temperature: 0.7
@@ -80,10 +80,10 @@ analysis:
   # -----------------------------------------------------------------------
   # Gemini 配置（OpenAI 兼容接口，通过 Google 官方兼容层）
   # 环境变量: GOOGLE_API_KEY
-  # 可选模型: gemini-2.5-pro / gemini-2.5-flash / gemini-3-pro-preview
+  # 可选模型: gemini-2.5-pro / deepseek-ai/deepseek-v4-flash / gemini-3-pro-preview
   # -----------------------------------------------------------------------
   gemini:
-    model: gemini-3.1-pro-preview
+    model: gemini-3.1-flash-lite-preview
     api_key: ${GOOGLE_API_KEY}
     base_url: https://api.example.com/v1
     temperature: 0.7
@@ -105,7 +105,7 @@ analysis:
   # 环境变量: MOONSHOT_API_KEY
   # -----------------------------------------------------------------------
   kimi:
-    model: gemini-3-flash
+    model: moonshotai/kimi-k2.6
     api_key: ${MOONSHOT_API_KEY}
     base_url: https://api.example.com/v1
     temperature: 0.7
@@ -116,7 +116,7 @@ analysis:
   # 环境变量: XAI_API_KEY
   # -----------------------------------------------------------------------
   grok:
-    model: grok-4.1-thinking
+    model: grok-4.20-multi-agent-xhigh
     api_key: ${XAI_API_KEY}
     base_url: https://api.example.com/v1
     temperature: 0.7
@@ -125,10 +125,10 @@ analysis:
   # -----------------------------------------------------------------------
   # DeepSeek 配置（OpenAI 兼容接口）
   # 环境变量: DEEPSEEK_API_KEY
-  # deepseek-chat = V3.2 非思考模式, deepseek-reasoner = V3.2 思考模式
+  # 当前推荐: deepseek-ai/deepseek-v4-flash
   # -----------------------------------------------------------------------
   deepseek:
-    model: gemini-2.5-flash
+    model: deepseek-ai/deepseek-v4-flash
     api_key: ${DEEPSEEK_API_KEY}
     base_url: https://api.example.com/v1
     temperature: 0.7
@@ -139,7 +139,7 @@ analysis:
   # 环境变量: DASHSCOPE_API_KEY
   # -----------------------------------------------------------------------
   qwen_cloud:
-    model: gemini-2.5-flash
+    model: qwen/qwen3.5-397b-a17b
     api_key: ${DASHSCOPE_API_KEY}
     base_url: https://api.example.com/v1
     temperature: 0.7
@@ -150,7 +150,7 @@ analysis:
   # 环境变量: ZHIPU_API_KEY
   # -----------------------------------------------------------------------
   glm:
-    model: gemini-2.5-flash
+    model: GLM-4.7-Flash
     api_key: ${ZHIPU_API_KEY}
     base_url: https://api.example.com/v1
     temperature: 0.7

@@ -36,7 +36,7 @@ export function SessionHistoryList({
   limit = 10,
 }: SessionHistoryListProps) {
   const { t } = useTranslation()
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   const [sessions, setSessions] = useState<RoundtableSessionSummary[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -82,6 +82,28 @@ export function SessionHistoryList({
     } finally {
       setOpeningId(null)
     }
+  }
+
+  // 首次加载中 → 显示 skeleton（让用户知道历史区域在加载，不是不存在）
+  if (loading && sessions.length === 0 && !error) {
+    return (
+      <section
+        className="mp-fade-up mt-8 max-w-3xl mx-auto rounded-2xl border border-border/60 bg-card/60 backdrop-blur overflow-hidden"
+        aria-label="圆桌讨论历史"
+        aria-busy="true"
+      >
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border/40">
+          <div className="flex items-center gap-2">
+            <History className="w-4 h-4 text-primary/80" />
+            <h3 className="text-sm font-semibold text-foreground">历史圆桌讨论</h3>
+          </div>
+          <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+        </div>
+        <div className="p-4 space-y-2">
+          <div className="h-12 rounded-lg bg-muted/40 animate-pulse" />
+        </div>
+      </section>
+    )
   }
 
   // 无历史 + 无加载 + 无错误 → 不渲染任何卡片

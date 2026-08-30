@@ -14,7 +14,7 @@ import { SupervisionStatePanel } from '../components/supervision/SupervisionStat
 import { DialogueProgressAnalysis } from '../components/supervision/DialogueProgressAnalysis'
 
 const FALLBACK_CHAT_MODELS: ModelInfo[] = [
-  { backend: 'grok', model: 'grok-4.3-high', base_url: 'https://api.example.com/v1', status: 'connected', has_key: true, suitable_for: ['chat'] },
+  { backend: 'grok', model: 'grok-4.20-multi-agent-xhigh', base_url: 'https://api.example.com/v1', status: 'connected', has_key: true, suitable_for: ['chat'] },
 ]
 
 const modelKey = (m: { backend: string; model: string }) => `${m.backend}::${m.model}`

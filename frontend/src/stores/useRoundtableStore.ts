@@ -73,7 +73,9 @@ interface RoundtableState {
   moderatorThinking: string | null
   /**
    * Day 7 · Moderator LLM 失败降级原因（null = LLM 成功或未执行；其余值代表本轮走了规则模板）
-   * 值域：'llm_returned_none' | 'llm_disabled' | 'exception:XxxError' | null
+   * 值域：'timeout' | 'json_parse_fail' | 'api_error:XxxError' | 'llm_disabled' |
+   *   'backend_unavailable:XxxError' | 'claude_native_unsupported' | 'prompt_template_missing' |
+   *   'prompt_render_failed' | 'exception:XxxError' | 'llm_returned_none'（旧 session 兜底值）| null
    * 前端据此在 ModeratorCard 上方显示"降级/无记忆"提示条。
    */
   moderatorFallbackReason: string | null

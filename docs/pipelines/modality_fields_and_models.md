@@ -426,7 +426,7 @@ python run_all_pipelines.py --skip-compression    # 跳过压缩步骤
 | **Claude Sonnet 4** | 分析降级 | Phase 8: Claude Opus 降级 | Opus 不可用时的分析替代 |
 | **DeepSeek R1** | 对话后端 | Phase 10: 在线对话 | 深度推理对话 |
 | **GLM-4-Plus** | 对话后端 | Phase 10: 在线对话 | 智谱中文对话 |
-| **Qwen3-235B-A22B** | 对话后端 | Phase 10: 在线对话 | 阿里云大模型对话 |
+| **qwen3.5-397b-a17b-A22B** | 对话后端 | Phase 10: 在线对话 | 阿里云大模型对话 |
 
 ### 显存管理策略
 
@@ -1369,7 +1369,7 @@ python scripts/compression/validate_sft_quality.py --level all
 |------|------|
 | **Agent 类型** | 中立顾问 / 支持性顾问 / 精神分析顾问（3 种独立 System Prompt） |
 | **交互模式** | 倾听模式（5-7 句共情回应）/ 咨询模式（1500-3000 字结构化深度分析） |
-| **云端后端** | GPT-5.2 · Claude Opus 4.6 Think · Gemini 3 Pro · Grok 4.1 Thinking · DeepSeek V3.1 · Qwen3-235B · GLM 4.7 · Kimi K2.5（共 8 个） |
+| **云端后端** | GPT-5.2 · Claude Opus 4.6 Think · Gemini 3 Pro · Grok 4.1 Thinking · DeepSeek V3.1 · qwen3.5-397b-a17b · GLM 4.7 · Kimi K2.5（共 8 个） |
 | **本地后端** | Ollama qwen3:8b (:11434)，QLoRA 微调后 LoRA 权重加载 |
 | **硬件约束** | 单卡 RTX 5070 Ti 16GB（训练 + 推理共用，无多卡并行） |
 

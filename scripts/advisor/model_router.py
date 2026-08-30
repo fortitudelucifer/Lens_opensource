@@ -180,20 +180,20 @@ DEFAULT_BACKENDS = {
     },
     'deepseek_reasoner': {
         'type': 'cloud',
-        'model': 'deepseek-ai/DeepSeek-V3.1',
+        'model': 'deepseek-ai/deepseek-v4-flash',
         'base_url': 'https://api.deepseek.com/v1',
         'api_key_env': 'DEEPSEEK_API_KEY',
         'cost_per_1k_tokens': 0.00028,
     },
     'claude_opus': {
         'type': 'cloud',
-        'model': 'claude-opus-4.6-think',
+        'model': 'claude-opus-4-8-think',
         'api_key_env': 'ANTHROPIC_API_KEY',
         'cost_per_1k_tokens': 0.015,
     },
     'qwen_cloud': {
         'type': 'cloud',
-        'model': 'Qwen/Qwen3-235B-A22B-Thinking-2507',
+        'model': 'qwen/qwen3.5-397b-a17b',
         'base_url': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
         'api_key_env': 'DASHSCOPE_API_KEY',
         'cost_per_1k_tokens': 0.0008,
@@ -207,7 +207,7 @@ DEFAULT_BACKENDS = {
     },
     'grok': {
         'type': 'cloud',
-        'model': 'grok-4.1-thinking',
+        'model': 'grok-4.20-multi-agent-xhigh',
         'base_url': 'https://api.x.ai/v1',
         'api_key_env': 'XAI_API_KEY',
         'cost_per_1k_tokens': 0.003,

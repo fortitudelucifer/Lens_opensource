@@ -170,6 +170,7 @@
     "fallbackTitle": "Moderator 已降级 · 本轮走了规则模板",
     "fallbackTitleDisabled": "Moderator 使用规则模板（LLM 已关闭）",
     "fallbackDetailTimeout": "LLM 调用超时或返回为空 · 常见于 thinking 模型生成慢或代理限流 · 可尝试换用更快的 backend 或提高 ROUNDTABLE_MODERATOR_TIMEOUT。{{memorySuffix}}",
+    "fallbackDetailJsonParseFail": "LLM 已返回内容，但格式不是预期的 JSON，解析失败 · 本轮综合由规则模板生成。{{memorySuffix}}",
     "fallbackDetailDisabled": "环境变量 ROUNDTABLE_MODERATOR_LLM=0 · 这是预期行为。{{memorySuffix}}",
     "fallbackDetailException": "LLM 调用异常：{{reason}} · 本轮综合由规则模板生成。{{memorySuffix}}",
     "fallbackDetailGeneric": "降级原因：{{reason}}。{{memorySuffix}}",

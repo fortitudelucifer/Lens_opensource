@@ -12,17 +12,17 @@ judge:
   # 各后端 Judge 专用模型配置（仅 model/max_tokens/temperature）
   backends:
     claude:
-      model: claude-opus-4.5
+      model: claude-opus-4-8
       max_tokens: 4096
       temperature: 0.3
 
     openai:
-      model: gpt-5.2-high
+      model: gpt-5.5
       max_tokens: 4096
       temperature: 0.3
 
     kimi:
-      model: moonshotai/Kimi-K2-Instruct
+      model: moonshotai/kimi-k2.6
       max_tokens: 4096
       temperature: 0.3
 

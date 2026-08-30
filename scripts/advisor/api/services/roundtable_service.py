@@ -39,7 +39,7 @@ from ..core.models import (
 )
 from . import roundtable_audit as audit  # Day 5 · D5.5 · 结构化审计
 from . import roundtable_memory as memory  # Day 4 · D4.8 · CrossRoundMemory 压缩
-from .generator_service import get_generator
+from .generator_service import get_generator, get_available_chat_backends
 
 log = logging.getLogger(__name__)
 
@@ -109,6 +109,14 @@ DEEP_MODERATOR_MAX_TOKENS: int = int(os.environ.get("ROUNDTABLE_DEEP_MODERATOR_M
 # Day 7 · 深度模式 · Moderator timeout（thinking 模型 + 大 token 预算需要更长）
 # 独立于普通 timeout，避免"深度 + 思考模型"下频繁 90s 超时降级到规则模板
 DEEP_MODERATOR_LLM_TIMEOUT: float = float(os.environ.get("ROUNDTABLE_DEEP_MODERATOR_TIMEOUT", "240"))
+# D · phase1(3) + phase2(3) 已连续打了 6 次请求 · 第 7 次（moderator）紧接着发起容易撞到
+# 代理侧的 RPM/并发限流（2026-07-07 实测：moderator 7.3s 内快速失败，明显不是超时特征）
+# 加一个错峰延迟，前端已提前进入 phase3 动态 banner，用户感知上是"还在讨论"而非"卡住"
+MODERATOR_PRE_CALL_DELAY: float = float(os.environ.get("ROUNDTABLE_MODERATOR_PRE_DELAY", "10"))
+# D · 2026-07-08 · Moderator 独立 backend · 让 moderator 用不同于 agent 的 backend
+# 避免 6 次 agent 调用 + 1 次 moderator 调用全部打到同一代理的 RPM 限流
+# 例：agent 走 gemini，moderator 走 grok · 未设置时与 agent 同 backend
+MODERATOR_BACKEND: str = os.environ.get("ROUNDTABLE_MODERATOR_BACKEND", "").strip()
 
 
 def _get_default_backend() -> str:
@@ -1033,27 +1041,34 @@ async def _run_pipeline(session_id: str) -> None:
         thinking_text: str = ""
         fallback_reason: Optional[str] = None  # D5.5 · moderator fallback 原因
         if USE_LLM and MODERATOR_USE_LLM:
+            # D · 错峰延迟：避开 phase1+phase2 共 6 次调用后紧接着发起第 7 次请求的限流窗口。
+            # 前端在这段等待期间持续展示 phase3 动态 banner，不会显得"卡住"。
+            log.info(
+                "[roundtable] moderator pre-call delay · session=%s · sleeping %.0fs",
+                session_id, MODERATOR_PRE_CALL_DELAY,
+            )
+            await asyncio.sleep(MODERATOR_PRE_CALL_DELAY)
             try:
                 audit.get_auditor().emit(
                     session_id=session_id, event_type="moderator_start",
                     round_index=_round, phase="phase3",
-                    data={"backend": session.backend or _get_default_backend()},
+                    data={
+                        "backend": session.backend or _get_default_backend(),
+                        "pre_call_delay_s": MODERATOR_PRE_CALL_DELAY,
+                    },
                 )
             except Exception:
                 log.debug("[roundtable] moderator_start audit emit failed", exc_info=True)
             try:
-                result = await _build_llm_moderator(session)
+                moderator, thinking_text, fallback_reason = await _build_llm_moderator(session)
             except Exception as _exc:
                 log.exception(
                     "[roundtable] moderator LLM unexpected error · session=%s · fallback",
                     session_id,
                 )
-                result = None
-                fallback_reason = f"exception:{type(_exc).__name__}"
-            if result is not None:
-                moderator, thinking_text = result
-            elif fallback_reason is None:
-                # _build_llm_moderator 返回 None · 一般是 timeout 或 JSON 解析失败
+                moderator, thinking_text, fallback_reason = None, "", f"exception:{type(_exc).__name__}"
+            if moderator is None and fallback_reason is None:
+                # 兜底：正常情况下 _build_llm_moderator 现在总会带上具体原因
                 fallback_reason = "llm_returned_none"
         else:
             fallback_reason = "llm_disabled"
@@ -1719,10 +1734,14 @@ def _parse_moderator_json(raw: str) -> Optional[RoundtableModeratorContent]:
 async def _build_llm_moderator(
     session: RoundtableSession,
     backend: Optional[str] = None,
-) -> Optional[tuple[RoundtableModeratorContent, str]]:
+) -> tuple[Optional[RoundtableModeratorContent], str, Optional[str]]:
     """LLM 一次性生成 Moderator 综合（非流式）。
 
-    成功返回 `(content, thinking_text)` tuple；任何失败/超时/解析失败 → None（上层 fallback）。
+    始终返回 3-tuple `(content, thinking_text, fallback_reason)`：
+      - 成功：`(content, thinking_text, None)`
+      - 失败：`(None, "", reason)` · reason 取值见各失败分支，供上层原样写入
+        `session.moderator_fallback_reason` + 审计日志，避免所有失败原因被压扁成
+        同一个笼统的 "llm_returned_none"（D · 2026-07-07 复盘发现的问题）。
 
     - `content`：6 段 JSON 解析后的 RoundtableModeratorContent
     - `thinking_text`：LLM 先写的自然语言综合思考段（可能为空字符串，用于前端流式展示）
@@ -1735,7 +1754,7 @@ async def _build_llm_moderator(
     tmpl = prompts.get(tmpl_key) or prompts.get("moderator_llm_prompt")
     if not tmpl:
         log.warning("[roundtable] moderator_llm_prompt missing in yaml · fallback to rule")
-        return None
+        return None, "", "prompt_template_missing"
 
     # ── 构造 peers_block · 按 phase2 confidence 降序 ──
     phase2_conf: dict[str, float] = {}
@@ -1768,69 +1787,134 @@ async def _build_llm_moderator(
         )
     except Exception:
         log.exception("[roundtable] failed to render moderator prompt")
-        return None
+        return None, "", "prompt_render_failed"
 
-    # ── backend 解析（与 _stream_one_agent_via_llm 同优先级）──
-    bk = (
-        getattr(session, "backend", None)
+    # ── backend 解析 ──
+    # D · 2026-07-08 · Moderator 独立 backend 分流策略
+    # 优先级：ROUNDTABLE_MODERATOR_BACKEND env > session.backend > 参数 backend > 默认
+    # 让 moderator 用不同于 agent 的 backend，避免 6+1 次调用全打同一代理 RPM 限流
+    primary_bk = (
+        MODERATOR_BACKEND
+        or getattr(session, "backend", None)
         or backend
         or _get_default_backend()
     )
-    try:
-        gen = get_generator(bk)
-    except Exception as exc:
-        log.warning("[roundtable] moderator LLM backend unavailable · backend=%s · %s", bk, exc)
-        return None
 
-    # Claude 官方 SDK 不支持 OpenAI 兼容（Day 4 遗留）· 直接 fallback
-    if getattr(gen, "_claude_native", False):
-        log.info("[roundtable] claude_native not supported for moderator · fallback to rule")
-        return None
+    # D · 2026-07-08 · Moderator backend fallback 链
+    # 主 backend 连续 503/限流时，依次尝试其他可用 backend，避免直接降级到规则模板。
+    # 优先级：用户选定的 backend → 其他已配置 API key 的 chat backend → 规则模板
+    fallback_backends = [primary_bk]
+    for alt in get_available_chat_backends(exclude=primary_bk):
+        if alt not in fallback_backends:
+            fallback_backends.append(alt)
+    # 去掉 qwen_local（Ollama 本地模型，moderator prompt 太长容易 OOM/超时）
+    fallback_backends = [b for b in fallback_backends if b != "qwen_local"]
 
     # Day 7 · 深度模式 · Moderator token 预算也翻倍
     mod_max = DEEP_MODERATOR_MAX_TOKENS if getattr(session, "deep_mode", False) else MODERATOR_MAX_TOKENS
-    kwargs: dict = dict(
-        model=gen.model,
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=min(gen.max_tokens, mod_max),
-    )
-    if gen.temperature is not None and "think" not in gen.model.lower():
-        kwargs["temperature"] = gen.temperature
-
-    def _sync_call() -> str:
-        """同步 OpenAI 客户端调用，返回 message content"""
-        resp = gen.client.chat.completions.create(**kwargs)
-        if not resp.choices:
-            return ""
-        return resp.choices[0].message.content or ""
-
-    # Day 7 · 深度模式 timeout 独立（thinking 模型 + 3584 token 在 90s 内很容易超时 → 降级规则模板）
     mod_timeout = DEEP_MODERATOR_LLM_TIMEOUT if getattr(session, "deep_mode", False) else MODERATOR_LLM_TIMEOUT
-    log.info(
-        "[roundtable] moderator LLM call · session=%s · backend=%s · model=%s · deep=%s · timeout=%.0fs · max_tokens=%d",
-        session.id, bk, gen.model, getattr(session, "deep_mode", False),
-        mod_timeout, kwargs["max_tokens"],
-    )
+
+    MODERATOR_MAX_RETRIES = int(os.environ.get("ROUNDTABLE_MODERATOR_MAX_RETRIES", "3"))
+    MODERATOR_RETRY_DELAY = float(os.environ.get("ROUNDTABLE_MODERATOR_RETRY_DELAY", "15"))
+
     loop = asyncio.get_event_loop()
-    try:
-        raw = await asyncio.wait_for(
-            loop.run_in_executor(None, _sync_call),
-            timeout=mod_timeout,
+    raw: Optional[str] = None
+    last_reason: str = ""
+
+    for bk_idx, bk in enumerate(fallback_backends):
+        if raw is not None:
+            break
+        try:
+            gen = get_generator(bk)
+        except Exception as exc:
+            log.warning("[roundtable] moderator backend unavailable · backend=%s · %s", bk, exc)
+            last_reason = f"backend_unavailable:{type(exc).__name__}"
+            continue
+
+        if getattr(gen, "_claude_native", False):
+            log.info("[roundtable] claude_native not supported for moderator · skip backend=%s", bk)
+            last_reason = "claude_native_unsupported"
+            continue
+
+        kwargs: dict = dict(
+            model=gen.model,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=min(gen.max_tokens, mod_max),
         )
-    except asyncio.TimeoutError:
+        if gen.temperature is not None and "think" not in gen.model.lower():
+            kwargs["temperature"] = gen.temperature
+
+        def _sync_call(_gen=gen, _kwargs=kwargs) -> str:
+            """同步 OpenAI 客户端流式调用，返回完整 message content"""
+            stream = _gen.client.chat.completions.create(**_kwargs, stream=True)
+            parts: list[str] = []
+            for chunk in stream:
+                if not chunk.choices:
+                    continue
+                delta = chunk.choices[0].delta
+                if delta and delta.content:
+                    parts.append(delta.content)
+            return "".join(parts)
+
+        if bk_idx == 0:
+            log.info(
+                "[roundtable] moderator LLM call · session=%s · backend=%s · model=%s · deep=%s · timeout=%.0fs · max_tokens=%d · fallback_chain=%s",
+                session.id, bk, gen.model, getattr(session, "deep_mode", False),
+                mod_timeout, kwargs["max_tokens"], fallback_backends,
+            )
+        else:
+            log.info(
+                "[roundtable] moderator falling back to backend=%s · model=%s · session=%s (primary failed)",
+                bk, gen.model, session.id,
+            )
+
+        last_exc: Optional[Exception] = None
+        for attempt in range(1, MODERATOR_MAX_RETRIES + 1):
+            try:
+                raw = await asyncio.wait_for(
+                    loop.run_in_executor(None, _sync_call),
+                    timeout=mod_timeout,
+                )
+                break  # 成功
+            except asyncio.TimeoutError:
+                log.warning(
+                    "[roundtable] moderator LLM timeout (%.0fs) · attempt=%d/%d · session=%s · backend=%s · model=%s",
+                    mod_timeout, attempt, MODERATOR_MAX_RETRIES, session.id, bk, gen.model,
+                )
+                last_exc = TimeoutError(f"timeout after {mod_timeout}s")
+                last_reason = "timeout"
+                if attempt < MODERATOR_MAX_RETRIES:
+                    await asyncio.sleep(MODERATOR_RETRY_DELAY)
+                continue
+            except Exception as exc:
+                last_exc = exc
+                err_detail = str(exc)[:300]
+                status_code = getattr(exc, "status_code", None) or getattr(getattr(exc, "response", None), "status_code", None)
+                log.warning(
+                    "[roundtable] moderator LLM call failed · attempt=%d/%d · session=%s · backend=%s · status=%s · %s",
+                    attempt, MODERATOR_MAX_RETRIES, session.id, bk, status_code, err_detail,
+                )
+                exc_name = type(exc).__name__
+                exc_msg = str(exc)[:200]
+                last_reason = f"api_error:{exc_name}" + (f":{exc_msg}" if exc_msg else "")
+                if attempt < MODERATOR_MAX_RETRIES:
+                    log.info("[roundtable] moderator retry in %.0fs · attempt=%d · backend=%s", MODERATOR_RETRY_DELAY, attempt + 1, bk)
+                    await asyncio.sleep(MODERATOR_RETRY_DELAY)
+                continue
+
+        if raw is not None:
+            break  # 这个 backend 成功了，跳出 fallback 链
         log.warning(
-            "[roundtable] moderator LLM timeout (%.0fs) · session=%s · backend=%s · model=%s · "
-            "这会触发降级到规则模板 · 规则模板无跨轮记忆 · "
-            "建议: 换用更快的 backend（如 kimi/deepseek）· 或导出 ROUNDTABLE_MODERATOR_TIMEOUT=300",
-            mod_timeout, session.id, bk, gen.model,
+            "[roundtable] moderator LLM all %d attempts failed on backend=%s · session=%s · trying next backend if available",
+            MODERATOR_MAX_RETRIES, bk, session.id,
         )
-        return None
-    except Exception as exc:
+
+    if raw is None:
         log.warning(
-            "[roundtable] moderator LLM call failed · session=%s · backend=%s · %s",
-            session.id, bk, exc,
+            "[roundtable] moderator LLM exhausted all backends (%s) · session=%s · fallback to rule template · reason=%s",
+            fallback_backends, session.id, last_reason,
         )
-        return None
+        return None, "", last_reason or "all_backends_failed"
 
     # 两段式拆分：thinking + JSON
     thinking_text, json_payload = _split_moderator_output(raw or "")
@@ -1841,13 +1925,13 @@ async def _build_llm_moderator(
             "[roundtable] moderator JSON parse failed · session=%s · raw[:200]=%r",
             session.id, (raw or "")[:200],
         )
-        return None
+        return None, "", "json_parse_fail"
 
     log.info(
         "[roundtable] moderator LLM success · session=%s · thinking=%d chars · angles=%d tries=%d doubts=%d",
         session.id, len(thinking_text), len(content.angles), len(content.tries), len(content.doubts),
     )
-    return content, thinking_text
+    return content, thinking_text, None
 
 
 # ═══════════════════════════════════════════════════════════════════

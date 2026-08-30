@@ -1380,7 +1380,7 @@ def main():
                         choices=["grok", "kimi"],
                         help="MoA 聚合器后端 (grok 或 kimi) — grok-thinking 不稳定时可切换")
     parser.add_argument("--grok-model", type=str, default=None,
-                        help="MoA 聚合器模型名覆盖 (例如 grok-4 / grok-4.1-thinking / moonshotai/Kimi-K2-Instruct)")
+                        help="MoA 聚合器模型名覆盖 (例如 grok-4 / grok-4.20-multi-agent-xhigh / moonshotai/kimi-k2.6)")
     parser.add_argument("--pipeline", action="store_true",
                         help="启用 CPU 流水线式并行 (S1 与 S2-S4 并行, 强制启用 --moa)")
     parser.add_argument("--max-s1", type=int, default=2,
@@ -1560,7 +1560,7 @@ def main():
         # 创建 Claude 降级 generator (sonnet-4.5-think)
         claude_degraded_gen = None
         claude_cfg = pool_config.get("claude", {}) if pool_config else {}
-        degraded_model = claude_cfg.get("degraded_model", "claude-sonnet-4.5-think")
+        degraded_model = claude_cfg.get("degraded_model", "claude-sonnet-5")
         if degraded_model:
             try:
                 claude_degraded_gen = _create_generator(

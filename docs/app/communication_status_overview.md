@@ -484,12 +484,12 @@ judge:
       temperature: 0.3
 
     openai:
-      model: gpt-5.2-high
+      model: gpt-5.5-high
       max_tokens: 4096
       temperature: 0.3
 
     kimi:
-      model: moonshotai/Kimi-K2-Instruct
+      model: moonshotai/kimi-k2.6
       max_tokens: 4096
       temperature: 0.3
 
@@ -1108,12 +1108,12 @@ judge:
       temperature: 0.3
 
     openai:
-      model: gpt-5.2-high
+      model: gpt-5.5-high
       max_tokens: 4096
       temperature: 0.3
 
     kimi:
-      model: moonshotai/Kimi-K2-Instruct
+      model: moonshotai/kimi-k2.6
       max_tokens: 4096
       temperature: 0.3
 

@@ -370,19 +370,23 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
           </span>
         </div>
         <div
-          className={cn(
-            'grid grid-cols-1 lg:grid-cols-3 gap-4 transition-all duration-700',
-            phase1Faded && 'opacity-50 scale-[0.98] grayscale-[0.4]',
-          )}
+          className="grid grid-cols-1 lg:grid-cols-3 gap-4"
           aria-label={phase1Faded ? t('roundtable.session.phase1Completed') : t('roundtable.session.phase1InProgress')}
         >
           {phase1Agents.map((agent) => (
-            <AgentMessage
+            <div
               key={`p1-${agent.personaId}`}
-              agent={agent}
-              phaseLabel="🧠 Independent View"
-              compact
-            />
+              className={cn(
+                'transition-all duration-300',
+                phase1Faded && 'opacity-50 scale-[0.98] grayscale-[0.4] hover:opacity-100 hover:scale-100 hover:grayscale-0 hover:shadow-lg hover:z-10',
+              )}
+            >
+              <AgentMessage
+                agent={agent}
+                phaseLabel="🧠 Independent View"
+                compact
+              />
+            </div>
           ))}
         </div>
       </section>
@@ -406,19 +410,23 @@ export function RoundtableSessionPage({ onBack }: RoundtableSessionPageProps) {
             </span>
           </div>
           <div
-            className={cn(
-              'grid grid-cols-1 lg:grid-cols-3 gap-4 transition-all duration-700',
-              phase2Faded && 'opacity-50 scale-[0.98] grayscale-[0.4]',
-            )}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-4"
             aria-label={phase2Faded ? 'Phase 2 completed' : 'Phase 2 in progress'}
           >
             {phase2Agents.map((agent) => (
-              <AgentMessage
+              <div
                 key={`p2-${agent.personaId}`}
-                agent={agent}
-                phaseLabel="🔄 Response after seeing peers"
-                compact
-              />
+                className={cn(
+                  'transition-all duration-300',
+                  phase2Faded && 'opacity-50 scale-[0.98] grayscale-[0.4] hover:opacity-100 hover:scale-100 hover:grayscale-0 hover:shadow-lg hover:z-10',
+                )}
+              >
+                <AgentMessage
+                  agent={agent}
+                  phaseLabel="🔄 Response after seeing peers"
+                  compact
+                />
+              </div>
             ))}
           </div>
         </section>

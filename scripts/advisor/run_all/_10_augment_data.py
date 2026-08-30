@@ -30,7 +30,7 @@
 - deepseek_reasoner: DeepSeek Reasoner（逻辑推理，低成本）
 - claude_opus: Claude Opus 4.6 Think（风格生成，高质量）
 - grok: Grok 4（备选）
-- qwen3_max: Qwen3-235B（备选）
+- qwen3_max: qwen3.5-397b-a17b（备选）
 - glm4_plus: GLM-4-Plus（备选）
 
 输入：
@@ -118,7 +118,7 @@ def main():
     import os
     teacher_configs = {
         'claude_opus': {
-            'model': os.environ.get('ANTHROPIC_MODEL', 'claude-sonnet-4.6-think'),
+            'model': os.environ.get('ANTHROPIC_MODEL', 'claude-sonnet-5'),
             'base_url': os.environ.get('ANTHROPIC_BASE_URL', 'https://api.example.com/v1'),
             'api_key_env': 'ANTHROPIC_API_KEY',
             'temperature': 0.7,
@@ -126,7 +126,7 @@ def main():
             'cost_per_1k_tokens': 0.015,
         },
         'claude_backup': {
-            'model': os.environ.get('ANTHROPIC_BACKUP_MODEL', 'claude-sonnet-4.6'),
+            'model': os.environ.get('ANTHROPIC_BACKUP_MODEL', 'claude-sonnet-5'),
             'base_url': os.environ.get('ANTHROPIC_BACKUP_BASE_URL', 'https://api.example.com/v1'),
             'api_key_env': 'ANTHROPIC_BACKUP_API_KEY',
             'temperature': 0.7,
@@ -134,7 +134,7 @@ def main():
             'cost_per_1k_tokens': 0.015,
         },
         'gpt': {
-            'model': os.environ.get('OPENAI_MODEL', 'gpt-5.3-codex-spark'),
+            'model': os.environ.get('OPENAI_MODEL', 'gpt-5.5'),
             'base_url': os.environ.get('OPENAI_BASE_URL', 'https://api.example.com/v1'),
             'api_key_env': 'OPENAI_API_KEY',
             'temperature': 0.7,
@@ -142,7 +142,7 @@ def main():
             'cost_per_1k_tokens': 0.003,
         },
         'grok': {
-            'model': os.environ.get('XAI_MODEL', 'grok-4.1-thinking'),
+            'model': os.environ.get('XAI_MODEL', 'grok-4.20-multi-agent-xhigh'),
             'base_url': os.environ.get('XAI_BASE_URL', 'https://api.example.com/v1'),
             'api_key_env': 'XAI_API_KEY',
             'temperature': 0.7,
@@ -150,7 +150,7 @@ def main():
             'cost_per_1k_tokens': 0.003,
         },
         'gemini': {
-            'model': os.environ.get('GOOGLE_MODEL', 'gemini-3.1-pro-preview'),
+            'model': os.environ.get('GOOGLE_MODEL', 'gemini-3.1-flash-lite-preview'),
             'base_url': os.environ.get('GOOGLE_BASE_URL', 'https://api.example.com/v1'),
             'api_key_env': 'GOOGLE_API_KEY',
             'temperature': 0.7,
